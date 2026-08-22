@@ -3,9 +3,9 @@ A completely headless, privacy-oriented media player add-on for the [NVDA screen
 
 ---
 
-## Documentation / أدلة الاستخدام الكاملة
-- 🇬🇧 **[English User Guide (readme.md)](HeadlessPlayer/doc/en/readme.md)**
-- 🇸🇦 **[دليل المستخدم باللغة العربية (readme.md)](HeadlessPlayer/doc/ar/readme.md)**
+## Documentation
+- **[English User Guide (readme.md)](HeadlessPlayer/doc/en/readme.md)**
+- **[دليل المستخدم باللغة العربية (readme.md)](HeadlessPlayer/doc/ar/readme.md)**
 
 ---
 
@@ -53,7 +53,7 @@ When Player Mode is active (<kbd>NVDA+Ctrl+Shift+P</kbd>):
 
 ---
 
-## 5. YouTube Cookies & Long-Lived Session Solutions / حلول استقرار الكوكيز
+## 5. YouTube Cookies & Long-Lived Session Solutions
 
 > [!NOTE]
 > **Important Note:** 99% of YouTube features (searching by name, playing any video, exploring public playlists/channels, trending music, and live streams) **do NOT require any sign-in or cookies at all!** Cookies are only needed for Private playlists (like Watch Later `WL` or Liked Videos `LL`) and age-restricted videos.
