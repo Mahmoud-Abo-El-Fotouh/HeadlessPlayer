@@ -1,0 +1,715 @@
+# HeadlessPlayer English Translation
+# Copyright (C) 2026 HeadlessPlayer Team
+# This file is distributed under the same license as the HeadlessPlayer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: HeadlessPlayer 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-21 12:00+0300\n"
+"PO-Revision-Date: 2026-08-21 12:00+0300\n"
+"Last-Translator: HeadlessPlayer Team <headlessplayer@nvda-addon.org>\n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Headless Media Player"
+msgstr "Headless Media Player"
+
+msgid "Completely headless, privacy-oriented media player for NVDA operated via modal keyboard capture."
+msgstr "Completely headless, privacy-oriented media player for NVDA operated via modal keyboard capture."
+
+msgid "Player Mode active"
+msgstr "Player Mode active"
+
+msgid "Player Mode exited"
+msgstr "Player Mode exited"
+
+msgid "Playing"
+msgstr "Playing"
+
+msgid "Paused"
+msgstr "Paused"
+
+msgid "Stopped"
+msgstr "Stopped"
+
+msgid "Muted"
+msgstr "Muted"
+
+msgid "Unmuted"
+msgstr "Unmuted"
+
+msgid "Volume %d percent"
+msgstr "Volume %d percent"
+
+msgid "Speed %.2fx"
+msgstr "Speed %.2fx"
+
+msgid "Speed %.2fx (Preset)"
+msgstr "Speed %.2fx (Preset)"
+
+msgid "Speed reset to 1.0x"
+msgstr "Speed reset to 1.0x"
+
+msgid "Forward %s, position %s of %s"
+msgstr "Forward %s, position %s of %s"
+
+msgid "Backward %s, position %s of %s"
+msgstr "Backward %s, position %s of %s"
+
+msgid "Jump to %d percent, position %s"
+msgstr "Jump to %d percent, position %s"
+
+msgid "Start of media"
+msgstr "Start of media"
+
+msgid "End of media"
+msgstr "End of media"
+
+msgid "A-B Repeat: Start point set at %s"
+msgstr "A-B Repeat: Start point set at %s"
+
+msgid "A-B Repeat: End point set at %s"
+msgstr "A-B Repeat: End point set at %s"
+
+msgid "A-B Looping active from %s to %s"
+msgstr "A-B Looping active from %s to %s"
+
+msgid "A-B Repeat cleared"
+msgstr "A-B Repeat cleared"
+
+msgid "Repeat Track enabled"
+msgstr "Repeat Track enabled"
+
+msgid "Repeat Playlist enabled"
+msgstr "Repeat Playlist enabled"
+
+msgid "Repeat disabled"
+msgstr "Repeat disabled"
+
+msgid "Chapter %d: %s"
+msgstr "Chapter %d: %s"
+
+msgid "Chapter %d"
+msgstr "Chapter %d"
+
+msgid "No chapters available in media"
+msgstr "No chapters available in media"
+
+msgid "Audio track %d: %s (%s)"
+msgstr "Audio track %d: %s (%s)"
+
+msgid "Audio track %d"
+msgstr "Audio track %d"
+
+msgid "Loaded %d files into playlist"
+msgstr "Loaded %d files into playlist"
+
+msgid "Playlist empty"
+msgstr "Playlist empty"
+
+msgid "Track %d of %d: %s"
+msgstr "Track %d of %d: %s"
+
+msgid "Auto-next enabled"
+msgstr "Auto-next enabled"
+
+msgid "Auto-next disabled"
+msgstr "Auto-next disabled"
+
+msgid "Shuffle enabled"
+msgstr "Shuffle enabled"
+
+msgid "Shuffle disabled"
+msgstr "Shuffle disabled"
+
+msgid "Title: %s, Duration: %s, Track %d of %d"
+msgstr "Title: %s, Duration: %s, Track %d of %d"
+
+msgid "Remaining time: %s"
+msgstr "Remaining time: %s"
+
+msgid "Elapsed time: %s"
+msgstr "Elapsed time: %s"
+
+msgid "Speech Feedback & Announcements"
+msgstr "Speech Feedback & Announcements"
+
+msgid "Announce &volume changes"
+msgstr "Announce &volume changes"
+
+msgid "Announce &seek position and jump offsets"
+msgstr "Announce &seek position and jump offsets"
+
+msgid "Announce playback s&peed adjustments"
+msgstr "Announce playback s&peed adjustments"
+
+msgid "Announce &track titles and playlist navigation"
+msgstr "Announce &track titles and playlist navigation"
+
+msgid "Announce A-B &loop and segment markers"
+msgstr "Announce A-B &loop and segment markers"
+
+msgid "Announce &chapter markers and names"
+msgstr "Announce &chapter markers and names"
+
+msgid "Seek Jump Step Sizes (Seconds)"
+msgstr "Seek Jump Step Sizes (Seconds)"
+
+msgid "&Normal seek jump (Left/Right arrows):"
+msgstr "&Normal seek jump (Left/Right arrows):"
+
+msgid "&Slow / precise seek jump (Alt + Left/Right):"
+msgstr "&Slow / precise seek jump (Alt + Left/Right):"
+
+msgid "&Fast seek jump (Ctrl + Left/Right):"
+msgstr "&Fast seek jump (Ctrl + Left/Right):"
+
+msgid "&Ultrafast seek jump (Shift + Left/Right):"
+msgstr "&Ultrafast seek jump (Shift + Left/Right):"
+
+msgid "Playback Defaults & Options"
+msgstr "Playback Defaults & Options"
+
+msgid "Default playback s&peed:"
+msgstr "Default playback s&peed:"
+
+msgid "0.5x"
+msgstr "0.5x"
+
+msgid "0.75x"
+msgstr "0.75x"
+
+msgid "1.0x (Normal)"
+msgstr "1.0x (Normal)"
+
+msgid "1.25x"
+msgstr "1.25x"
+
+msgid "1.5x"
+msgstr "1.5x"
+
+msgid "1.75x"
+msgstr "1.75x"
+
+msgid "2.0x"
+msgstr "2.0x"
+
+msgid "2.5x"
+msgstr "2.5x"
+
+msgid "3.0x"
+msgstr "3.0x"
+
+msgid "Default &repeat mode:"
+msgstr "Default &repeat mode:"
+
+msgid "Off"
+msgstr "Off"
+
+msgid "Repeat Current Track"
+msgstr "Repeat Current Track"
+
+msgid "Repeat Entire Playlist"
+msgstr "Repeat Entire Playlist"
+
+msgid "Auto-advance to &next track when media finishes"
+msgstr "Auto-advance to &next track when media finishes"
+
+msgid "Remember and &resume playback position for media"
+msgstr "Remember and &resume playback position for media"
+
+msgid "Play audio &earcons when entering/exiting Player Mode"
+msgstr "Play audio &earcons when entering/exiting Player Mode"
+
+msgid "Automatically enter &Player Mode when loading new media"
+msgstr "Automatically enter &Player Mode when loading new media"
+
+msgid "Media engine failed to start"
+msgstr "Media engine failed to start"
+
+msgid "Media file not found: %s"
+msgstr "Media file not found: %s"
+
+msgid "Unsupported media format or corrupted file"
+msgstr "Unsupported media format or corrupted file"
+
+msgid "Error communicating with media player pipe"
+msgstr "Error communicating with media player pipe"
+
+msgid "Select Media File"
+msgstr "Select Media File"
+
+msgid "Select Media Folder"
+msgstr "Select Media Folder"
+
+msgid "Media Files"
+msgstr "Media Files"
+
+msgid "All Files"
+msgstr "All Files"
+
+msgid "No media files found in selected folder"
+msgstr "No media files found in selected folder"
+
+msgid "No media files currently selected in Windows Explorer"
+msgstr "No media files currently selected in Windows Explorer"
+
+msgid "Playback resumed from %s"
+msgstr "Playback resumed from %s"
+
+msgid "Audio track %d: %s"
+msgstr "Audio track %d: %s"
+
+msgid "Default Test Media"
+msgstr "Default Test Media"
+
+msgid "Select Media Files"
+msgstr "Select Media Files"
+
+msgid "Select Media Folder to Queue"
+msgstr "Select Media Folder to Queue"
+
+msgid "Toggles Headless Media Player keyboard capture mode."
+msgstr "Toggles Headless Media Player keyboard capture mode."
+
+msgid "HEADLESS MEDIA PLAYER - KEYBOARD SHORTCUTS HELP"
+msgstr "HEADLESS MEDIA PLAYER - KEYBOARD SHORTCUTS HELP"
+
+msgid "Headless Media Player - Shortcuts Help"
+msgstr "Headless Media Player - Shortcuts Help"
+
+msgid "MODE TOGGLE & ESSENTIALS:"
+msgstr "MODE TOGGLE & ESSENTIALS:"
+
+msgid "Enter or exit Headless Player Mode."
+msgstr "Enter or exit Headless Player Mode."
+
+msgid "Exit Player Mode and return to normal desktop keyboard control."
+msgstr "Exit Player Mode and return to normal desktop keyboard control."
+
+msgid "Silence speech immediately while in Player Mode."
+msgstr "Silence speech immediately while in Player Mode."
+
+msgid "Show this keyboard shortcuts help window."
+msgstr "Show this keyboard shortcuts help window."
+
+msgid "PLAYBACK & VOLUME CONTROLS:"
+msgstr "PLAYBACK & VOLUME CONTROLS:"
+
+msgid "Play / Pause toggle."
+msgstr "Play / Pause toggle."
+
+msgid "Stop playback and rewind to beginning."
+msgstr "Stop playback and rewind to beginning."
+
+msgid "Mute / Unmute audio."
+msgstr "Mute / Unmute audio."
+
+msgid "Adjust volume (+/- 5%)."
+msgstr "Adjust volume (+/- 5%)."
+
+msgid "SEEKING & JUMPS:"
+msgstr "SEEKING & JUMPS:"
+
+msgid "Normal seek (+/- 5 seconds)."
+msgstr "Normal seek (+/- 5 seconds)."
+
+msgid "Slow & precise seek (+/- 1 second)."
+msgstr "Slow & precise seek (+/- 1 second)."
+
+msgid "Fast seek (+/- 30 seconds)."
+msgstr "Fast seek (+/- 30 seconds)."
+
+msgid "Ultrafast seek (+/- 5 minutes)."
+msgstr "Ultrafast seek (+/- 5 minutes)."
+
+msgid "Number keys 1 to 9 (Top Row) : "
+msgstr "Number keys 1 to 9 (Top Row) : "
+
+msgid "Jump directly to 10% through 90% of file duration."
+msgstr "Jump directly to 10% through 90% of file duration."
+
+msgid "PITCH-PRESERVED SPEED CONTROLS:"
+msgstr "PITCH-PRESERVED SPEED CONTROLS:"
+
+msgid "Fine speed adjustment (+/- 0.1x)."
+msgstr "Fine speed adjustment (+/- 0.1x)."
+
+msgid "Cycle preset speeds (1.0x, 1.5x, 1.75x, 2.0x, 2.5x, 3.0x)."
+msgstr "Cycle preset speeds (1.0x, 1.5x, 1.75x, 2.0x, 2.5x, 3.0x)."
+
+msgid "A-B SEGMENT LOOP & REPEAT MODES:"
+msgstr "A-B SEGMENT LOOP & REPEAT MODES:"
+
+msgid "Mark start of loop (Point A)."
+msgstr "Mark start of loop (Point A)."
+
+msgid "Mark end of loop (Point B)."
+msgstr "Mark end of loop (Point B)."
+
+msgid "Toggle repeat: A-B loop (if marked) or cycle Single Track / Playlist / Off."
+msgstr "Toggle repeat: A-B loop (if marked) or cycle Single Track / Playlist / Off."
+
+msgid "Clear marked A-B loop points."
+msgstr "Clear marked A-B loop points."
+
+msgid "PLAYLIST, FOLDERS & WINDOWS EXPLORER:"
+msgstr "PLAYLIST, FOLDERS & WINDOWS EXPLORER:"
+
+msgid "Open file dialog (select single media file)."
+msgstr "Open file dialog (select single media file)."
+
+msgid "Open folder dialog (load entire folder as playlist)."
+msgstr "Open folder dialog (load entire folder as playlist)."
+
+msgid "Play active selection directly from Windows Explorer / Desktop."
+msgstr "Play active selection directly from Windows Explorer / Desktop."
+
+msgid "Previous / Next track in playlist."
+msgstr "Previous / Next track in playlist."
+
+msgid "Toggle Auto-Next track playback."
+msgstr "Toggle Auto-Next track playback."
+
+msgid "Toggle playlist shuffle / random mode."
+msgstr "Toggle playlist shuffle / random mode."
+
+msgid "CHAPTERS & VIDEO AUDIO TRACKS:"
+msgstr "CHAPTERS & VIDEO AUDIO TRACKS:"
+
+msgid "Jump to Next / Previous chapter."
+msgstr "Jump to Next / Previous chapter."
+
+msgid "Cycle audio tracks / languages in video files."
+msgstr "Cycle audio tracks / languages in video files."
+
+msgid "SPEECH QUERIES:"
+msgstr "SPEECH QUERIES:"
+
+msgid "Speak full media information (title, duration, playlist index)."
+msgstr "Speak full media information (title, duration, playlist index)."
+
+msgid "Speak remaining playback time."
+msgstr "Speak remaining playback time."
+
+msgid "Speak elapsed playback time."
+msgstr "Speak elapsed playback time."
+
+msgid "Directly loads and plays selected or focused media files/folders from Windows Explorer."
+msgstr "Directly loads and plays selected or focused media files/folders from Windows Explorer."
+
+msgid "Directly load and play focused/selected media from Explorer/Desktop without entering Player Mode."
+msgstr "Directly load and play focused/selected media from Explorer/Desktop without entering Player Mode."
+
+msgid "Player Mode Keyboard Shortcuts"
+msgstr "Player Mode Keyboard Shortcuts"
+
+msgid "Customize Player Mode &Shortcuts..."
+msgstr "Customize Player Mode &Shortcuts..."
+
+msgid "Customize Player Mode Shortcuts"
+msgstr "Customize Player Mode Shortcuts"
+
+msgid "Select an action and enter your preferred key or key combination (e.g. space, control, pagedown, s, m, home, end, alt+right):"
+msgstr "Select an action and enter your preferred key or key combination (e.g. space, control, pagedown, s, m, home, end, alt+right):"
+
+msgid "&Player Action:"
+msgstr "&Player Action:"
+
+msgid "Assigned &Shortcut Key:"
+msgstr "Assigned &Shortcut Key:"
+
+msgid "&Reset to Defaults"
+msgstr "&Reset to Defaults"
+
+msgid "Player Mode shortcuts have been reset to factory defaults."
+msgstr "Player Mode shortcuts have been reset to factory defaults."
+
+msgid "Shortcuts Reset"
+msgstr "Shortcuts Reset"
+
+msgid "Play / Pause toggle"
+msgstr "Play / Pause toggle"
+
+msgid "Stop and rewind to beginning"
+msgstr "Stop and rewind to beginning"
+
+msgid "Mute / Unmute audio"
+msgstr "Mute / Unmute audio"
+
+msgid "Volume Up (+5%)"
+msgstr "Volume Up (+5%)"
+
+msgid "Volume Down (-5%)"
+msgstr "Volume Down (-5%)"
+
+msgid "Normal Seek Forward (Right Arrow)"
+msgstr "Normal Seek Forward (Right Arrow)"
+
+msgid "Normal Seek Backward (Left Arrow)"
+msgstr "Normal Seek Backward (Left Arrow)"
+
+msgid "Slow / Precise Seek Forward (Alt+Right)"
+msgstr "Slow / Precise Seek Forward (Alt+Right)"
+
+msgid "Slow / Precise Seek Backward (Alt+Left)"
+msgstr "Slow / Precise Seek Backward (Alt+Left)"
+
+msgid "Fast Seek Forward (Ctrl+Right)"
+msgstr "Fast Seek Forward (Ctrl+Right)"
+
+msgid "Fast Seek Backward (Ctrl+Left)"
+msgstr "Fast Seek Backward (Ctrl+Left)"
+
+msgid "Ultrafast Seek Forward (Shift+Right)"
+msgstr "Ultrafast Seek Forward (Shift+Right)"
+
+msgid "Ultrafast Seek Backward (Shift+Left)"
+msgstr "Ultrafast Seek Backward (Shift+Left)"
+
+msgid "Fine Speed Up (+0.1x)"
+msgstr "Fine Speed Up (+0.1x)"
+
+msgid "Fine Speed Down (-0.1x)"
+msgstr "Fine Speed Down (-0.1x)"
+
+msgid "Next Preset Speed"
+msgstr "Next Preset Speed"
+
+msgid "Previous Preset Speed"
+msgstr "Previous Preset Speed"
+
+msgid "Next Track in Playlist"
+msgstr "Next Track in Playlist"
+
+msgid "Previous Track in Playlist"
+msgstr "Previous Track in Playlist"
+
+msgid "Mark A-B Loop Start (Point A)"
+msgstr "Mark A-B Loop Start (Point A)"
+
+msgid "Mark A-B Loop End (Point B)"
+msgstr "Mark A-B Loop End (Point B)"
+
+msgid "Toggle Repeat Mode"
+msgstr "Toggle Repeat Mode"
+
+msgid "Clear A-B Loop Points"
+msgstr "Clear A-B Loop Points"
+
+msgid "Open File Dialog"
+msgstr "Open File Dialog"
+
+msgid "Open Folder Dialog"
+msgstr "Open Folder Dialog"
+
+msgid "Load from Windows Explorer"
+msgstr "Load from Windows Explorer"
+
+msgid "Toggle Auto-Next"
+msgstr "Toggle Auto-Next"
+
+msgid "Toggle Shuffle"
+msgstr "Toggle Shuffle"
+
+msgid "Speak Full Media Info"
+msgstr "Speak Full Media Info"
+
+msgid "Speak Remaining Time"
+msgstr "Speak Remaining Time"
+
+msgid "Speak Elapsed Time"
+msgstr "Speak Elapsed Time"
+
+msgid "Show Shortcuts Help Dialog"
+msgstr "Show Shortcuts Help Dialog"
+
+msgid "Exit Player Mode"
+msgstr "Exit Player Mode"
+
+msgid "Select a player action, then choose or search a key from the suggestions list,\nor press the 'Capture Key Directly' button to assign by pressing any key on your keyboard."
+msgstr "Select a player action, then choose or search a key from the suggestions list,\nor press the 'Capture Key Directly' button to assign by pressing any key on your keyboard."
+
+msgid "Current assigned key: %s"
+msgstr "Current assigned key: %s"
+
+msgid "&Search Key Suggestions (type e.g. 'ta', 'control', 'page', 'arrow'):"
+msgstr "&Search Key Suggestions (type e.g. 'ta', 'control', 'page', 'arrow'):"
+
+msgid "&Assign Selected Suggestion"
+msgstr "&Assign Selected Suggestion"
+
+msgid "&Press Key on Keyboard Directly..."
+msgstr "&Press Key on Keyboard Directly..."
+
+msgid "Assigned %s to %s"
+msgstr "Assigned %s to %s"
+
+msgid "Press Shortcut Key"
+msgstr "Press Shortcut Key"
+
+msgid "Press any key or key combination on your keyboard now to assign it.\nPress Escape to cancel."
+msgstr "Press any key or key combination on your keyboard now to assign it.\nPress Escape to cancel."
+
+msgid "Waiting for key press..."
+msgstr "Waiting for key press..."
+
+msgid "Captured: %s"
+msgstr "Captured: %s"
+
+msgid "(Not Set)"
+msgstr "(Not Set)"
+
+msgid "Space (مسافة)"
+msgstr "Space (مسافة)"
+
+msgid "Control (كنترول)"
+msgstr "Control (كنترول)"
+
+msgid "Shift (شفت)"
+msgstr "Shift (شفت)"
+
+msgid "Alt (ألت)"
+msgstr "Alt (ألت)"
+
+msgid "Tab (تاب)"
+msgstr "Tab (تاب)"
+
+msgid "Escape (هروب)"
+msgstr "Escape (هروب)"
+
+msgid "Enter / Return (إدخال)"
+msgstr "Enter / Return (إدخال)"
+
+msgid "Backspace (مسافة للخلف)"
+msgstr "Backspace (مسافة للخلف)"
+
+msgid "Page Down (صفحة لأسفل)"
+msgstr "Page Down (صفحة لأسفل)"
+
+msgid "Page Up (صفحة لأعلى)"
+msgstr "Page Up (صفحة لأعلى)"
+
+msgid "Home (بداية السطر)"
+msgstr "Home (بداية السطر)"
+
+msgid "End (نهاية السطر)"
+msgstr "End (نهاية السطر)"
+
+msgid "Insert (إدراج)"
+msgstr "Insert (إدراج)"
+
+msgid "Delete (حذف)"
+msgstr "Delete (حذف)"
+
+msgid "Left Arrow (سهم لليسار)"
+msgstr "Left Arrow (سهم لليسار)"
+
+msgid "Right Arrow (سهم لليمين)"
+msgstr "Right Arrow (سهم لليمين)"
+
+msgid "Up Arrow (سهم لأعلى)"
+msgstr "Up Arrow (سهم لأعلى)"
+
+msgid "Down Arrow (سهم لأسفل)"
+msgstr "Down Arrow (سهم لأسفل)"
+
+msgid "Alt + Left Arrow (Alt + سهم لليسار)"
+msgstr "Alt + Left Arrow (Alt + سهم لليسار)"
+
+msgid "Alt + Right Arrow (Alt + سهم لليمين)"
+msgstr "Alt + Right Arrow (Alt + سهم لليمين)"
+
+msgid "Alt + Up Arrow (Alt + سهم لأعلى)"
+msgstr "Alt + Up Arrow (Alt + سهم لأعلى)"
+
+msgid "Alt + Down Arrow (Alt + سهم لأسفل)"
+msgstr "Alt + Down Arrow (Alt + سهم لأسفل)"
+
+msgid "Control + Left Arrow (Ctrl + سهم لليسار)"
+msgstr "Control + Left Arrow (Ctrl + سهم لليسار)"
+
+msgid "Control + Right Arrow (Ctrl + سهم لليمين)"
+msgstr "Control + Right Arrow (Ctrl + سهم لليمين)"
+
+msgid "Control + Up Arrow (Ctrl + سهم لأعلى)"
+msgstr "Control + Up Arrow (Ctrl + سهم لأعلى)"
+
+msgid "Control + Down Arrow (Ctrl + سهم لأسفل)"
+msgstr "Control + Down Arrow (Ctrl + سهم لأسفل)"
+
+msgid "Shift + Left Arrow (Shift + سهم لليسار)"
+msgstr "Shift + Left Arrow (Shift + سهم لليسار)"
+
+msgid "Shift + Right Arrow (Shift + سهم لليمين)"
+msgstr "Shift + Right Arrow (Shift + سهم لليمين)"
+
+msgid "Shift + Up Arrow (Shift + سهم لأعلى)"
+msgstr "Shift + Up Arrow (Shift + سهم لأعلى)"
+
+msgid "Shift + Down Arrow (Shift + سهم لأسفل)"
+msgstr "Shift + Down Arrow (Shift + سهم لأسفل)"
+
+msgid "Control + Shift + Left Arrow (Ctrl+Shift+سهم لليسار)"
+msgstr "Control + Shift + Left Arrow (Ctrl+Shift+سهم لليسار)"
+
+msgid "Control + Shift + Right Arrow (Ctrl+Shift+سهم لليمين)"
+msgstr "Control + Shift + Right Arrow (Ctrl+Shift+سهم لليمين)"
+
+msgid "Control + I (Ctrl + i)"
+msgstr "Control + I (Ctrl + i)"
+
+msgid "Shift + I (Shift + i)"
+msgstr "Shift + I (Shift + i)"
+
+msgid "Control + A (Ctrl + a)"
+msgstr "Control + A (Ctrl + a)"
+
+msgid "Control + S (Ctrl + s)"
+msgstr "Control + S (Ctrl + s)"
+
+msgid "Control + Space (Ctrl + مسافة)"
+msgstr "Control + Space (Ctrl + مسافة)"
+
+msgid "Shift + Space (Shift + مسافة)"
+msgstr "Shift + Space (Shift + مسافة)"
+
+msgid "Alt + Space (Alt + مسافة)"
+msgstr "Alt + Space (Alt + مسافة)"
+
+msgid "[ Bracket (قوس فتح / ج)"
+msgstr "[ Bracket (قوس فتح / ج)"
+
+msgid "] Bracket (قوس إغلاق / د)"
+msgstr "] Bracket (قوس إغلاق / د)"
+
+msgid "; Semicolon (فاصلة منقوطة / ك)"
+msgstr "; Semicolon (فاصلة منقوطة / ك)"
+
+msgid "' Quote (علامة تنصيص / ط)"
+msgstr "' Quote (علامة تنصيص / ط)"
+
+msgid ", Comma (فاصلة / و)"
+msgstr ", Comma (فاصلة / و)"
+
+msgid ". Period (نقطة / ز)"
+msgstr ". Period (نقطة / ز)"
+
+msgid "/ Slash (شرطة مائلة / ظ)"
+msgstr "/ Slash (شرطة مائلة / ظ)"
+
+msgid "- Minus (ناقص)"
+msgstr "- Minus (ناقص)"
+
+msgid "= Equals (يساوي)"
+msgstr "= Equals (يساوي)"
+
+
+
+
+

@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دليل مستخدم إضافة Headless Media Player لقارئ الشاشة NVDA</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Tahoma, Arial, "Noto Sans Arabic", sans-serif;
+            line-height: 1.8;
+            color: #222;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px 25px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4 {
+            color: #0b4f8a;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            border-bottom: 2px solid #0b4f8a;
+            padding-bottom: 8px;
+            font-size: 1.9em;
+        }
+        h2 {
+            border-bottom: 1px solid #d0d7de;
+            padding-bottom: 5px;
+            font-size: 1.4em;
+        }
+        h3 {
+            font-size: 1.15em;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 15px 0 25px 0;
+        }
+        th, td {
+            border: 1px solid #d0d7de;
+            padding: 9px 14px;
+            text-align: right;
+            vertical-align: top;
+        }
+        th {
+            background-color: #f6f8fa;
+            color: #1f2328;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #fbfcfd;
+        }
+        kbd {
+            display: inline-block;
+            padding: 2px 7px;
+            font-family: Consolas, "Segoe UI", monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+            color: #1f2328;
+            background-color: #f6f8fa;
+            border: 1px solid #d0d7de;
+            border-radius: 4px;
+            box-shadow: inset 0 -1px 0 #d0d7de;
+            direction: ltr;
+        }
+        .note {
+            background-color: #eef6fc;
+            border-right: 4px solid #0b4f8a;
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 4px 0 0 4px;
+        }
+        .warning {
+            background-color: #fff8e6;
+            border-right: 4px solid #d4a72c;
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 4px 0 0 4px;
+        }
+        .important {
+            background-color: #fdf2f2;
+            border-right: 4px solid #d93025;
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 4px 0 0 4px;
+        }
+        code {
+            background-color: #f6f8fa;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            font-family: Consolas, monospace;
+            direction: ltr;
+            display: inline-block;
+        }
+        ul, ol {
+            padding-right: 25px;
+        }
+        li {
+            margin-bottom: 6px;
+        }
+        a {
+            color: #0969da;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>دليل مستخدم إضافة Headless Media Player — مشغل الوسائط الخفي لـ NVDA</h1>
+    <p><strong>إصدار الإضافة:</strong> 1.1.6</p>
+    <p><strong>المطور:</strong> محمود أبو الفتوح &lt;<a href="mailto:mahmoudaboelfotouh.20@gmail.com">mahmoudaboelfotouh.20@gmail.com</a>&gt;</p>
+    <p><strong>رابط المستودع على GitHub:</strong> <a href="https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer" target="_blank">https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer</a></p>
+    <p><strong>التوافق مع NVDA:</strong> من إصدار NVDA 2022.1 وحتى 2025.3 وأحدث</p>
+
+    <div class="note">
+        <p><strong>نبذة عن الإضافة:</strong> <strong>Headless Media Player</strong> هي إضافة احترافية فائقة السرعة والخفة، مصممة خصيصاً لمستخدمي قارئ الشاشة NVDA لتشغيل جميع الملفات الصوتية والمرئية وقوائم التشغيل والبث المباشر واليوتيوب في الخلفية <strong>بدون أي نوافذ مرئية، وبدون أي أيقونة في شريط المهام، وبدون مقاطعة تركيزك في التطبيقات الأخرى</strong>.</p>
+    </div>
+
+    <h2>فهرس الدليل</h2>
+    <ul>
+        <li><a href="#concept">1. المفهوم الأساسي: وضع المشغل التفاعلي (Player Mode)</a></li>
+        <li><a href="#quick-start">2. دليل البدء السريع</a></li>
+        <li><a href="#global-shortcuts">3. اختصارات NVDA العامة</a></li>
+        <li><a href="#player-shortcuts">4. جدول اختصارات وضع المشغل الكامل</a></li>
+        <li><a href="#youtube">5. البحث وتشغيل يوتيوب والبث المباشر عبر الإنترنت</a></li>
+        <li><a href="#cookies">6. هام جداً: تسجيل الدخول لليوتيوب وسحب الكوكيز (Cookies)</a></li>
+        <li><a href="#explorer">7. التكامل مع مستكشف ملفات ويندوز وسطح المكتب</a></li>
+        <li><a href="#settings">8. إعدادات الإضافة وتخصيص الاختصارات</a></li>
+        <li><a href="#formats">9. الصيغ والامتدادات المدعومة</a></li>
+        <li><a href="#troubleshooting">10. نصائح وحلول المشاكل الشائعة</a></li>
+    </ul>
+
+    <hr>
+
+    <h2 id="concept">1. المفهوم الأساسي: وضع المشغل التفاعلي (Player Mode)</h2>
+    <p>تتميز الإضافة بطبقة حصرية لالتقاط المفاتيح تُسمى <strong>وضع المشغل (Player Mode)</strong>:</p>
+    <ul>
+        <li>عند تفعيل وضع المشغل بالضغط على <kbd>NVDA+Ctrl+Shift+P</kbd>، يتم توجيه جميع ضغطات المفاتيح إلى مشغل الوسائط مباشرة دون أن تتسرب إلى التطبيقات المفتوحة في الخلفية مثل Word أو المتصفح.</li>
+        <li>يمكنك الضغط على مفاتيح مفردة سريعة (مثل مسافة للإيقاف/التشغيل، الأسهم للتقديم والتأخير، <kbd>u</kbd> للبحث في يوتيوب، <kbd>Tab</kbd> للتنقل بين التراكات) للتحكم الفوري في الصوت.</li>
+        <li>تصدر الإضافة نغمات صوتية مميزة وإعلانات صوتية عبر NVDA عند الدخول والخروج من وضع المشغل.</li>
+        <li>للخروج من وضع المشغل في أي وقت والعودة للكتابة الطبيعية في الويندوز، اضغط مفتاح <kbd>Escape</kbd> أو <kbd>NVDA+Ctrl+Shift+P</kbd>.</li>
+    </ul>
+
+    <hr>
+
+    <h2 id="quick-start">2. دليل البدء السريع</h2>
+    <ol>
+        <li><strong>التشغيل الفوري من مستكشف الملفات:</strong> قف على أي ملف صوتي أو مرئي أو مجلد في Explorer واضغط <kbd>NVDA+Ctrl+Windows+E</kbd> ليبدأ التشغيل فوراً ويدخل وضع المشغل تلقائياً!</li>
+        <li><strong>فتح ملف أو مجلد:</strong> داخل وضع المشغل، اضغط <kbd>o</kbd> لاختيار ملف، أو <kbd>f</kbd> لاختيار مجلد كامل لتشغيله كقائمة مرتبة.</li>
+        <li><strong>البحث في يوتيوب:</strong> داخل وضع المشغل، اضغط <kbd>u</kbd>، اكتب اسم المقطع أو السورة (مثلاً: <code>سورة الكهف العفاسي</code>) واضغط <kbd>Enter</kbd>. تنقل بالأسهم واضغط <kbd>Enter</kbd> لسماع المقطع فوراً في الخلفية!</li>
+        <li><strong>التحكم الصوتي:</strong> اضغط مسافة للإيقاف المؤقت، الأسهم للتقديم ورفع الصوت، <kbd>i</kbd> لمعرفة معلومات المقطع والوقت، و <kbd>Escape</kbd> للخروج والعودة لأعمالك.</li>
+    </ol>
+
+    <hr>
+
+    <h2 id="global-shortcuts">3. اختصارات NVDA العامة</h2>
+    <p>تعمل هذه الاختصارات من أي مكان في نظام ويندوز وبغض النظر عن التطبيق المفتوح:</p>
+    <table>
+        <thead>
+            <tr>
+                <th>الاختصار</th>
+                <th>الإجراء</th>
+                <th>الوصف</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><kbd>NVDA+Ctrl+Shift+P</kbd><br><small>(أو <kbd>Insert+Ctrl+Shift+P</kbd> / <kbd>CapsLock+Ctrl+Shift+P</kbd>)</small></td>
+                <td>تبديل وضع المشغل</td>
+                <td>الدخول إلى أو الخروج من وضع التحكم الحصري بالمشغل.</td>
+            </tr>
+            <tr>
+                <td><kbd>NVDA+Ctrl+Windows+E</kbd><br><small>(أو <kbd>Insert+Ctrl+Win+E</kbd>)</small></td>
+                <td>تشغيل المحدد من Explorer</td>
+                <td>تشغيل الملف الصوتي أو المرئي أو المجلد المحدد حالياً في مستكشف ويندوز أو سطح المكتب فوراً.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2 id="player-shortcuts">4. جدول اختصارات وضع المشغل الكامل</h2>
+    <p>المفاتيح التالية تعمل عندما يكون <strong>وضع المشغل نشطاً (Player Mode)</strong>:</p>
+
+    <h3>4.1. التحكم الأساسي ومستوى الصوت</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>المفتاح</th>
+                <th>الإجراء</th>
+                <th>الوصف</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><kbd>مسافة (Space)</kbd></td>
+                <td>تشغيل / إيقاف مؤقت</td>
+                <td>تبديل حالة التشغيل، وإذا كان المقطع قد انتهى يعيد تشغيله من البداية.</td>
+            </tr>
+            <tr>
+                <td><kbd>s</kbd></td>
+                <td>إيقاف كامل (Stop)</td>
+                <td>إيقاف التشغيل وحفظ موضع الاستئناف وإرجاع المؤشر للبداية (0:00).</td>
+            </tr>
+            <tr>
+                <td><kbd>m</kbd></td>
+                <td>كتم / إلغاء كتم الصوت</td>
+                <td>تبديل كتم الصوت.</td>
+            </tr>
+            <tr>
+                <td><kbd>السهم لأعلى (Up)</kbd></td>
+                <td>رفع الصوت</td>
+                <td>زيادة مستوى الصوت بمقدار 5% مع النطق.</td>
+            </tr>
+            <tr>
+                <td><kbd>السهم لأسفل (Down)</kbd></td>
+                <td>خفض الصوت</td>
+                <td>خفض مستوى الصوت بمقدار 5% مع النطق.</td>
+            </tr>
+            <tr>
+                <td><kbd>b</kbd></td>
+                <td>تعزيز تضخيم الصوت (Bass Boost)</td>
+                <td>زيادة ترددات البيس بمقدار +3 ديسيبل.</td>
+            </tr>
+            <tr>
+                <td><kbd>Shift + b</kbd></td>
+                <td>تقليل تضخيم الصوت (Bass Reduce)</td>
+                <td>تقليل ترددات البيس بمقدار -3 ديسيبل.</td>
+            </tr>
+            <tr>
+                <td><kbd>Escape</kbd></td>
+                <td>الخروج من وضع المشغل</td>
+                <td>إنهاء وضع المشغل واستعادة لوحة المفاتيح فوراً للكتابة في التطبيقات الأخرى.</td>
+            </tr>
+            <tr>
+                <td><kbd>Control</kbd></td>
+                <td>إسكات النطق فوراً</td>
+                <td>مقاطعة نطق NVDA دون التأثير على تشغيل الصوت في الخلفية.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>4.2. التقديم والتأخير والقفز المئوي المباشر</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>المفتاح</th>
+                <th>نوع التقديم/التأخير</th>
+                <th>المقدار الافتراضي</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><kbd>السهم لليمين</kbd> / <kbd>السهم لليسار</kbd></td>
+                <td>التقديم والتأخير العادي</td>
+                <td>5 ثوانٍ (قابل للتعديل من الإعدادات)</td>
+            </tr>
+            <tr>
+                <td><kbd>Alt + السهم لليمين / لليسار</kbd></td>
+                <td>التقديم والتأخير الدقيق والبطيء</td>
+                <td>ثانية واحدة (قابل للتعديل)</td>
+            </tr>
+            <tr>
+                <td><kbd>Ctrl + السهم لليمين / لليسار</kbd></td>
+                <td>التقديم والتأخير السريع</td>
+                <td>30 ثانية (قابل للتعديل)</td>
+            </tr>
+            <tr>
+                <td><kbd>Shift + السهم لليمين / لليسار</kbd></td>
+                <td>التقديم والتأخير فائق السرعة</td>
+                <td>5 دقائق (300 ثانية، قابل للتعديل)</td>
+            </tr>
+            <tr>
+                <td>الأرقام من <kbd>1</kbd> إلى <kbd>9</kbd> <small>(الصف العلوي أو الآلة الحاسبة)</small></td>
+                <td>القفز المئوي المباشر</td>
+                <td>القفز المباشر إلى 10%، 20%، 30%، ... حتى 90% من طول الملف.</td>
+            </tr>
+            <tr>
+                <td>الرقم <kbd>0</kbd></td>
+                <td>الرجوع لبداية المقطع</td>
+                <td>الرجوع المباشر إلى 0% (أول المقطع).</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>4.3. التحكم في سرعة التشغيل مع الحفاظ على نبرة الصوت (Pitch-Preserved Speed)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>المفتاح</th>
+                <th>الإجراء</th>
+                <th>الوصف</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><kbd>Ctrl + السهم لأعلى</kbd></td>
+                <td>تسريع دقيق</td>
+                <td>زيادة السرعة بمقدار +0.1x دون أي تشويه في نبرة أو طبقة الصوت الطبيعية.</td>
+            </tr>
+            <tr>
+                <td><kbd>Ctrl + السهم لأسفل</kbd></td>
+                <td>إبطاء دقيق</td>
+                <td>تقليل السرعة بمقدار -0.1x.</td>
+            </tr>
+            <tr>
+                <td><kbd>Shift + السهم لأعلى</kbd></td>
+                <td>السرعة الجاهزة التالية</td>
+                <td>التنقل بين السرعات القياسية الجاهزة: 1.0x &larr; 1.25x &larr; 1.5x &larr; 1.75x &larr; 2.0x &larr; 2.25x &larr; 2.5x &larr; 3.0x &larr; 3.5x &larr; 4.0x.</td>
+            </tr>
+            <tr>
+                <td><kbd>Shift + السهم لأسفل</kbd></td>
+                <td>السرعة الجاهزة السابقة</td>
+                <td>التنقل للسرعة السابقة.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>4.4. تكرار المقاطع وتكرار جزء محدد (A-B Looping)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>المفتاح</th>
+                <th>الإجراء</th>
+                <th>الوصف</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><kbd>[</kbd> <small>(أو الحرف العربي <kbd>ج</kbd>)</small></td>
+                <td>تحديد نقطة البداية (نقطة أ)</td>
+                <td>تحديد بداية المقطع المراد تكراره من الموضع الحالي.</td>
+            </tr>
+            <tr>
+                <td><kbd>]</kbd> <small>(أو الحرف العربي <kbd>د</kbd>)</small></td>
+                <td>تحديد نقطة النهاية (نقطة ب)</td>
+                <td>تحديد نهاية المقطع والبدء الفوري في تكرار الجزء المحصور بين (أ) و (ب) باستمرار وبلا انقطاع.</td>
+            </tr>
+            <tr>
+                <td><kbd>c</kbd></td>
+                <td>مسح نقاط التكرار</td>
+                <td>إلغاء التكرار الجزئي والعودة للتشغيل الطبيعي.</td>
+            </tr>
+            <tr>
+                <td><kbd>r</kbd></td>
+                <td>تبديل نمط التكرار العام</td>
+                <td>التبديل بين: <strong>تكرار المقطع الحالي</strong> &larr; <strong>تكرار قائمة التشغيل كاملة</strong> &larr; <strong>إيقاف التكرار</strong>.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>4.5. قوائم التشغيل والتنقل بين الملفات والفصول</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>المفتاح</th>
+                <th>الإجراء</th>
+                <th>الوصف</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><kbd>Page Down</kbd> <small>(أو <kbd>Tab</kbd>)</small></td>
+                <td>المقطع التالي</td>
+                <td>الانتقال للمقطع التالي في قائمة التشغيل.</td>
+            </tr>
+            <tr>
+                <td><kbd>Page Up</kbd> <small>(أو <kbd>Shift + Tab</kbd>)</small></td>
+                <td>المقطع السابق</td>
+                <td>الانتقال للمقطع السابق في قائمة التشغيل.</td>
+            </tr>
+            <tr>
+                <td><kbd>n</kbd></td>
+                <td>تبديل التشغيل التلقائي للتالي (Auto-Next)</td>
+                <td>تفعيل أو تعطيل الانتقال التلقائي للتراك التالي عند انتهاء المقطع الحالي.</td>
+            </tr>
+            <tr>
+                <td><kbd>z</kbd></td>
+                <td>تبديل التشغيل العشوائي (Shuffle)</td>
+                <td>خلط ترتيب القائمة عشوائياً دون مسح الترتيب الأصلي.</td>
+            </tr>
+            <tr>
+                <td><kbd>Ctrl + Shift + السهم لليمين</kbd></td>
+                <td>الفصل التالي (Next Chapter)</td>
+                <td>القفز للفصل التالي في الكتب الصوتية والفيديوهات (مع نطق اسم ورقم الفصل).</td>
+            </tr>
+            <tr>
+                <td><kbd>Ctrl + Shift + السهم لليسار</kbd></td>
+                <td>الفصل السابق (Previous Chapter)</td>
+                <td>الرجوع للفصل السابق.</td>
+            </tr>
+            <tr>
+                <td><kbd>a</kbd></td>
+                <td>تبديل المسار الصوتي / اللغة</td>
+                <td>التبديل بين المسارات الصوتية واللغات المتعددة في ملفات الفيديو.</td>
+            </tr>
+            <tr>
+                <td><kbd>o</kbd></td>
+                <td>فتح نافذة اختيار ملف</td>
+                <td>فتح مربع حوار ويندوز لاختيار ملف صوتي أو مرئي لتشغيله.</td>
+            </tr>
+            <tr>
+                <td><kbd>f</kbd></td>
+                <td>فتح نافذة اختيار مجلد</td>
+                <td>فتح مربع حوار لاختيار مجلد كامل وترتيب ملفاته أبجدياً وإضافتها لقائمة التشغيل.</td>
+            </tr>
+            <tr>
+                <td><kbd>e</kbd></td>
+                <td>تشغيل المحدد من Explorer</td>
+                <td>تشغيل الملف أو المجلد المركز عليه حالياً في مستكشف ويندوز.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>4.6. الاستعلامات الصوتية والمساعدة</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>المفتاح</th>
+                <th>الإجراء</th>
+                <th>الوصف</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><kbd>i</kbd></td>
+                <td>معلومات المقطع الكاملة</td>
+                <td>نطق اسم المقطع الفعلي والمدة الزمنية ورقم التراك في القائمة (مثال: <em>"المقطع 3 من 15"</em>).</td>
+            </tr>
+            <tr>
+                <td><kbd>Ctrl + i</kbd></td>
+                <td>الوقت المتبقي</td>
+                <td>نطق الوقت المتبقي لانتهاء المقطع بالساعات والدقائق والثواني.</td>
+            </tr>
+            <tr>
+                <td><kbd>Shift + i</kbd></td>
+                <td>الوقت المنقضي</td>
+                <td>نطق الوقت المنقضي منذ بداية المقطع.</td>
+            </tr>
+            <tr>
+                <td><kbd>h</kbd> <small>(أو الحرف العربي <kbd>ا</kbd>)</small></td>
+                <td>نافذة المساعدة وقائمة الاختصارات</td>
+                <td>فتح نافذة مساعدة تفاعلية ميسرة تسرد جميع الاختصارات المتاحة.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2 id="youtube">5. البحث وتشغيل يوتيوب والبث المباشر عبر الإنترنت</h2>
+    <p>تحتوي الإضافة على محرك استخراج وبث مدمج بالكامل يعتمد على مكتبة <code>yt-dlp</code> ومحرك جافا سكريبت مدمج، <strong>دون الحاجة لتثبيت أي برامج خارجية إضافية</strong>.</p>
+
+    <h3>5.1. البحث التفاعلي في يوتيوب (مفتاح <kbd>u</kbd>)</h3>
+    <ol>
+        <li>اضغط <kbd>u</kbd> وأنت داخل وضع المشغل.</li>
+        <li>يفتح لك مربع كتابة ذكي لإدخال الرابط أو عبارة البحث. (إذا كنت قد نسخت رابطاً إلى الحافظة يتم لصقه تلقائياً!).</li>
+        <li>اكتب أي كلمة بحث باللغة العربية أو الإنجليزية (مثلاً: <code>سورة مريم المنشاوي</code> أو <code>إذاعة القرآن الكريم مصر بث مباشر</code>) واضغط <kbd>Enter</kbd>.</li>
+        <li>تفتح لك نافذة متصفح النتائج الميسرة لقارئ الشاشة، تسرد الفيديوهات وقوائم التشغيل والقنوات مع أسماء الناشرين والمدة بدقة.</li>
+        <li><strong>لتشغيل فيديو:</strong> تحرك بالأسهم واضغط <kbd>Enter</kbd> ليبدأ التشغيل في ثوانٍ معدودة في الخلفية.</li>
+        <li><strong>لاستعراض قائمة تشغيل أو قناة:</strong> اضغط <kbd>Enter</kbd> على قائمة التشغيل أو القناة للدخول واستعراض مقاطعها الفردية.</li>
+        <li><strong>لتشغيل قائمة تشغيل بالكامل دفعة واحدة:</strong> قف على قائمة التشغيل واضغط <kbd>Tab</kbd> للوصول لزر <strong>Play Entire Playlist</strong> واضغط مسافة أو Enter.</li>
+        <li>للرجوع خطوة للخلف اضغط <kbd>Backspace</kbd>، ولإغلاق المتصفح اضغط <kbd>Escape</kbd>.</li>
+    </ol>
+
+    <h3>5.2. تشغيل الروابط المباشرة (مفتاح <kbd>u</kbd>)</h3>
+    <p>يمكنك لصق أي رابط مدعوم داخل مربع حوار <kbd>u</kbd> والضغط على <kbd>Enter</kbd>:</p>
+    <ul>
+        <li><strong>فيديو أو شورتس أو بث يوتيوب:</strong> <code>https://www.youtube.com/watch?v=...</code> أو <code>https://youtu.be/...</code></li>
+        <li><strong>قوائم تشغيل يوتيوب كاملة:</strong> <code>https://www.youtube.com/playlist?list=...</code> (تُضاف جميع المقاطع للقائمة مع ميزة Auto-Next التلقائية).</li>
+        <li><strong>روابط الوسائط والبث المباشر العالمية:</strong> بثوث Twitch، مقاطع SoundCloud، روابط الصوت المباشرة HTTP/HTTPS، روابط الراديو والبث الحي <code>.m3u8</code>.</li>
+    </ul>
+
+    <h3>5.3. بوابة يوتيوب والفيديوهات الرائجة وحسابك (مفتاح <kbd>p</kbd>)</h3>
+    <p>اضغط <kbd>p</kbd> لفتح <strong>بوابة يوتيوب</strong> واستعراض:</p>
+    <ul>
+        <li><strong>الفيديوهات الرائجة (Trending):</strong> باختيار دولتك (مصر، السعودية، الإمارات، الولايات المتحدة، بريطانيا، ألمانيا، فرنسا، اليابان، وغيرها).</li>
+        <li><strong>اشتراكاتك وقوائمك الشخصية:</strong> تصفح خلاصاتك وقوائم تشغيل حسابك الخاصة (راجع قسم الكوكيز أدناه).</li>
+    </ul>
+
+    <h3>5.4. نسخ رابط البث إلى الحافظة (مفتاح <kbd>v</kbd>)</h3>
+    <p>عند تشغيل أي رابط أو مقطع من يوتيوب أو الإنترنت، اضغط <kbd>v</kbd> لنسخ رابط الفيديو أو مساره فوراً إلى حافظة ويندوز مع نطق تأكيد من NVDA.</p>
+
+    <hr>
+
+    <h2 id="cookies">6. هام جداً: تسجيل الدخول لليوتيوب وسحب الكوكيز (Cookies)</h2>
+    
+    <div class="important">
+        <p><strong>لماذا لا يعمل السحب المباشر للكوكيز من متصفح جوجل كروم في ويندوز؟</strong></p>
+        <p>بدءاً من الإصدارات الحديثة لمتصفح Google Chrome ومتصفح Microsoft Edge (الإصدار 120 فما أحدث)، قامت جوجل بتطبيق نظام حماية مشدد يُسمى <em>App-Bound Encryption</em> (تشفير DPAPI المربوط بالتطبيق مع مفتاح <code>v20</code>). هذا النظام يمنع تماماً أي برنامج خارجي من فك تشفير وقراءة قاعدة بيانات الكوكيز لمتصفح كروم مباشرة من القرص الصلب، ولهذا فإن السحب التلقائي من كروم يفشل أو يعطي أخطاء مصادقة.</p>
+    </div>
+
+    <h3>الحل المعتمد والسهل لتصدير الكوكيز عبر إضافة المتصفح:</h3>
+    <ol>
+        <li>قم بتنزيل وتثبيت إضافة تصدير الكوكيز الموثوقة في متصفحك:
+            <ul>
+                <li><strong>لمستخدمي متصفح Google Chrome، أو Brave، أو Microsoft Edge:</strong> ثبت إضافة <a href="https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc" target="_blank"><strong>Get cookies.txt LOCALLY من متجر سوق كروم الإلكتروني</strong></a></li>
+                <li><strong>لمستخدمي متصفح Mozilla Firefox:</strong> ثبت إضافة <a href="https://addons.mozilla.org/firefox/addon/cookies-txt/" target="_blank"><strong>cookies.txt من موقع إضافات فايرفوكس</strong></a></li>
+            </ul>
+        </li>
+        <li>افتح موقع <a href="https://www.youtube.com" target="_blank">YouTube.com</a> وتأكد من أنك مسجل الدخول بحسابك في المتصفح.</li>
+        <li>اضغط على أيقونة الإضافة في شريط المتصفح، ثم اضغط زر <strong>Export</strong> (أو Download) لحفظ ملف الكوكيز باسم <code>cookies.txt</code> في مجلد المستندات أو التنزيلات.</li>
+        <li>في NVDA، افتح <strong>قائمة NVDA &larr; تفضيلات &larr; إعدادات &larr; Headless Media Player</strong>.</li>
+        <li>تحت قسم <strong>إعدادات بث يوتيوب</strong>، اضغط على زر <strong>تصفح... (Browse)</strong> بجوار <em>ملف الكوكيز المخصص</em>، واختر ملف <code>cookies.txt</code> الذي قمت بتصديره، ثم اضغط <strong>موافق (OK)</strong>.</li>
+    </ol>
+    <p>الآن ستعمل معك جميع قوائمك الخاصة واشتراكاتك والمحتوى المقيد في يوتيوب بكل سلاسة وبدون أي مشاكل!</p>
+
+    <hr>
+
+    <h2 id="explorer">7. التكامل مع مستكشف ملفات ويندوز وسطح المكتب</h2>
+    <p>يمكنك تشغيل أي ملف صوتي أو مرئي أو مجلد فوراً دون فتح أي نوافذ:</p>
+    <ul>
+        <li>حدد أو قف على أي ملف أو مجلد في مستكشف ويندوز أو سطح المكتب.</li>
+        <li>اضغط <kbd>NVDA+Ctrl+Windows+E</kbd> (من أي مكان) أو <kbd>e</kbd> (في وضع المشغل).</li>
+        <li>تتعرف الإضافة على الملف المختار بدقة حتى وإن كانت امتدادات الملفات مخفية في ويندوز، وتبدأ التشغيل وتدخل وضع المشغل فوراً!</li>
+    </ul>
+
+    <hr>
+
+    <h2 id="settings">8. إعدادات الإضافة وتخصيص الاختصارات</h2>
+    <p>افتح <strong>قائمة NVDA &larr; تفضيلات &larr; إعدادات &larr; Headless Media Player</strong> للتحكم في الخيارات التالية:</p>
+
+    <h3>8.1. خيارات النطق والإعلانات الصوتية</h3>
+    <ul>
+        <li>إمكانية تفعيل أو تعطيل نطق كل حدث على حدة (تغيير مستوى الصوت، وقت التقديم والتأخير، تغيير السرعة، تبديل التراكات، نمط التكرار، وتحديد نقاط التكرار الجزئي A-B).</li>
+    </ul>
+
+    <h3>8.2. تخصيص قفزات التقديم والتأخير</h3>
+    <ul>
+        <li>تحديد عدد الثواني لكل من: <strong>التقديم العادي</strong> (الافتراضي 5ث)، <strong>التقديم البطيء</strong> (1ث)، <strong>التقديم السريع</strong> (30ث)، و <strong>التقديم فائق السرعة</strong> (300ث / 5 دقائق).</li>
+    </ul>
+
+    <h3>8.3. خيارات التشغيل واستئناف الموضع</h3>
+    <ul>
+        <li><strong>الحفظ التلقائي لموضع التوقف والاستئناف:</strong> يحفظ المشغل آخر ثانية توقفت عندها في المحاضرات والكتب الصوتية الطويلة ويستأنف منها تلقائياً عند إعادة فتح الملف.</li>
+        <li><strong>السرعة الافتراضية والتشغيل التلقائي:</strong> تحديد السرعة الافتراضية للمشغل وتفعيل أو تعطيل Auto-Next افتراضياً.</li>
+        <li><strong>الدخول التلقائي في وضع المشغل:</strong> تفعيل وضع المشغل تلقائياً بمجرد تشغيل أي ملف وسائط جديد.</li>
+    </ul>
+
+    <h3>8.4. إعدادات بث يوتيوب والتحديثات</h3>
+    <ul>
+        <li><strong>جودة الصوت المفضلة:</strong> اختيار جودة الصوت (Opus عالية النقاء، M4A/AAC، أو أعلى جودة متاحة).</li>
+        <li><strong>ملف الكوكيز المخصص:</strong> اختيار ملف <code>cookies.txt</code> لمزامنة حسابك وقوائمك الشخصية.</li>
+        <li><strong>زر التحقق من التحديثات:</strong> يقوم بالتحقق وتحديث محرك استخراج البث تلقائياً في الخلفية لضمان عدم توقف اليوتيوب مستقبلاً.</li>
+    </ul>
+
+    <h3>8.5. مخصص اختصارات لوحة المفاتيح التفاعلي</h3>
+    <p>اضغط على زر <strong>تخصيص الاختصارات</strong> داخل لوحة الإعدادات لفتح نافذة تفاعلية تتيح لك تعيين اختصاراتك المفضلة (مثل الجمع بين مفتاحين: <kbd>Shift + Tab</kbd> للتراك السابق أو <kbd>Ctrl + Space</kbd>) مع إمكانية التقاط المفاتيح المباشرة والبحث في قائمة اقتراحات المفاتيح باللغة الإنجليزية واللغة العربية.</p>
+
+    <hr>
+
+    <h2 id="formats">9. الصيغ والامتدادات المدعومة</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>الفئة</th>
+                <th>الامتدادات والبروتوكولات المدعومة</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>الملفات الصوتية</strong></td>
+                <td><code>.mp3</code>, <code>.wav</code>, <code>.flac</code>, <code>.m4a</code>, <code>.aac</code>, <code>.ogg</code>, <code>.opus</code>, <code>.wma</code>, <code>.alac</code>, <code>.aiff</code>, <code>.ape</code>, <code>.ac3</code>, <code>.dts</code>, <code>.mka</code>, <code>.mid</code>, <code>.amr</code>, <code>.spx</code></td>
+            </tr>
+            <tr>
+                <td><strong>ملفات الفيديو (تشغيل خفي)</strong></td>
+                <td><code>.mp4</code>, <code>.mkv</code>, <code>.avi</code>, <code>.webm</code>, <code>.mov</code>, <code>.wmv</code>, <code>.flv</code>, <code>.ts</code>, <code>.m2ts</code>, <code>.vob</code>, <code>.ogv</code>, <code>.3gp</code>, <code>.mpg</code></td>
+            </tr>
+            <tr>
+                <td><strong>قوائم التشغيل</strong></td>
+                <td><code>.m3u</code>, <code>.m3u8</code>, <code>.pls</code>, <code>.cue</code></td>
+            </tr>
+            <tr>
+                <td><strong>البث والإنترنت</strong></td>
+                <td>يوتيوب (فيديوهات، قوائم تشغيل، قنوات، شورتس، بثوث حية)، تويتش، ساوند كلاود، إذاعات الراديو الحية وروابط HLS (<code>.m3u8</code>).</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2 id="troubleshooting">10. نصائح وحلول المشاكل الشائعة</h2>
+    <ul>
+        <li><strong>لا تستطيع الكتابة في البرامج الأخرى؟</strong> أنت حالياً داخل وضع المشغل (Player Mode). اضغط مفتاح <kbd>Escape</kbd> أو <kbd>NVDA+Ctrl+Shift+P</kbd> للخروج واستعادة الكتابة الطبيعية.</li>
+        <li><strong>التقديم السريع المتكرر:</strong> عند الاستمرار في الضغط على مفاتيح التقديم، تقوم الإضافة بدمج النطق لتنطق الموضع النهائي الذي وصلت إليه فقط عند رفع يدك عن المفتاح لتجنب التشويش.</li>
+        <li><strong>إسكات النطق بسرعة:</strong> اضغط مفتاح <kbd>Control</kbd> بمفرده في أي وقت لإسكات صوت NVDA فوراً.</li>
+    </ul>
+
+</body>
+</html>

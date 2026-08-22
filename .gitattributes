@@ -1,0 +1,2 @@
+HeadlessPlayer/resources/bin/x64/mpv.exe filter=lfs diff=lfs merge=lfs -text
+*.exe filter=lfs diff=lfs merge=lfs -text

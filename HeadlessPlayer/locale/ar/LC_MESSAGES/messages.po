@@ -1,0 +1,982 @@
+# HeadlessPlayer Arabic Translation
+# Copyright (C) 2026 HeadlessPlayer Team
+# This file is distributed under the same license as the HeadlessPlayer package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: HeadlessPlayer 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-21 12:00+0300\n"
+"PO-Revision-Date: 2026-08-21 12:00+0300\n"
+"Last-Translator: HeadlessPlayer Team <headlessplayer@nvda-addon.org>\n"
+"Language-Team: Arabic\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
+
+msgid "Headless Media Player"
+msgstr "مشغل الوسائط الخفي"
+
+msgid "Completely headless, privacy-oriented media player for NVDA operated via modal keyboard capture."
+msgstr "مشغل وسائط خفي تماماً وموجه للخصوصية لبرنامج NVDA يعمل عبر وضع الالتقاط الحصري للوحة المفاتيح."
+
+msgid "Player Mode active"
+msgstr "تم تفعيل وضع المشغل"
+
+msgid "Player Mode exited"
+msgstr "تم الخروج من وضع المشغل"
+
+msgid "Playing"
+msgstr "تشغيل"
+
+msgid "Paused"
+msgstr "إيقاف مؤقت"
+
+msgid "Stopped"
+msgstr "تم الإيقاف"
+
+msgid "Muted"
+msgstr "كتم الصوت"
+
+msgid "Unmuted"
+msgstr "إلغاء كتم الصوت"
+
+msgid "Volume %d percent"
+msgstr "مستوى الصوت %d بالمائة"
+
+msgid "Speed %.2fx"
+msgstr "السرعة %.2fx"
+
+msgid "Speed %.2fx (Preset)"
+msgstr "السرعة %.2fx (إعداد مسبق)"
+
+msgid "Speed reset to 1.0x"
+msgstr "تمت إعادة تعيين السرعة إلى 1.0x"
+
+msgid "Forward %s, position %s of %s"
+msgstr "تقديم %s، الموضع %s من %s"
+
+msgid "Backward %s, position %s of %s"
+msgstr "تأخير %s، الموضع %s من %s"
+
+msgid "Jump to %d percent, position %s"
+msgstr "انتقال إلى %d بالمائة، الموضع %s"
+
+msgid "Start of media"
+msgstr "بداية الوسائط"
+
+msgid "End of media"
+msgstr "نهاية الوسائط"
+
+msgid "A-B Repeat: Start point set at %s"
+msgstr "تكرار المقطع A-B: تم تحديد نقطة البداية عند %s"
+
+msgid "A-B Repeat: End point set at %s"
+msgstr "تكرار المقطع A-B: تم تحديد نقطة النهاية عند %s"
+
+msgid "A-B Looping active from %s to %s"
+msgstr "تكرار المقطع A-B نشط من %s إلى %s"
+
+msgid "A-B Repeat cleared"
+msgstr "تم مسح نقاط تكرار المقطع A-B"
+
+msgid "Repeat Track enabled"
+msgstr "تم تفعيل تكرار المسار الحالي"
+
+msgid "Repeat Playlist enabled"
+msgstr "تم تفعيل تكرار قائمة التشغيل"
+
+msgid "Repeat disabled"
+msgstr "تم تعطيل التكرار"
+
+msgid "Chapter %d: %s"
+msgstr "الفصل %d: %s"
+
+msgid "Chapter %d"
+msgstr "الفصل %d"
+
+msgid "No chapters available in media"
+msgstr "لا توجد فصول متوفرة في هذه الوسائط"
+
+msgid "Audio track %d: %s (%s)"
+msgstr "المسار الصوتي %d: %s (%s)"
+
+msgid "Audio track %d"
+msgstr "المسار الصوتي %d"
+
+msgid "Loaded %d files into playlist"
+msgstr "تم تحميل %d ملف في قائمة التشغيل"
+
+msgid "Playlist empty"
+msgstr "قائمة التشغيل فارغة"
+
+msgid "Track %d of %d: %s"
+msgstr "المسار %d من %d: %s"
+
+msgid "Auto-next enabled"
+msgstr "تم تفعيل الانتقال التلقائي"
+
+msgid "Auto-next disabled"
+msgstr "تم تعطيل الانتقال التلقائي"
+
+msgid "Shuffle enabled"
+msgstr "تم تفعيل التشغيل العشوائي"
+
+msgid "Shuffle disabled"
+msgstr "تم تعطيل التشغيل العشوائي"
+
+msgid "Title: %s, Duration: %s, Track %d of %d"
+msgstr "العنوان: %s، المدة الإجمالية: %s، المسار %d من %d"
+
+msgid "Remaining time: %s"
+msgstr "الوقت المتبقي: %s"
+
+msgid "Elapsed time: %s"
+msgstr "الوقت المنقضي: %s"
+
+msgid "Speech Feedback & Announcements"
+msgstr "التغذية الصوتية والإعلانات المنطوقة"
+
+msgid "Announce &volume changes"
+msgstr "النطق عند تغيير مستوى ال&صوت"
+
+msgid "Announce &seek position and jump offsets"
+msgstr "النطق عند ال&تقديم والتأخير ومواضع الانتقال"
+
+msgid "Announce playback s&peed adjustments"
+msgstr "النطق عند تغيير س&رعة التشغيل"
+
+msgid "Announce &track titles and playlist navigation"
+msgstr "النطق عند التنقل بين ال&مسارات وقوائم التشغيل"
+
+msgid "Announce A-B &loop and segment markers"
+msgstr "النطق عند تحديد وتكرار م&قاطع A-B"
+
+msgid "Announce &chapter markers and names"
+msgstr "النطق عند التنقل بين ال&فصول وأسمائها"
+
+msgid "Seek Jump Step Sizes (Seconds)"
+msgstr "قيم خطوات التقديم والتأخير (بالثواني)"
+
+msgid "&Normal seek jump (Left/Right arrows):"
+msgstr "خطوة التقديم والتأخير ال&عادية (السهمان يميناً/يساراً):"
+
+msgid "&Slow / precise seek jump (Alt + Left/Right):"
+msgstr "خطوة التقديم والتأخير ال&بطيئة / الدقيقة (Alt + يميناً/يساراً):"
+
+msgid "&Fast seek jump (Ctrl + Left/Right):"
+msgstr "خطوة التقديم والتأخير ال&سريعة (Ctrl + يميناً/يساراً):"
+
+msgid "&Ultrafast seek jump (Shift + Left/Right):"
+msgstr "خطوة التقديم والتأخير فائ&قة السرعة (Shift + يميناً/يساراً):"
+
+msgid "Playback Defaults & Options"
+msgstr "الخيارات والافتراضيات العامة للتشغيل"
+
+msgid "Default playback s&peed:"
+msgstr "س&رعة التشغيل الافتراضية:"
+
+msgid "0.5x"
+msgstr "0.5x"
+
+msgid "0.75x"
+msgstr "0.75x"
+
+msgid "1.0x (Normal)"
+msgstr "1.0x (طبيعي)"
+
+msgid "1.25x"
+msgstr "1.25x"
+
+msgid "1.5x"
+msgstr "1.5x"
+
+msgid "1.75x"
+msgstr "1.75x"
+
+msgid "2.0x"
+msgstr "2.0x"
+
+msgid "2.5x"
+msgstr "2.5x"
+
+msgid "3.0x"
+msgstr "3.0x"
+
+msgid "Default &repeat mode:"
+msgstr "نمط ال&تكرار الافتراضي:"
+
+msgid "Off"
+msgstr "معطل"
+
+msgid "Repeat Current Track"
+msgstr "تكرار المسار الحالي"
+
+msgid "Repeat Entire Playlist"
+msgstr "تكرار قائمة التشغيل كاملة"
+
+msgid "Auto-advance to &next track when media finishes"
+msgstr "الانتقال التلقائي إلى المسار ال&تالي عند انتهاء الملف"
+
+msgid "Remember and &resume playback position for media"
+msgstr "ت&ذكر واستئناف موضع التشغيل للملفات الطويلة"
+
+msgid "Play audio &earcons when entering/exiting Player Mode"
+msgstr "تشغيل &نغمات صوتية مميزة عند الدخول/الخروج من وضع المشغل"
+
+msgid "Automatically enter &Player Mode when loading new media"
+msgstr "الدخول &تلقائياً في وضع المشغل فور فتح وسائط جديدة"
+
+msgid "Media engine failed to start"
+msgstr "تعذر تشغيل محرك الوسائط"
+
+msgid "Media file not found: %s"
+msgstr "ملف الوسائط غير موجود: %s"
+
+msgid "Unsupported media format or corrupted file"
+msgstr "صيغة الوسائط غير مدعومة أو الملف تالف"
+
+msgid "Error communicating with media player pipe"
+msgstr "خطأ في الاتصال بقناة مشغل الوسائط"
+
+msgid "Select Media File"
+msgstr "اختيار ملف وسائط"
+
+msgid "Select Media Folder"
+msgstr "اختيار مجلد وسائط"
+
+msgid "Media Files"
+msgstr "ملفات الوسائط"
+
+msgid "All Files"
+msgstr "كافة الملفات"
+
+msgid "No media files found in selected folder"
+msgstr "لم يتم العثور على ملفات وسائط في المجلد المحدد"
+
+msgid "No media files currently selected in Windows Explorer"
+msgstr "لا توجد ملفات وسائط محددة حالياً في مستكشف Windows"
+
+msgid "Playback resumed from %s"
+msgstr "تم استئناف التشغيل من %s"
+
+msgid "Audio track %d: %s"
+msgstr "المسار الصوتي %d: %s"
+
+msgid "Default Test Media"
+msgstr "ملف وسائط تجريبي افتراضي"
+
+msgid "Select Media Files"
+msgstr "اختيار ملفات وسائط"
+
+msgid "Select Media Folder to Queue"
+msgstr "اختيار مجلد وسائط لإدراجه في قائمة التشغيل"
+
+msgid "Toggles Headless Media Player keyboard capture mode."
+msgstr "تبديل تشغيل وضع التقاط لوحة المفاتيح للمشغل الخفي."
+
+msgid "HEADLESS MEDIA PLAYER - KEYBOARD SHORTCUTS HELP"
+msgstr "دليل اختصارات لوحة المفاتيح لمشغل الوسائط الخفي"
+
+msgid "Headless Media Player - Shortcuts Help"
+msgstr "مشغل الوسائط الخفي - دليل الاختصارات"
+
+msgid "MODE TOGGLE & ESSENTIALS:"
+msgstr "تبديل الوضع والتحكم الأساسي:"
+
+msgid "Enter or exit Headless Player Mode."
+msgstr "الدخول إلى وضع المشغل أو الخروج منه."
+
+msgid "Exit Player Mode and return to normal desktop keyboard control."
+msgstr "الخروج من وضع المشغل والعودة للتحكم العادي بلوحة المفاتيح."
+
+msgid "Silence speech immediately while in Player Mode."
+msgstr "إسكات نطق NVDA فوراً أثناء التواجد في وضع المشغل."
+
+msgid "Show this keyboard shortcuts help window."
+msgstr "عرض نافذة المساعدة هذه بكافة الاختصارات."
+
+msgid "PLAYBACK & VOLUME CONTROLS:"
+msgstr "التشغيل ومستوى الصوت:"
+
+msgid "Play / Pause toggle."
+msgstr "تشغيل / إيقاف مؤقت."
+
+msgid "Stop playback and rewind to beginning."
+msgstr "إيقاف التشغيل وإرجاع المقطع إلى البداية."
+
+msgid "Mute / Unmute audio."
+msgstr "كتم / إلغاء كتم الصوت."
+
+msgid "Adjust volume (+/- 5%)."
+msgstr "تعديل مستوى الصوت (رفع أو خفض 5%)."
+
+msgid "SEEKING & JUMPS:"
+msgstr "التقديم والتأخير والقفز:"
+
+msgid "Normal seek (+/- 5 seconds)."
+msgstr "تقديم / تأخير عادي (5 ثوانٍ أو القيمة المخصصة)."
+
+msgid "Slow & precise seek (+/- 1 second)."
+msgstr "تقديم / تأخير بطيء ودقيق (ثانية واحدة)."
+
+msgid "Fast seek (+/- 30 seconds)."
+msgstr "تقديم / تأخير سريع (30 ثانية)."
+
+msgid "Ultrafast seek (+/- 5 minutes)."
+msgstr "تقديم / تأخير فائق السرعة (5 دقائق)."
+
+msgid "Number keys 1 to 9 (Top Row) : "
+msgstr "الأرقام من 1 إلى 9 (الصف العلوي) : "
+
+msgid "Jump directly to 10% through 90% of file duration."
+msgstr "القفز المباشر لنسبة من 10% إلى 90% من طول الملف."
+
+msgid "PITCH-PRESERVED SPEED CONTROLS:"
+msgstr "التحكم في السرعة مع الحفاظ على النبرة الصوتية:"
+
+msgid "Fine speed adjustment (+/- 0.1x)."
+msgstr "تعديل السرعة الدقيق بمقدار (+/- 0.1x)."
+
+msgid "Cycle preset speeds (1.0x, 1.5x, 1.75x, 2.0x, 2.5x, 3.0x)."
+msgstr "التبديل بين السرعات الجاهزة (1.0x, 1.5x, 1.75x, 2.0x, 2.5x, 3.0x)."
+
+msgid "A-B SEGMENT LOOP & REPEAT MODES:"
+msgstr "تكرار المقاطع A-B وتكرار المسارات:"
+
+msgid "Mark start of loop (Point A)."
+msgstr "تحديد بداية المقطع (النقطة A)."
+
+msgid "Mark end of loop (Point B)."
+msgstr "تحديد نهاية المقطع (النقطة B)."
+
+msgid "Toggle repeat: A-B loop (if marked) or cycle Single Track / Playlist / Off."
+msgstr "التبديل بين تكرار المقطع A-B (إن وجد) أو تكرار المقطع الحالي / القائمة كاملة / إيقاف."
+
+msgid "Clear marked A-B loop points."
+msgstr "مسح نقاط المقطع A-B المحددة."
+
+msgid "PLAYLIST, FOLDERS & WINDOWS EXPLORER:"
+msgstr "قوائم التشغيل والمجلدات ومستكشف Windows:"
+
+msgid "Open file dialog (select single media file)."
+msgstr "فتح نافذة اختيار ملف وسائط منفصل."
+
+msgid "Open folder dialog (load entire folder as playlist)."
+msgstr "فتح نافذة اختيار مجلد كامل كقائمة تشغيل."
+
+msgid "Play active selection directly from Windows Explorer / Desktop."
+msgstr "تشغيل الملفات أو المجلدات المحددة مباشرة من مستكشف Windows أو سطح المكتب."
+
+msgid "Previous / Next track in playlist."
+msgstr "المقطع السابق / التالي في قائمة التشغيل."
+
+msgid "Toggle Auto-Next track playback."
+msgstr "التبديل بين تشغيل المقطع التالي تلقائياً أو إيقافه."
+
+msgid "Toggle playlist shuffle / random mode."
+msgstr "التبديل بين وضع التشغيل العشوائي والترتيبي."
+
+msgid "CHAPTERS & VIDEO AUDIO TRACKS:"
+msgstr "الفصول والمسارات الصوتية للفيديو:"
+
+msgid "Jump to Next / Previous chapter."
+msgstr "الانتقال إلى الفصل التالي / السابق."
+
+msgid "Cycle audio tracks / languages in video files."
+msgstr "التبديل بين المسارات الصوتية واللغات في ملفات الفيديو."
+
+msgid "SPEECH QUERIES:"
+msgstr "استعلامات النطق:"
+
+msgid "Speak full media information (title, duration, playlist index)."
+msgstr "نطق معلومات الوسائط كاملة (الاسم، المدة، ورقم المقطع)."
+
+msgid "Speak remaining playback time."
+msgstr "نطق الوقت المتبقي من المقطع."
+
+msgid "Speak elapsed playback time."
+msgstr "نطق الوقت المنقضي من المقطع."
+
+msgid "Directly loads and plays selected or focused media files/folders from Windows Explorer."
+msgstr "تشغيل الملفات أو المجلدات المحددة أو المفوكس عليها مباشرة من مستكشف Windows."
+
+msgid "Directly load and play focused/selected media from Explorer/Desktop without entering Player Mode."
+msgstr "تشغيل الملفات أو المجلدات المحددة أو المركز عليها مباشرة من مستكشف Windows أو سطح المكتب دون الحاجة للدخول في وضع المشغل."
+
+msgid "Player Mode Keyboard Shortcuts"
+msgstr "إيماءات واختصارات لوحة المفاتيح لوضع المشغل"
+
+msgid "Customize Player Mode &Shortcuts..."
+msgstr "تخصيص اختصارات وضع المشغل (&S)..."
+
+msgid "Customize Player Mode Shortcuts"
+msgstr "تخصيص اختصارات وضع المشغل"
+
+msgid "Select an action and enter your preferred key or key combination (e.g. space, control, pagedown, s, m, home, end, alt+right):"
+msgstr "اختر إجراءً واكتب المفتاح أو التركيبة المفضلة لديك (مثل: space, control, pagedown, s, m, home, end, alt+right):"
+
+msgid "&Player Action:"
+msgstr "إجراء المشغل (&P):"
+
+msgid "Assigned &Shortcut Key:"
+msgstr "المفتاح المخصص (&S):"
+
+msgid "&Reset to Defaults"
+msgstr "إعادة ضبط المصنع (&R)"
+
+msgid "Player Mode shortcuts have been reset to factory defaults."
+msgstr "تمت إعادة ضبط اختصارات وضع المشغل إلى الإعدادات الافتراضية."
+
+msgid "Shortcuts Reset"
+msgstr "إعادة تعيين الاختصارات"
+
+msgid "Play / Pause toggle"
+msgstr "التبديل بين التشغيل والإيقاف المؤقت"
+
+msgid "Stop and rewind to beginning"
+msgstr "إيقاف التشغيل والرجوع للبداية"
+
+msgid "Mute / Unmute audio"
+msgstr "كتم / تشغيل الصوت"
+
+msgid "Volume Up (+5%)"
+msgstr "رفع مستوى الصوت (+5%)"
+
+msgid "Volume Down (-5%)"
+msgstr "خفض مستوى الصوت (-5%)"
+
+msgid "Normal Seek Forward (Right Arrow)"
+msgstr "تقديم عادي (سهم يمين)"
+
+msgid "Normal Seek Backward (Left Arrow)"
+msgstr "تأخير عادي (سهم يسار)"
+
+msgid "Slow / Precise Seek Forward (Alt+Right)"
+msgstr "تقديم دقيق وبطيء (Alt + سهم يمين)"
+
+msgid "Slow / Precise Seek Backward (Alt+Left)"
+msgstr "تأخير دقيق وبطيء (Alt + سهم يسار)"
+
+msgid "Fast Seek Forward (Ctrl+Right)"
+msgstr "تقديم سريع (Ctrl + سهم يمين)"
+
+msgid "Fast Seek Backward (Ctrl+Left)"
+msgstr "تأخير سريع (Ctrl + سهم يسار)"
+
+msgid "Ultrafast Seek Forward (Shift+Right)"
+msgstr "تقديم فائق السرعة (Shift + سهم يمين)"
+
+msgid "Ultrafast Seek Backward (Shift+Left)"
+msgstr "تأخير فائق السرعة (Shift + سهم يسار)"
+
+msgid "Fine Speed Up (+0.1x)"
+msgstr "تسريع دقيق (+0.1x)"
+
+msgid "Fine Speed Down (-0.1x)"
+msgstr "تبطيء دقيق (-0.1x)"
+
+msgid "Next Preset Speed"
+msgstr "السرعة الجاهزة التالية"
+
+msgid "Previous Preset Speed"
+msgstr "السرعة الجاهزة السابقة"
+
+msgid "Next Track in Playlist"
+msgstr "المقطع التالي في قائمة التشغيل"
+
+msgid "Previous Track in Playlist"
+msgstr "المقطع السابق في قائمة التشغيل"
+
+msgid "Mark A-B Loop Start (Point A)"
+msgstr "تحديد بداية المقطع A-B (النقطة A)"
+
+msgid "Mark A-B Loop End (Point B)"
+msgstr "تحديد نهاية المقطع A-B (النقطة B)"
+
+msgid "Toggle Repeat Mode"
+msgstr "تبديل وضع التكرار"
+
+msgid "Clear A-B Loop Points"
+msgstr "مسح نقاط المقطع A-B"
+
+msgid "Open File Dialog"
+msgstr "فتح نافذة اختيار ملف"
+
+msgid "Open Folder Dialog"
+msgstr "فتح نافذة اختيار مجلد"
+
+msgid "Load from Windows Explorer"
+msgstr "التشغيل المباشر من مستكشف Windows"
+
+msgid "Toggle Auto-Next"
+msgstr "تبديل التشغيل التلقائي للتالي"
+
+msgid "Toggle Shuffle"
+msgstr "تبديل الوضع العشوائي"
+
+msgid "Speak Full Media Info"
+msgstr "نطق معلومات الوسائط كاملة"
+
+msgid "Speak Remaining Time"
+msgstr "نطق الوقت المتبقي"
+
+msgid "Speak Elapsed Time"
+msgstr "نطق الوقت المنقضي"
+
+msgid "Show Shortcuts Help Dialog"
+msgstr "عرض نافذة مساعدة الاختصارات"
+
+msgid "Exit Player Mode"
+msgstr "الخروج من وضع المشغل"
+
+msgid "Select a player action, then choose or search a key from the suggestions list,\nor press the 'Capture Key Directly' button to assign by pressing any key on your keyboard."
+msgstr "اختر إجراء المشغل، ثم اختر أو ابحث عن المفتاح من قائمة الاقتراحات، أو اضغط زر 'التقاط ضغطة المفتاح مباشرة' لتعيينه بضغطة واحدة من الكيبورد."
+
+msgid "Current assigned key: %s"
+msgstr "المفتاح المخصص حالياً: %s"
+
+msgid "&Search Key Suggestions (type e.g. 'ta', 'control', 'page', 'arrow'):"
+msgstr "البحث في اقتراحات المفاتيح (اكتب مثلاً 'ta' أو 'control' أو 'page' أو 'سهم') (&S):"
+
+msgid "&Assign Selected Suggestion"
+msgstr "تعيين المفتاح المختار (&A)"
+
+msgid "&Press Key on Keyboard Directly..."
+msgstr "التقاط ضغطة المفتاح من الكيبورد مباشرة (&P)..."
+
+msgid "Assigned %s to %s"
+msgstr "تم تعيين %s للإجراء %s"
+
+msgid "Press Shortcut Key"
+msgstr "اضغط على مفتاح الاختصار"
+
+msgid "Press any key or key combination on your keyboard now to assign it.\nPress Escape to cancel."
+msgstr "اضغط على أي مفتاح أو تركيبة مفاتيح في الكيبورد الآن لتعيينها.\nاضغط Escape للإلغاء."
+
+msgid "Waiting for key press..."
+msgstr "في انتظار ضغطة المفتاح..."
+
+msgid "Captured: %s"
+msgstr "تم التقاط: %s"
+
+msgid "(Not Set)"
+msgstr "(غير محدد)"
+
+msgid "Space (مسافة)"
+msgstr "Space (مسافة)"
+
+msgid "Control (كنترول)"
+msgstr "Control (كنترول)"
+
+msgid "Shift (شفت)"
+msgstr "Shift (شفت)"
+
+msgid "Alt (ألت)"
+msgstr "Alt (ألت)"
+
+msgid "Tab (تاب)"
+msgstr "Tab (تاب)"
+
+msgid "Escape (هروب)"
+msgstr "Escape (هروب)"
+
+msgid "Enter / Return (إدخال)"
+msgstr "Enter / Return (إدخال)"
+
+msgid "Backspace (مسافة للخلف)"
+msgstr "Backspace (مسافة للخلف)"
+
+msgid "Page Down (صفحة لأسفل)"
+msgstr "Page Down (صفحة لأسفل)"
+
+msgid "Page Up (صفحة لأعلى)"
+msgstr "Page Up (صفحة لأعلى)"
+
+msgid "Home (بداية السطر)"
+msgstr "Home (بداية السطر)"
+
+msgid "End (نهاية السطر)"
+msgstr "End (نهاية السطر)"
+
+msgid "Insert (إدراج)"
+msgstr "Insert (إدراج)"
+
+msgid "Delete (حذف)"
+msgstr "Delete (حذف)"
+
+msgid "Left Arrow (سهم لليسار)"
+msgstr "Left Arrow (سهم لليسار)"
+
+msgid "Right Arrow (سهم لليمين)"
+msgstr "Right Arrow (سهم لليمين)"
+
+msgid "Up Arrow (سهم لأعلى)"
+msgstr "Up Arrow (سهم لأعلى)"
+
+msgid "Down Arrow (سهم لأسفل)"
+msgstr "Down Arrow (سهم لأسفل)"
+
+msgid "Alt + Left Arrow (Alt + سهم لليسار)"
+msgstr "Alt + Left Arrow (Alt + سهم لليسار)"
+
+msgid "Alt + Right Arrow (Alt + سهم لليمين)"
+msgstr "Alt + Right Arrow (Alt + سهم لليمين)"
+
+msgid "Alt + Up Arrow (Alt + سهم لأعلى)"
+msgstr "Alt + Up Arrow (Alt + سهم لأعلى)"
+
+msgid "Alt + Down Arrow (Alt + سهم لأسفل)"
+msgstr "Alt + Down Arrow (Alt + سهم لأسفل)"
+
+msgid "Control + Left Arrow (Ctrl + سهم لليسار)"
+msgstr "Control + Left Arrow (Ctrl + سهم لليسار)"
+
+msgid "Control + Right Arrow (Ctrl + سهم لليمين)"
+msgstr "Control + Right Arrow (Ctrl + سهم لليمين)"
+
+msgid "Control + Up Arrow (Ctrl + سهم لأعلى)"
+msgstr "Control + Up Arrow (Ctrl + سهم لأعلى)"
+
+msgid "Control + Down Arrow (Ctrl + سهم لأسفل)"
+msgstr "Control + Down Arrow (Ctrl + سهم لأسفل)"
+
+msgid "Shift + Left Arrow (Shift + سهم لليسار)"
+msgstr "Shift + Left Arrow (Shift + سهم لليسار)"
+
+msgid "Shift + Right Arrow (Shift + سهم لليمين)"
+msgstr "Shift + Right Arrow (Shift + سهم لليمين)"
+
+msgid "Shift + Up Arrow (Shift + سهم لأعلى)"
+msgstr "Shift + Up Arrow (Shift + سهم لأعلى)"
+
+msgid "Shift + Down Arrow (Shift + سهم لأسفل)"
+msgstr "Shift + Down Arrow (Shift + سهم لأسفل)"
+
+msgid "Control + Shift + Left Arrow (Ctrl+Shift+سهم لليسار)"
+msgstr "Control + Shift + Left Arrow (Ctrl+Shift+سهم لليسار)"
+
+msgid "Control + Shift + Right Arrow (Ctrl+Shift+سهم لليمين)"
+msgstr "Control + Shift + Right Arrow (Ctrl+Shift+سهم لليمين)"
+
+msgid "Control + I (Ctrl + i)"
+msgstr "Control + I (Ctrl + i)"
+
+msgid "Shift + I (Shift + i)"
+msgstr "Shift + I (Shift + i)"
+
+msgid "Control + A (Ctrl + a)"
+msgstr "Control + A (Ctrl + a)"
+
+msgid "Control + S (Ctrl + s)"
+msgstr "Control + S (Ctrl + s)"
+
+msgid "Control + Space (Ctrl + مسافة)"
+msgstr "Control + Space (Ctrl + مسافة)"
+
+msgid "Shift + Space (Shift + مسافة)"
+msgstr "Shift + Space (Shift + مسافة)"
+
+msgid "Alt + Space (Alt + مسافة)"
+msgstr "Alt + Space (Alt + مسافة)"
+
+msgid "[ Bracket (قوس فتح / ج)"
+msgstr "[ Bracket (قوس فتح / ج)"
+
+msgid "] Bracket (قوس إغلاق / د)"
+msgstr "] Bracket (قوس إغلاق / د)"
+
+msgid "; Semicolon (فاصلة منقوطة / ك)"
+msgstr "; Semicolon (فاصلة منقوطة / ك)"
+
+msgid "' Quote (علامة تنصيص / ط)"
+msgstr "' Quote (علامة تنصيص / ط)"
+
+msgid ", Comma (فاصلة / و)"
+msgstr ", Comma (فاصلة / و)"
+
+msgid ". Period (نقطة / ز)"
+msgstr ". Period (نقطة / ز)"
+
+msgid "/ Slash (شرطة مائلة / ظ)"
+msgstr "/ Slash (شرطة مائلة / ظ)"
+
+msgid "- Minus (ناقص)"
+msgstr "- Minus (ناقص)"
+
+msgid "= Equals (يساوي)"
+msgstr "= Equals (يساوي)"
+
+
+
+
+
+
+msgid "Enter a URL (YouTube or any website) to play, or text to search YouTube:"
+msgstr "أدخل رابطًا (يوتيوب أو أي موقع) لتشغيله، أو اكتب نصًا للبحث في يوتيوب:"
+
+msgid "Play URL or Search YouTube"
+msgstr "تشغيل رابط أو البحث في يوتيوب"
+
+msgid "Playlist"
+msgstr "قائمة تشغيل"
+
+msgid "Channel"
+msgstr "قناة"
+
+msgid "Section"
+msgstr "قسم"
+
+msgid "Live"
+msgstr "بث مباشر"
+
+msgid "Video"
+msgstr "فيديو"
+
+msgid "Videos of %s"
+msgstr "فيديوهات %s"
+
+msgid "Playlists of %s"
+msgstr "قوائم تشغيل %s"
+
+msgid "Live streams of %s"
+msgstr "البث المباشر لـ %s"
+
+msgid "YouTube Search Results"
+msgstr "نتائج البحث في يوتيوب"
+
+msgid "Play &Playlist"
+msgstr "تشغيل &قائمة التشغيل"
+
+msgid "&Play"
+msgstr "&تشغيل"
+
+msgid "&Open"
+msgstr "&فتح"
+
+msgid "&Back"
+msgstr "&رجوع"
+
+msgid "&Close"
+msgstr "إ&غلاق"
+
+msgid "Loading %s..."
+msgstr "جارٍ تحميل %s..."
+
+msgid "Could not load this item. Check your connection or update yt-dlp from settings."
+msgstr "تعذر تحميل هذا العنصر. تحقق من اتصالك بالإنترنت أو حدّث yt-dlp من الإعدادات."
+
+msgid "No items found."
+msgstr "لم يتم العثور على عناصر."
+
+msgid "%d items"
+msgstr "%d عنصر"
+
+msgid "Online streaming is unavailable. It requires NVDA 2024.1 or later."
+msgstr "البث عبر الإنترنت غير متاح. يتطلب NVDA إصدار 2024.1 أو أحدث."
+
+msgid "Loading URL, please wait..."
+msgstr "جارٍ تحميل الرابط، الرجاء الانتظار..."
+
+msgid "Searching YouTube, please wait..."
+msgstr "جارٍ البحث في يوتيوب، الرجاء الانتظار..."
+
+msgid "No results found."
+msgstr "لم يتم العثور على نتائج."
+
+msgid "YouTube results for: %s"
+msgstr "نتائج يوتيوب عن: %s"
+
+msgid "Operation failed. Check your internet connection, or update yt-dlp from HeadlessPlayer settings."
+msgstr "فشلت العملية. تحقق من اتصالك بالإنترنت، أو حدّث yt-dlp من إعدادات المشغل الخفي."
+
+msgid "No playable items found."
+msgstr "لم يتم العثور على عناصر قابلة للتشغيل."
+
+msgid "Loading playlist, please wait..."
+msgstr "جارٍ تحميل قائمة التشغيل، الرجاء الانتظار..."
+
+msgid "Could not load the playlist. Check your internet connection, or update yt-dlp from HeadlessPlayer settings."
+msgstr "تعذر تحميل قائمة التشغيل. تحقق من اتصالك بالإنترنت، أو حدّث yt-dlp من إعدادات المشغل الخفي."
+
+msgid "Loading: %s"
+msgstr "جارٍ التحميل: %s"
+
+msgid "Could not play this stream. Check your internet connection, or update yt-dlp from HeadlessPlayer settings."
+msgstr "تعذر تشغيل هذا البث. تحقق من اتصالك بالإنترنت، أو حدّث yt-dlp من إعدادات المشغل الخفي."
+
+msgid "Playback engine failed to start."
+msgstr "فشل بدء محرك التشغيل."
+
+msgid "Open URL / YouTube Search Box"
+msgstr "فتح مربع الرابط / البحث في يوتيوب"
+
+msgid "Add as an a&dditional shortcut (keep the current one)"
+msgstr "إضافته كاختصار إ&ضافي (مع الاحتفاظ بالاختصار الحالي)"
+
+msgid " and "
+msgstr " و "
+
+msgid "YouTube & Online Streaming (yt-dlp)"
+msgstr "يوتيوب والبث عبر الإنترنت (yt-dlp)"
+
+msgid "not installed"
+msgstr "غير مثبت"
+
+msgid "Streaming engine (yt-dlp) version: %s"
+msgstr "إصدار محرك البث (yt-dlp): %s"
+
+msgid "Number of YouTube search &results:"
+msgstr "عدد &نتائج البحث في يوتيوب:"
+
+msgid "&Maximum items loaded from an online playlist or channel:"
+msgstr "ال&حد الأقصى للعناصر المحملة من قائمة تشغيل أو قناة عبر الإنترنت:"
+
+msgid "Disabled (no sign-in)"
+msgstr "معطل (بدون تسجيل دخول)"
+
+msgid "Use sign-in coo&kies from browser (for age-restricted or members-only content):"
+msgstr "استخدام &كوكيز تسجيل الدخول من المتصفح (للمحتوى المقيد بالعمر أو الخاص بالأعضاء):"
+
+msgid "Check for &Updates of the streaming engine now..."
+msgstr "التحقق من وجود &تحديثات لمحرك البث الآن..."
+
+msgid "Checking for updates..."
+msgstr "جارٍ التحقق من التحديثات..."
+
+msgid "Checking for streaming engine updates, please wait..."
+msgstr "جارٍ التحقق من تحديثات محرك البث، الرجاء الانتظار..."
+
+msgid "Downloading update..."
+msgstr "جارٍ تنزيل التحديث..."
+
+msgid "Installing update..."
+msgstr "جارٍ تثبيت التحديث..."
+
+msgid "The streaming engine was updated successfully to version %s.\nPlease restart NVDA to start using the new version."
+msgstr "تم تحديث محرك البث بنجاح إلى الإصدار %s.\nالرجاء إعادة تشغيل NVDA لبدء استخدام الإصدار الجديد."
+
+msgid "Update Installed"
+msgstr "تم تثبيت التحديث"
+
+msgid "Streaming engine (yt-dlp) version: %s (restart NVDA to activate)"
+msgstr "إصدار محرك البث (yt-dlp): %s (أعد تشغيل NVDA للتفعيل)"
+
+msgid "The streaming engine is already up to date (version %s)."
+msgstr "محرك البث محدّث بالفعل (الإصدار %s)."
+
+msgid "No Update Needed"
+msgstr "لا حاجة للتحديث"
+
+msgid "Could not update the streaming engine.\nCheck your internet connection and try again.\n\nDetails: %s"
+msgstr "تعذر تحديث محرك البث.\nتحقق من اتصالك بالإنترنت وحاول مرة أخرى.\n\nالتفاصيل: %s"
+
+msgid "Update Failed"
+msgstr "فشل التحديث"
+
+msgid "YOUTUBE & ONLINE STREAMING:"
+msgstr "يوتيوب والبث عبر الإنترنت:"
+
+msgid "Open URL / search box: paste a YouTube or website link to play it, or type text to search YouTube."
+msgstr "فتح مربع الرابط / البحث: الصق رابط يوتيوب أو أي موقع لتشغيله، أو اكتب نصًا للبحث في يوتيوب."
+
+msgid "In search results: Enter on a video plays it; Enter on a playlist or channel opens it; Tab reaches the Play Playlist button; Backspace goes back."
+msgstr "في نتائج البحث: إدخال على فيديو يشغّله؛ إدخال على قائمة تشغيل أو قناة يفتحها؛ تاب يصل إلى زر تشغيل قائمة التشغيل؛ مسافة للخلف تعود خطوة."
+
+msgid "Online playlists behave exactly like local playlists (Next/Previous track, shuffle, repeat, resume)."
+msgstr "قوائم التشغيل عبر الإنترنت تعمل تمامًا مثل قوائم التشغيل المحلية (المقطع التالي/السابق، الخلط، التكرار، استئناف الموضع)."
+
+msgid "The streaming engine failed to load. Try updating it from HeadlessPlayer settings."
+msgstr "فشل تحميل محرك البث. جرّب تحديثه من إعدادات المشغل الخفي."
+
+msgid "Nothing is currently loaded."
+msgstr "لا يوجد شيء محمّل حاليًا."
+
+msgid "Link copied to clipboard."
+msgstr "تم نسخ الرابط إلى الحافظة."
+
+msgid "File path copied to clipboard."
+msgstr "تم نسخ مسار الملف إلى الحافظة."
+
+msgid "Could not copy to clipboard."
+msgstr "تعذر النسخ إلى الحافظة."
+
+msgid "YouTube Account & Feeds"
+msgstr "حساب يوتيوب والتغذيات"
+
+msgid "Recommended for you (home feed)"
+msgstr "مقترحات لك (الصفحة الرئيسية)"
+
+msgid "Latest videos from your subscriptions"
+msgstr "أحدث فيديوهات اشتراكاتك"
+
+msgid "Watch Later playlist"
+msgstr "قائمة المشاهدة لاحقًا"
+
+msgid "Liked videos"
+msgstr "الفيديوهات التي أعجبتك"
+
+msgid "Watch history"
+msgstr "سجل المشاهدة"
+
+msgid "Trending in your country"
+msgstr "الرائج في دولتك"
+
+msgid "This section requires YouTube sign-in. Enable sign-in cookies from your browser in HeadlessPlayer settings, then try again."
+msgstr "هذا القسم يتطلب تسجيل الدخول إلى يوتيوب. فعّل كوكيز تسجيل الدخول من متصفحك في إعدادات المشغل الخفي ثم حاول مجددًا."
+
+msgid "Copy Current Track Link / Path to Clipboard"
+msgstr "نسخ رابط / مسار المقطع الحالي إلى الحافظة"
+
+msgid "Open YouTube Account & Feeds Browser"
+msgstr "فتح متصفح حساب يوتيوب والتغذيات"
+
+msgid "Open URL / search box: paste a YouTube or website link to play it, or type text to search YouTube. Exits Player Mode automatically."
+msgstr "فتح مربع الرابط / البحث: الصق رابط يوتيوب أو أي موقع لتشغيله، أو اكتب نصًا للبحث في يوتيوب. يخرج من وضع المشغل تلقائيًا."
+
+msgid "Open YouTube account & feeds browser (recommendations, subscriptions, watch later, liked, history, trending)."
+msgstr "فتح متصفح حساب يوتيوب والتغذيات (المقترحات، الاشتراكات، المشاهدة لاحقًا، الإعجابات، السجل، الرائج)."
+
+msgid "Copy the current track's link (or file path) to the clipboard."
+msgstr "نسخ رابط المقطع الحالي (أو مسار الملف) إلى الحافظة."
+
+msgid "Trending music (Top 100 songs worldwide)"
+msgstr "الموسيقى الرائجة (أفضل 100 أغنية عالميًا)"
+
+msgid "Manual sign-in cookies &file (cookies.txt in Netscape format):"
+msgstr "&ملف كوكيز تسجيل الدخول اليدوي (cookies.txt بصيغة Netscape):"
+
+msgid "&Browse for cookies file..."
+msgstr "ا&ستعراض لاختيار ملف الكوكيز..."
+
+msgid "Tip: export cookies.txt while signed in to YouTube using a browser extension such as 'Get cookies.txt LOCALLY' (Chrome/Edge) or 'cookies.txt' (Firefox). The manual file takes priority over the browser choice above, and works even when Chrome blocks automatic cookie extraction."
+msgstr "نصيحة: صدّر ملف cookies.txt وأنت مسجل الدخول إلى يوتيوب باستخدام إضافة متصفح مثل 'Get cookies.txt LOCALLY' (كروم/إيدج) أو 'cookies.txt' (فيرفكس). الملف اليدوي له الأولوية على اختيار المتصفح أعلاه، ويعمل حتى عندما يمنع كروم السحب التلقائي للكوكيز."
+
+msgid "Select cookies.txt file"
+msgstr "اختر ملف cookies.txt"
+
+msgid "Cookies files (*.txt)|*.txt|All files (*.*)|*.*"
+msgstr "ملفات الكوكيز (*.txt)|*.txt|كل الملفات (*.*)|*.*"
+
+msgid "Could not read sign-in cookies from your browser. Set a manual cookies.txt file in HeadlessPlayer settings instead."
+msgstr "تعذرت قراءة كوكيز تسجيل الدخول من متصفحك. عيّن ملف cookies.txt يدويًا في إعدادات المشغل الخفي بدلًا من ذلك."
+
+msgid "Playback of this stream failed. Press Enter or Space to retry."
+msgstr "فشل تشغيل هذا البث. اضغط إدخال أو المسافة لإعادة المحاولة."
+
+msgid "Bass: %s dB"
+msgstr "البيز: %s ديسيبل"
+
+msgid "Bass: normal"
+msgstr "البيز: طبيعي"
+
+msgid "Bass Up (+3 dB)"
+msgstr "رفع البيز (+3 ديسيبل)"
+
+msgid "Bass Down (-3 dB)"
+msgstr "خفض البيز (-3 ديسيبل)"
+
+msgid "Raise / lower bass (+/- 3 dB)."
+msgstr "رفع / خفض البيز (+/- 3 ديسيبل)."

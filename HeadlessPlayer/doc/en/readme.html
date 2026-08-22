@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Headless Media Player - NVDA Add-on User Guide</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #222;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px 25px;
+            background-color: #fff;
+        }
+        h1, h2, h3, h4 {
+            color: #0b4f8a;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h1 {
+            border-bottom: 2px solid #0b4f8a;
+            padding-bottom: 8px;
+            font-size: 1.9em;
+        }
+        h2 {
+            border-bottom: 1px solid #d0d7de;
+            padding-bottom: 5px;
+            font-size: 1.4em;
+        }
+        h3 {
+            font-size: 1.15em;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 15px 0 25px 0;
+        }
+        th, td {
+            border: 1px solid #d0d7de;
+            padding: 9px 14px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #f6f8fa;
+            color: #1f2328;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #fbfcfd;
+        }
+        kbd {
+            display: inline-block;
+            padding: 2px 6px;
+            font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+            color: #1f2328;
+            background-color: #f6f8fa;
+            border: 1px solid #d0d7de;
+            border-radius: 4px;
+            box-shadow: inset 0 -1px 0 #d0d7de;
+        }
+        .note {
+            background-color: #eef6fc;
+            border-left: 4px solid #0b4f8a;
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .warning {
+            background-color: #fff8e6;
+            border-left: 4px solid #d4a72c;
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .important {
+            background-color: #fdf2f2;
+            border-left: 4px solid #d93025;
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        code {
+            background-color: #f6f8fa;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            font-family: Consolas, monospace;
+        }
+        ul, ol {
+            padding-left: 25px;
+        }
+        li {
+            margin-bottom: 6px;
+        }
+        a {
+            color: #0969da;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Headless Media Player — User Guide</h1>
+    <p><strong>Add-on Version:</strong> 1.1.6</p>
+    <p><strong>Author:</strong> Mahmoud Abo El Fotouh &lt;<a href="mailto:mahmoudaboelfotouh.20@gmail.com">mahmoudaboelfotouh.20@gmail.com</a>&gt;</p>
+    <p><strong>Repository URL:</strong> <a href="https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer">https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer</a></p>
+    <p><strong>NVDA Compatibility:</strong> NVDA 2022.1 to 2025.3+</p>
+
+    <div class="note">
+        <p><strong>Overview:</strong> <strong>Headless Media Player</strong> is a high-performance, completely headless, privacy-oriented background media player add-on for the NVDA screen reader. It allows you to play local audio/video files, entire directories, playlists, and online streams (YouTube videos, playlists, channels, search queries, live streams, Twitch, SoundCloud, web radio) with <strong>zero visible UI, zero floating windows, and zero taskbar presence</strong>.</p>
+    </div>
+
+    <h2>Table of Contents</h2>
+    <ul>
+        <li><a href="#concept">1. Core Concept: Modal Keyboard Capture (Player Mode)</a></li>
+        <li><a href="#quick-start">2. Quick Start Guide</a></li>
+        <li><a href="#global-shortcuts">3. Global NVDA Shortcuts</a></li>
+        <li><a href="#player-shortcuts">4. Complete Player Mode Shortcuts Reference</a></li>
+        <li><a href="#youtube">5. YouTube & Online Web Streaming</a></li>
+        <li><a href="#cookies">6. Important: YouTube Login & Cookies Setup</a></li>
+        <li><a href="#explorer">7. Windows Explorer & Desktop Integration</a></li>
+        <li><a href="#settings">8. NVDA Settings & Customization</a></li>
+        <li><a href="#formats">9. Supported Formats</a></li>
+        <li><a href="#troubleshooting">10. Tips & Troubleshooting</a></li>
+    </ul>
+
+    <hr>
+
+    <h2 id="concept">1. Core Concept: Modal Keyboard Capture (Player Mode)</h2>
+    <p>Traditional media players require switching windows, stealing focus from your active document, web browser, or chat. <strong>Headless Media Player</strong> operates entirely in the background.</p>
+    <p>When you enter <strong>Player Mode</strong> (by pressing <kbd>NVDA+Ctrl+Shift+P</kbd>):</p>
+    <ul>
+        <li>All keystrokes are intercepted exclusively by the media engine and are <strong>blocked from leaking</strong> into background applications.</li>
+        <li>Pressing single letters (e.g. <kbd>Space</kbd> to pause, arrows to seek, <kbd>u</kbd> to search YouTube, <kbd>Tab</kbd> to jump tracks) controls the player instantly without typing characters into open documents.</li>
+        <li>Subtle acoustic tones and NVDA speech announcements confirm entering and exiting Player Mode.</li>
+        <li>Pressing <kbd>Escape</kbd> or <kbd>NVDA+Ctrl+Shift+P</kbd> exits Player Mode immediately and restores standard keyboard input.</li>
+    </ul>
+
+    <hr>
+
+    <h2 id="quick-start">2. Quick Start Guide</h2>
+    <ol>
+        <li><strong>Play any file or folder from Explorer:</strong> Focus on any media file or folder in Windows Explorer or Desktop and press <kbd>NVDA+Ctrl+Windows+E</kbd>. Playback starts immediately in the background and activates Player Mode!</li>
+        <li><strong>Open File Dialog:</strong> In Player Mode, press <kbd>o</kbd> to browse for a media file, or <kbd>f</kbd> to queue an entire folder.</li>
+        <li><strong>Search YouTube:</strong> In Player Mode, press <kbd>u</kbd>, type your search query (in Arabic or English, e.g. <code>Surah Al-Kahf</code> or <code>Audiobook Chapter 1</code>), and press <kbd>Enter</kbd>. Browse results with Up/Down arrows and press <kbd>Enter</kbd> to play!</li>
+        <li><strong>Control Playback:</strong> Press <kbd>Space</kbd> to pause/resume, <kbd>Left</kbd>/<kbd>Right</kbd> to seek, <kbd>Up</kbd>/<kbd>Down</kbd> for volume, <kbd>i</kbd> for track details, and <kbd>Escape</kbd> when you want to return to typing in other applications.</li>
+    </ol>
+
+    <hr>
+
+    <h2 id="global-shortcuts">3. Global NVDA Shortcuts</h2>
+    <p>These shortcuts work everywhere across Windows regardless of active application or Player Mode state:</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Shortcut</th>
+                <th>Action</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><kbd>NVDA+Ctrl+Shift+P</kbd><br><small>(or <kbd>Insert+Ctrl+Shift+P</kbd> / <kbd>CapsLock+Ctrl+Shift+P</kbd>)</small></td>
+                <td>Toggle Player Mode</td>
+                <td>Enters or exits exclusive modal keyboard capture.</td>
+            </tr>
+            <tr>
+                <td><kbd>NVDA+Ctrl+Windows+E</kbd><br><small>(or <kbd>Insert+Ctrl+Win+E</kbd>)</small></td>
+                <td>Play from Explorer / Desktop</td>
+                <td>Instantly queues and plays the currently selected or focused media file/folder in Windows Explorer or Desktop.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2 id="player-shortcuts">4. Complete Player Mode Shortcuts Reference</h2>
+    <p>The following commands are available while <strong>Player Mode is active</strong>:</p>
+
+    <h3>4.1. Playback & Volume Controls</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Key</th>
+                <th>Action</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><kbd>Space</kbd></td>
+                <td>Play / Pause</td>
+                <td>Toggles playback state. If the track reached the end, restarts from the beginning.</td>
+            </tr>
+            <tr>
+                <td><kbd>s</kbd></td>
+                <td>Stop</td>
+                <td>Stops playback, saves resume position, and rewinds to 0:00.</td>
+            </tr>
+            <tr>
+                <td><kbd>m</kbd></td>
+                <td>Mute / Unmute</td>
+                <td>Toggles audio mute state.</td>
+            </tr>
+            <tr>
+                <td><kbd>Up Arrow</kbd></td>
+                <td>Volume Up</td>
+                <td>Increases volume by 5% (announced by NVDA).</td>
+            </tr>
+            <tr>
+                <td><kbd>Down Arrow</kbd></td>
+                <td>Volume Down</td>
+                <td>Decreases volume by 5% (announced by NVDA).</td>
+            </tr>
+            <tr>
+                <td><kbd>b</kbd></td>
+                <td>Bass Boost</td>
+                <td>Increases bass equalizer by +3 dB.</td>
+            </tr>
+            <tr>
+                <td><kbd>Shift + b</kbd></td>
+                <td>Bass Reduce</td>
+                <td>Decreases bass equalizer by -3 dB.</td>
+            </tr>
+            <tr>
+                <td><kbd>Escape</kbd></td>
+                <td>Exit Player Mode</td>
+                <td>Deactivates Player Mode and restores normal keyboard input immediately.</td>
+            </tr>
+            <tr>
+                <td><kbd>Control</kbd></td>
+                <td>Silence Speech</td>
+                <td>Instantly cancels ongoing speech announcements.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>4.2. Granular Seeking & Direct Position Jumps</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Key</th>
+                <th>Action</th>
+                <th>Default Step</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><kbd>Left Arrow</kbd> / <kbd>Right Arrow</kbd></td>
+                <td>Normal Seek</td>
+                <td>- / + 5 seconds (Configurable in Settings)</td>
+            </tr>
+            <tr>
+                <td><kbd>Alt + Left Arrow</kbd> / <kbd>Alt + Right Arrow</kbd></td>
+                <td>Slow / Precise Seek</td>
+                <td>- / + 1 second (Configurable in Settings)</td>
+            </tr>
+            <tr>
+                <td><kbd>Ctrl + Left Arrow</kbd> / <kbd>Ctrl + Right Arrow</kbd></td>
+                <td>Fast Seek</td>
+                <td>- / + 30 seconds (Configurable in Settings)</td>
+            </tr>
+            <tr>
+                <td><kbd>Shift + Left Arrow</kbd> / <kbd>Shift + Right Arrow</kbd></td>
+                <td>Ultrafast Seek</td>
+                <td>- / + 5 minutes (300s, Configurable)</td>
+            </tr>
+            <tr>
+                <td><kbd>1</kbd> to <kbd>9</kbd> <small>(top row or numpad)</small></td>
+                <td>Percentage Jump</td>
+                <td>Jumps directly to 10%, 20%, 30%, ... 90% of file duration.</td>
+            </tr>
+            <tr>
+                <td><kbd>0</kbd></td>
+                <td>Jump to Start</td>
+                <td>Rewinds directly to 0% (beginning of file).</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>4.3. Pitch-Preserved Variable Speed</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Key</th>
+                <th>Action</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><kbd>Ctrl + Up Arrow</kbd></td>
+                <td>Fine Speed Up</td>
+                <td>Increases speed by +0.1x (audio pitch remains 100% natural and clear).</td>
+            </tr>
+            <tr>
+                <td><kbd>Ctrl + Down Arrow</kbd></td>
+                <td>Fine Speed Down</td>
+                <td>Decreases speed by -0.1x.</td>
+            </tr>
+            <tr>
+                <td><kbd>Shift + Up Arrow</kbd></td>
+                <td>Next Preset Speed</td>
+                <td>Cycles up through presets: 1.0x &rarr; 1.25x &rarr; 1.5x &rarr; 1.75x &rarr; 2.0x &rarr; 2.25x &rarr; 2.5x &rarr; 3.0x &rarr; 3.5x &rarr; 4.0x.</td>
+            </tr>
+            <tr>
+                <td><kbd>Shift + Down Arrow</kbd></td>
+                <td>Previous Preset Speed</td>
+                <td>Cycles down through standard speed presets.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>4.4. A-B Segment Looping & Repeat Modes</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Key</th>
+                <th>Action</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><kbd>[</kbd> <small>(or Arabic <kbd>ج</kbd>)</small></td>
+                <td>Mark Point A</td>
+                <td>Sets loop starting timestamp at current position.</td>
+            </tr>
+            <tr>
+                <td><kbd>]</kbd> <small>(or Arabic <kbd>د</kbd>)</small></td>
+                <td>Mark Point B</td>
+                <td>Sets loop ending timestamp and immediately starts endless repetition between Point A and Point B.</td>
+            </tr>
+            <tr>
+                <td><kbd>c</kbd></td>
+                <td>Clear A-B Loop</td>
+                <td>Clears A-B loop points and returns to normal sequential playback.</td>
+            </tr>
+            <tr>
+                <td><kbd>r</kbd></td>
+                <td>Toggle Repeat Mode</td>
+                <td>Cycles repeat mode: <strong>Track Repeat</strong> (repeat single file) &rarr; <strong>Playlist Repeat</strong> (repeat entire queue) &rarr; <strong>Repeat Off</strong>.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>4.5. Playlist, Files, and Chapter Navigation</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Key</th>
+                <th>Action</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><kbd>Page Down</kbd> <small>(or <kbd>Tab</kbd>)</small></td>
+                <td>Next Track</td>
+                <td>Skips to the next track in the playlist queue.</td>
+            </tr>
+            <tr>
+                <td><kbd>Page Up</kbd> <small>(or <kbd>Shift + Tab</kbd>)</small></td>
+                <td>Previous Track</td>
+                <td>Skips to the previous track in the playlist queue.</td>
+            </tr>
+            <tr>
+                <td><kbd>n</kbd></td>
+                <td>Toggle Auto-Next</td>
+                <td>Enables or disables automatic playback of the next track when current track finishes.</td>
+            </tr>
+            <tr>
+                <td><kbd>z</kbd></td>
+                <td>Toggle Shuffle</td>
+                <td>Shuffles playlist order non-destructively. Toggle off to restore original order.</td>
+            </tr>
+            <tr>
+                <td><kbd>Ctrl + Shift + Right Arrow</kbd></td>
+                <td>Next Chapter</td>
+                <td>Jumps to next chapter (announces chapter title/number).</td>
+            </tr>
+            <tr>
+                <td><kbd>Ctrl + Shift + Left Arrow</kbd></td>
+                <td>Previous Chapter</td>
+                <td>Jumps to previous chapter.</td>
+            </tr>
+            <tr>
+                <td><kbd>a</kbd></td>
+                <td>Cycle Audio Track</td>
+                <td>Switches between alternative audio streams or languages in multi-audio video files.</td>
+            </tr>
+            <tr>
+                <td><kbd>o</kbd></td>
+                <td>Open File Dialog</td>
+                <td>Opens native file selection dialog to play audio or video.</td>
+            </tr>
+            <tr>
+                <td><kbd>f</kbd></td>
+                <td>Open Folder Dialog</td>
+                <td>Opens native folder picker to queue all media files in natural alphabetical order.</td>
+            </tr>
+            <tr>
+                <td><kbd>e</kbd></td>
+                <td>Play Explorer Selection</td>
+                <td>Plays the focused or selected file/folder in Windows Explorer.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>4.6. Speech Queries & Help</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Key</th>
+                <th>Action</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><kbd>i</kbd></td>
+                <td>Speak Media Info</td>
+                <td>Announces track title, total formatted duration, and playlist index (e.g. <em>"Track 3 of 15"</em>).</td>
+            </tr>
+            <tr>
+                <td><kbd>Ctrl + i</kbd></td>
+                <td>Speak Remaining Time</td>
+                <td>Announces remaining playback time in hours, minutes, and seconds.</td>
+            </tr>
+            <tr>
+                <td><kbd>Shift + i</kbd></td>
+                <td>Speak Elapsed Time</td>
+                <td>Announces elapsed playback time.</td>
+            </tr>
+            <tr>
+                <td><kbd>h</kbd> <small>(or Arabic <kbd>ا</kbd>)</small></td>
+                <td>Show Shortcuts Help</td>
+                <td>Opens an accessible quick reference dialog displaying all shortcuts.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2 id="youtube">5. YouTube & Online Web Streaming</h2>
+    <p>Headless Media Player includes a built-in stream extraction engine powered by embedded <code>yt-dlp</code> and lightweight JavaScript engine support. It requires <strong>zero external installations</strong>.</p>
+
+    <h3>5.1. Searching YouTube (<kbd>u</kbd> Key)</h3>
+    <ol>
+        <li>Press <kbd>u</kbd> while in Player Mode.</li>
+        <li>A dialog appears asking for a URL or search query. (If a web link is currently copied to your clipboard, it is automatically pasted for you!)</li>
+        <li>Type any text search query (e.g. <code>سورة الرحمن العفاسي</code> or <code>BBC World News live</code>) and press <kbd>Enter</kbd>.</li>
+        <li>An accessible results browser appears displaying real matching videos, playlists, and channels with titles, uploaders, and durations.</li>
+        <li><strong>To play a video:</strong> Move with <kbd>Up</kbd>/<kbd>Down</kbd> arrows and press <kbd>Enter</kbd>. Playback starts headlessly in seconds!</li>
+        <li><strong>To explore a Playlist or Channel:</strong> Press <kbd>Enter</kbd> on any Playlist or Channel result to drill-down and view its individual tracks.</li>
+        <li><strong>To queue an entire Playlist at once:</strong> Focus on a Playlist item, press <kbd>Tab</kbd> to reach the <strong>Play Entire Playlist</strong> button, and press <kbd>Space</kbd> or <kbd>Enter</kbd>.</li>
+        <li>Press <kbd>Backspace</kbd> to go back one level, or <kbd>Escape</kbd> to close the browser.</li>
+    </ol>
+
+    <h3>5.2. Direct URL Playback (<kbd>u</kbd> Key)</h3>
+    <p>Paste any supported online URL into the <kbd>u</kbd> dialog and press <kbd>Enter</kbd>:</p>
+    <ul>
+        <li><strong>Single YouTube Video / Short / Live:</strong> <code>https://www.youtube.com/watch?v=...</code> or <code>https://youtu.be/...</code></li>
+        <li><strong>YouTube Playlist:</strong> <code>https://www.youtube.com/playlist?list=...</code> (Queues all tracks automatically with Auto-Next support!)</li>
+        <li><strong>Arbitrary Media Streams:</strong> Twitch streams, SoundCloud tracks, direct HTTP/HTTPS audio links, <code>.m3u8</code> HLS live streams, and online radio stations.</li>
+    </ul>
+
+    <h3>5.3. YouTube Account, Subscriptions & Trending (<kbd>p</kbd> Key)</h3>
+    <p>Press <kbd>p</kbd> in Player Mode to open the <strong>YouTube Portal</strong>. You can browse:</p>
+    <ul>
+        <li><strong>Regional Trending:</strong> Choose your country (Egypt, Saudi Arabia, UAE, USA, UK, Germany, France, Japan, etc.) and explore trending videos.</li>
+        <li><strong>My Subscriptions & My Playlists:</strong> Browse your personal YouTube feed and private playlists (see <a href="#cookies">Cookies Setup</a> below).</li>
+    </ul>
+
+    <h3>5.4. Copy Stream Link (<kbd>v</kbd> Key)</h3>
+    <p>Pressing <kbd>v</kbd> during playback copies the direct web link or source file path of the currently playing track to the Windows Clipboard and speaks a confirmation message.</p>
+
+    <hr>
+
+    <h2 id="cookies">6. Important: YouTube Login & Cookies Setup</h2>
+    
+    <div class="important">
+        <p><strong>Why direct Chrome cookie extraction does not work:</strong></p>
+        <p>Modern versions of Google Chrome and Microsoft Edge on Windows (Chrome 120+) enforce strict <em>App-Bound Encryption</em> (DPAPI + <code>v20</code> key protection). This prevents any external application from reading Chrome's cookie database directly from the disk. Attempting direct Chrome extraction will fail or produce authentication errors.</p>
+    </div>
+
+    <h3>How to export cookies easily using a Browser Extension:</h3>
+    <ol>
+        <li>Install a trusted cookie export extension in your browser:
+            <ul>
+                <li><strong>For Google Chrome, Brave, Edge:</strong> Install <a href="https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc" target="_blank"><strong>Get cookies.txt LOCALLY</strong> (Chrome Web Store)</a></li>
+                <li><strong>For Mozilla Firefox:</strong> Install <a href="https://addons.mozilla.org/firefox/addon/cookies-txt/" target="_blank"><strong>cookies.txt</strong> (Firefox Add-ons)</a></li>
+            </ul>
+        </li>
+        <li>Open <a href="https://www.youtube.com" target="_blank">YouTube.com</a> in your browser and make sure you are logged into your Google account.</li>
+        <li>Click the extension icon in your browser toolbar and click <strong>Export</strong> (or download) to save your <code>cookies.txt</code> file to your computer (e.g. into your Documents or Downloads folder).</li>
+        <li>In NVDA, open <strong>NVDA Menu &rarr; Preferences &rarr; Settings &rarr; Headless Media Player</strong>.</li>
+        <li>Under <strong>YouTube Stream Settings</strong>, click <strong>Browse...</strong> next to <em>Custom Cookies File</em>, select your exported <code>cookies.txt</code> file, and click <strong>OK</strong>.</li>
+    </ol>
+    <p>Now Headless Media Player can access all your private playlists, liked videos, subscriptions, and age-restricted content seamlessly without errors!</p>
+
+    <hr>
+
+    <h2 id="explorer">7. Windows Explorer & Desktop Integration</h2>
+    <p>You can start playback instantly from Windows Explorer or your Desktop without opening any dialogs:</p>
+    <ul>
+        <li>Select or focus on any audio or video file (or folder containing media files) in Windows Explorer or Desktop.</li>
+        <li>Press <kbd>NVDA+Ctrl+Windows+E</kbd> (globally) or <kbd>e</kbd> (in Player Mode).</li>
+        <li>The add-on automatically detects the focused item (even if file extensions are hidden in Windows), builds an ordered playlist, begins playback, and enters Player Mode immediately!</li>
+    </ul>
+
+    <hr>
+
+    <h2 id="settings">8. NVDA Settings & Customization</h2>
+    <p>Open <strong>NVDA Menu &rarr; Preferences &rarr; Settings &rarr; Headless Media Player</strong> to customize:</p>
+
+    <h3>8.1. Speech Feedback & Verbosity</h3>
+    <ul>
+        <li>Toggle individual voice announcements for: volume changes, seek time announcements, speed adjustments, track changes, repeat mode toggles, and A-B loop point markers.</li>
+    </ul>
+
+    <h3>8.2. Configurable Seek Jump Sizes</h3>
+    <ul>
+        <li>Customize the number of seconds for: <strong>Normal Seek</strong> (default: 5s), <strong>Slow Seek</strong> (default: 1s), <strong>Fast Seek</strong> (default: 30s), and <strong>Ultrafast Seek</strong> (default: 300s).</li>
+    </ul>
+
+    <h3>8.3. Playback Defaults & Resume Position</h3>
+    <ul>
+        <li><strong>Automatic Resume:</strong> Automatically saves and restores playback position for long lectures, podcasts, and audiobooks.</li>
+        <li><strong>Default Speed & Auto-Next:</strong> Set default playback speed and whether playlists advance automatically.</li>
+        <li><strong>Auto-Enter Player Mode:</strong> Automatically activates Player Mode whenever new media is loaded.</li>
+    </ul>
+
+    <h3>8.4. YouTube Stream Settings & Updates</h3>
+    <ul>
+        <li><strong>Audio Stream Quality:</strong> Choose preferred stream format: <code>Opus (High Quality)</code>, <code>M4A / AAC</code>, or <code>Best Available</code>.</li>
+        <li><strong>Custom Cookies File:</strong> Select your exported <code>cookies.txt</code> file for full account synchronization.</li>
+        <li><strong>Check for Updates Button:</strong> Checks GitHub for the latest stream extractor updates and updates the bundled streaming engine in the background.</li>
+    </ul>
+
+    <h3>8.5. Interactive Keyboard Shortcuts Customizer</h3>
+    <p>Click the <strong>Customize Shortcuts</strong> button in settings to open an interactive dialog where you can assign multi-key combinations (such as <kbd>Shift + Tab</kbd>, <kbd>Ctrl + Space</kbd>, or custom letters) to any player action with live key-press capture and searchable suggestions.</p>
+
+    <hr>
+
+    <h2 id="formats">9. Supported Formats</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Supported Extensions / Protocols</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Audio</strong></td>
+                <td><code>.mp3</code>, <code>.wav</code>, <code>.flac</code>, <code>.m4a</code>, <code>.aac</code>, <code>.ogg</code>, <code>.opus</code>, <code>.wma</code>, <code>.alac</code>, <code>.aiff</code>, <code>.ape</code>, <code>.ac3</code>, <code>.dts</code>, <code>.mka</code>, <code>.mid</code>, <code>.amr</code>, <code>.spx</code></td>
+            </tr>
+            <tr>
+                <td><strong>Video (Headless)</strong></td>
+                <td><code>.mp4</code>, <code>.mkv</code>, <code>.avi</code>, <code>.webm</code>, <code>.mov</code>, <code>.wmv</code>, <code>.flv</code>, <code>.ts</code>, <code>.m2ts</code>, <code>.vob</code>, <code>.ogv</code>, <code>.3gp</code>, <code>.mpg</code></td>
+            </tr>
+            <tr>
+                <td><strong>Playlists</strong></td>
+                <td><code>.m3u</code>, <code>.m3u8</code>, <code>.pls</code>, <code>.cue</code></td>
+            </tr>
+            <tr>
+                <td><strong>Online Streams</strong></td>
+                <td>YouTube (Videos, Playlists, Channels, Shorts, Live Streams), Twitch, SoundCloud, HTTP/HTTPS audio streams, HLS (<code>.m3u8</code>) radio streams.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2 id="troubleshooting">10. Tips & Troubleshooting</h2>
+    <ul>
+        <li><strong>Can't type into other programs?</strong> You are currently in Player Mode. Press <kbd>Escape</kbd> or <kbd>NVDA+Ctrl+Shift+P</kbd> to exit Player Mode and resume normal typing.</li>
+        <li><strong>Rapid Seeking:</strong> Holding down seek keys will debounce speech announcements and announce the final destination time cleanly when you release the key.</li>
+        <li><strong>Silence Speech:</strong> Tap bare <kbd>Control</kbd> at any time in Player Mode to immediately silence speech without interrupting audio playback.</li>
+    </ul>
+
+</body>
+</html>
