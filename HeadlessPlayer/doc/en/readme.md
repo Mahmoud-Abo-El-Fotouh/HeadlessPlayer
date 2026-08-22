@@ -101,19 +101,32 @@ When Player Mode is active (<kbd>NVDA+Ctrl+Shift+P</kbd>):
 
 ---
 
-## 5. Important: YouTube Login & Cookies Setup
-> [!IMPORTANT]
-> **Why direct Chrome cookie extraction does not work:**  
-> Modern versions of Google Chrome and Microsoft Edge on Windows (Chrome 120+) enforce strict **App-Bound Encryption** (DPAPI + `v20` key protection). This prevents external tools from decrypting cookies directly from Chrome's SQLite files on disk.
+## 5. YouTube Cookies & Long-Lived Session Solutions
 
-### Easy Cookie Export with Browser Extensions:
-1. Install an extension to export cookies:
-   - **For Chrome, Edge, Brave:** [Get cookies.txt LOCALLY (Chrome Web Store)](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc)
-   - **For Firefox:** [cookies.txt (Firefox Add-ons)](https://addons.mozilla.org/firefox/addon/cookies-txt/)
-2. Open [YouTube.com](https://www.youtube.com) and log in to your account.
-3. Click the extension icon and export your `cookies.txt` file.
-4. In NVDA, open **Preferences -> Settings -> Headless Media Player**.
-5. Click **Browse...** next to *Custom Cookies File*, select your `cookies.txt` file, and press **OK**.
+> [!NOTE]
+> **Important Note:** 99% of YouTube features (searching by name with <kbd>u</kbd>, playing any video, public playlists, channels, trending music with <kbd>p</kbd>, and live streams) **do NOT require any sign-in or cookies at all!** Cookies are only needed for Private playlists (such as Watch Later `WL` or Liked Videos `LL`) and age-restricted videos.
+
+### Why do Chrome cookies stop working quickly?
+In modern Google Chrome and Microsoft Edge on Windows (Chrome 120+), Google enforces **App-Bound Encryption** (preventing direct file extraction) and **Session Token Rotation** (invalidating old cookie snapshots whenever you browse or open other Google services).
+
+### Recommended Solutions for Long-Lived Cookies (lasting months/years):
+
+1. **Option 1 (Best & Most Recommended — Mozilla Firefox):**
+   - Firefox uses an independent cookie engine without aggressive session rotation.
+   - Install the **[cookies.txt extension for Firefox](https://addons.mozilla.org/firefox/addon/cookies-txt/)**.
+   - Log in to [YouTube.com](https://www.youtube.com), export your `cookies.txt`, and set it in HeadlessPlayer settings.
+   - **Result:** Cookies exported from Firefox typically last for **6 to 12+ months** without interruption as long as you don't log out.
+
+2. **Option 2 (Dedicated Chrome/Brave/Edge Profile):**
+   - Create a separate user profile in Chrome/Brave (e.g. named `Player`).
+   - Install **[Get cookies.txt LOCALLY for Chrome/Edge/Brave](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc)**.
+   - Log in to YouTube, export `cookies.txt`, and save it.
+   - **Crucial:** Keep this profile dedicated to the player and avoid using it for heavy daily web browsing so Google doesn't rotate its session tokens.
+
+3. **Option 3 (Incognito / Private Window):**
+   - Open an Incognito / InPrivate window in your browser.
+   - Log in to YouTube and export `cookies.txt` using the extension (make sure the extension is enabled in Incognito).
+   - Close the Incognito window.
 
 ---
 
@@ -132,3 +145,8 @@ Located in **NVDA Menu -> Preferences -> Settings -> Headless Media Player**:
 - **Video (Headless):** `.mp4`, `.mkv`, `.avi`, `.webm`, `.mov`, `.wmv`, `.flv`, `.ts`, `.m2ts`, `.vob`, `.ogv`, `.3gp`, `.mpg`
 - **Playlists:** `.m3u`, `.m3u8`, `.pls`, `.cue`
 - **Online:** YouTube (Videos, Playlists, Channels, Shorts, Live), Twitch, SoundCloud, HTTP/HTTPS audio, HLS (`.m3u8`) radio.
+
+---
+
+## License
+Released under the [MIT License](LICENSE).

@@ -66,7 +66,7 @@ In modern Google Chrome and Microsoft Edge on Windows (Chrome 120+), Google enfo
 1. **Option 1 (Best & Most Recommended — Mozilla Firefox):**
    - Firefox uses an independent cookie engine without aggressive session rotation.
    - Install the **[cookies.txt extension for Firefox](https://addons.mozilla.org/firefox/addon/cookies-txt/)**.
-   - Log in to [YouTube.com](https://www.youtube.com), export your `cookies.txt`, and set it in HeadlessPlayer settings.
+   - Log in to [YouTube.com](https://www.youtube.com), export your `cookies.txt`, and set it in HeadlessPlayer settings (**NVDA Menu -> Preferences -> Settings -> Headless Media Player**).
    - **Result:** Cookies exported from Firefox typically last for **6 to 12+ months** without interruption as long as you don't log out.
 
 2. **Option 2 (Dedicated Chrome/Brave/Edge Profile):**
@@ -79,10 +79,6 @@ In modern Google Chrome and Microsoft Edge on Windows (Chrome 120+), Google enfo
    - Open an Incognito / InPrivate window in your browser.
    - Log in to YouTube and export `cookies.txt` using the extension (make sure the extension is enabled in Incognito).
    - Close the Incognito window.
-
-4. **Option 4 (Zero Cookies Needed — Unlisted Playlists):**
-   - If you have personal playlists, change their privacy setting from **Private** to **Unlisted**.
-   - They will remain hidden from public search, but you can play them instantly in HeadlessPlayer via URL with **zero cookies required forever!**
 
 ---
 
