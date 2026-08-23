@@ -948,8 +948,23 @@ msgstr "الفيديوهات التي أعجبتك"
 msgid "Watch history"
 msgstr "سجل المشاهدة"
 
+msgid "Subscribed channels"
+msgstr "قنواتك المشترك فيها"
+
 msgid "Trending in your country"
 msgstr "الرائج في دولتك"
+
+msgid "Trending Videos (Now / General)"
+msgstr "الفيديوهات الرائجة (العام)"
+
+msgid "Trending Music (Local Charts)"
+msgstr "الموسيقى الرائجة محلياً"
+
+msgid "Trending Gaming"
+msgstr "الألعاب الرائجة"
+
+msgid "Trending Movies & Entertainment"
+msgstr "الأفلام والعروض الرائجة"
 
 msgid "This section requires YouTube sign-in. Enable sign-in cookies from your browser in HeadlessPlayer settings, then try again."
 msgstr "هذا القسم يتطلب تسجيل الدخول إلى يوتيوب. فعّل كوكيز تسجيل الدخول من متصفحك في إعدادات المشغل الخفي ثم حاول مجددًا."

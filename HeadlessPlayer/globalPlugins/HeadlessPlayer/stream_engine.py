@@ -43,7 +43,7 @@ _ADDON_DIR = os.path.dirname(os.path.abspath(__file__))
 LIB_DIR = os.path.join(_ADDON_DIR, "lib")
 
 if LIB_DIR not in sys.path:
-    sys.path.insert(0, LIB_DIR)
+    sys.path.append(LIB_DIR)
 
 _ytdlp_module: Any = None
 _ytdlp_import_error: Optional[str] = None
@@ -257,14 +257,20 @@ def get_account_sections() -> List["StreamItem"]:
     return [
         StreamItem(
             ITEM_LISTING,
-            "https://www.youtube.com/feed/recommended",
-            _("Recommended for you (home feed)"),
+            "https://www.youtube.com/feed/channels",
+            _("Subscribed channels"),
             requires_login=True,
         ),
         StreamItem(
             ITEM_LISTING,
             "https://www.youtube.com/feed/subscriptions",
             _("Latest videos from your subscriptions"),
+            requires_login=True,
+        ),
+        StreamItem(
+            ITEM_LISTING,
+            "https://www.youtube.com/feed/recommended",
+            _("Recommended for you (home feed)"),
             requires_login=True,
         ),
         StreamItem(
@@ -285,8 +291,13 @@ def get_account_sections() -> List["StreamItem"]:
             _("Watch history"),
             requires_login=True,
         ),
-        # YouTube discontinued the classic /feed/trending page in 2025;
-        # the official auto-generated global Top 100 chart playlist replaces it.
+        StreamItem(
+            ITEM_LISTING,
+            "internal://trending_country",
+            _("Trending in your country"),
+            requires_login=True,
+        ),
+        # Direct global top 100 music chart (works for everyone without login)
         StreamItem(
             ITEM_LISTING,
             "https://www.youtube.com/playlist?list=PL4fGSI1pDJn6puJdseH2Rt9sMvt9E2M4i",
