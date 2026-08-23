@@ -1,53 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-HeadlessPlayer Configuration Specification and Persistence Layer.
-Registers the [headlessPlayer] configuration schema with NVDA's config manager.
+HeadlessPlayer Configuration Specification and SQLite Persistence Layer.
+Manages all add-on settings, user preferences, and keyboard mappings
+with high-performance, crash-safe SQLite database storage.
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
+from .database import get_db_manager, normalize_file_path
 
 CONFIG_SECTION = "headlessPlayer"
-
-# ConfigObj specification definition for NVDA's configObj validator
-CONFIG_SPEC_STRING = """
-[headlessPlayer]
-# Speech Announcements Verbosity
-announceVolume = boolean(default=True)
-announceSeek = boolean(default=True)
-announceSpeed = boolean(default=True)
-announceTrack = boolean(default=True)
-announceLoop = boolean(default=True)
-announceChapter = boolean(default=True)
-
-# Seek Jump Step Sizes (in seconds)
-seekStepNormal = integer(default=5, min=1, max=3600)
-seekStepSlow = integer(default=1, min=1, max=3600)
-seekStepFast = integer(default=30, min=1, max=3600)
-seekStepUltrafast = integer(default=300, min=5, max=7200)
-
-# Playback Defaults & Options
-defaultSpeed = float(default=1.0, min=0.25, max=5.0)
-defaultRepeatMode = string(default="off")
-defaultAutoNext = boolean(default=True)
-resumePosition = boolean(default=True)
-playModalTones = boolean(default=False)
-autoEnterPlayerMode = boolean(default=True)
-
-# Audio & Engine Settings
-mpvExecutablePath = string(default="")
-namedPipeName = string(default="\\\\.\\pipe\\nvda_headless_player")
-volume = integer(default=100, min=0, max=150)
-lastPlaybackPath = string(default="")
-
-# YouTube & Online Streaming (yt-dlp)
-ytdlpCookiesBrowser = string(default="none")
-ytdlpCookiesFile = string(default="")
-searchResultsCount = integer(default=20, min=5, max=50)
-maxStreamPlaylistItems = integer(default=300, min=10, max=1000)
-
-# Allow custom shortcuts and dynamic config keys
-__many__ = string(default="")
-"""
 
 DEFAULT_CONFIG: Dict[str, Any] = {
     "announceVolume": True,
@@ -75,86 +36,6 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "searchResultsCount": 20,
     "maxStreamPlaylistItems": 300,
 }
-
-# In-memory fallback dictionary for when running outside NVDA (e.g. unit tests)
-_fallback_config: Dict[str, Any] = dict(DEFAULT_CONFIG)
-
-
-def initializeConfig() -> None:
-    """
-    Registers the HeadlessPlayer configuration specification into NVDA's config engine.
-    Safe to invoke both within NVDA runtime and in headless/standalone test environments.
-    """
-    try:
-        import config
-        from configobj import ConfigObj
-        from validate import Validator
-        try:
-            from logHandler import log
-        except ImportError:
-            log = None
-
-        spec = ConfigObj(CONFIG_SPEC_STRING.strip().splitlines(), list_values=False, encoding="utf-8")
-        if hasattr(config, "conf") and hasattr(config.conf, "spec"):
-            config.conf.spec[CONFIG_SECTION] = spec[CONFIG_SECTION]
-
-            # Validate against current configuration to populate default values
-            validator = Validator()
-            config.conf.validate(validator, copy=True, section=CONFIG_SECTION)
-            if log:
-                log.info("HeadlessPlayer: configuration initialized successfully.")
-    except Exception:
-        # Fallback when NVDA config module is not available
-        pass
-
-
-def getConfig() -> Dict[str, Any]:
-    """
-    Returns the active HeadlessPlayer configuration dictionary for the active NVDA profile,
-    or the in-memory fallback dictionary if NVDA config is not running.
-    """
-    try:
-        import config
-        if hasattr(config, "conf"):
-            if CONFIG_SECTION not in config.conf:
-                config.conf[CONFIG_SECTION] = dict(DEFAULT_CONFIG)
-            return config.conf[CONFIG_SECTION]
-    except Exception:
-        pass
-    return _fallback_config
-
-
-def setConfigValue(key: str, value: Any) -> None:
-    """
-    Sets a specific configuration key in the active configuration dictionary.
-    """
-    cfg = getConfig()
-    cfg[key] = value
-
-
-def getConfigValue(key: str, default: Any = None) -> Any:
-    """
-    Gets a specific configuration key with fallback to DEFAULT_CONFIG or provided default.
-    """
-    cfg = getConfig()
-    if key in cfg:
-        return cfg[key]
-    if default is not None:
-        return default
-    return DEFAULT_CONFIG.get(key)
-
-
-def saveConfig() -> None:
-    """
-    Saves the global NVDA configuration to disk if running inside NVDA.
-    """
-    try:
-        import config
-        if hasattr(config, "conf") and hasattr(config.conf, "save"):
-            config.conf.save()
-    except Exception:
-        pass
-
 
 DEFAULT_KEYMAP: Dict[str, str] = {
     "play_pause": "space",
@@ -202,6 +83,66 @@ DEFAULT_KEYMAP: Dict[str, str] = {
 }
 
 
+def initializeConfig() -> None:
+    """
+    Initializes the SQLite database manager and populates default settings if needed.
+    """
+    db = get_db_manager()
+    # Populate any missing default settings
+    for key, default_val in DEFAULT_CONFIG.items():
+        if db.get_setting(key) is None:
+            db.set_setting(key, default_val)
+
+
+def getConfig() -> Dict[str, Any]:
+    """
+    Returns the active HeadlessPlayer configuration dictionary from SQLite database,
+    merged on top of DEFAULT_CONFIG defaults.
+    """
+    cfg = dict(DEFAULT_CONFIG)
+    try:
+        db = get_db_manager()
+        stored = db.get_all_settings()
+        cfg.update(stored)
+    except Exception:
+        pass
+    return cfg
+
+
+def setConfigValue(key: str, value: Any) -> None:
+    """
+    Sets a specific configuration key in the SQLite database.
+    """
+    try:
+        db = get_db_manager()
+        db.set_setting(key, value)
+    except Exception:
+        pass
+
+
+def getConfigValue(key: str, default: Any = None) -> Any:
+    """
+    Gets a specific configuration key with fallback to DEFAULT_CONFIG or provided default.
+    """
+    try:
+        db = get_db_manager()
+        val = db.get_setting(key)
+        if val is not None:
+            return val
+    except Exception:
+        pass
+    if default is not None:
+        return default
+    return DEFAULT_CONFIG.get(key)
+
+
+def saveConfig() -> None:
+    """
+    Commits any pending configuration changes (SQLite handles WAL sync automatically).
+    """
+    pass
+
+
 def parseKeymapKeys(value: str) -> list:
     """
     Parses a keymap entry into its list of key gestures.
@@ -215,35 +156,44 @@ def parseKeymapKeys(value: str) -> list:
 
 def getKeymap() -> Dict[str, str]:
     """
-    Returns the active keymap for Player Mode, merging user customizations over DEFAULT_KEYMAP.
+    Returns the active keymap for Player Mode, merging user customizations from SQLite over DEFAULT_KEYMAP.
     """
     keymap = dict(DEFAULT_KEYMAP)
-    cfg = getConfig()
-    for action in DEFAULT_KEYMAP:
-        config_key = f"key_{action}"
-        if config_key in cfg and isinstance(cfg[config_key], str) and cfg[config_key].strip():
-            keymap[action] = cfg[config_key].strip().lower()
+    try:
+        db = get_db_manager()
+        for action in DEFAULT_KEYMAP:
+            config_key = f"key_{action}"
+            val = db.get_setting(config_key)
+            if val and isinstance(val, str) and val.strip():
+                keymap[action] = val.strip().lower()
+    except Exception:
+        pass
     return keymap
 
 
-def setKeymap(custom_map: Dict[str, str]) -> None:
+def setKeymap(keymap: Dict[str, str]) -> None:
     """
-    Updates custom keymap mappings in active configuration.
+    Saves customized keymap entries to SQLite database.
     """
-    cfg = getConfig()
-    for action, key in custom_map.items():
-        if action in DEFAULT_KEYMAP:
+    try:
+        db = get_db_manager()
+        mapping = {}
+        for action, key_id in keymap.items():
             config_key = f"key_{action}"
-            cfg[config_key] = key.strip().lower()
+            mapping[config_key] = key_id.strip().lower()
+        db.set_multiple_settings(mapping)
+    except Exception:
+        pass
 
 
 def resetKeymap() -> None:
     """
-    Resets all custom player mode shortcut keybindings to factory defaults.
+    Resets customized keymap entries in SQLite to factory defaults.
     """
-    cfg = getConfig()
-    for action in DEFAULT_KEYMAP:
-        config_key = f"key_{action}"
-        if config_key in cfg:
-            del cfg[config_key]
-
+    try:
+        db = get_db_manager()
+        for action in DEFAULT_KEYMAP:
+            config_key = f"key_{action}"
+            db.set_setting(config_key, "")
+    except Exception:
+        pass

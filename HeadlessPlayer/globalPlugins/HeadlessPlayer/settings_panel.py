@@ -979,71 +979,69 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         if wx is None:
             return
 
-        cfg = getConfig()
-
         # Update speech announcement flags
         if hasattr(self, "announceVolumeChk"):
-            cfg["announceVolume"] = bool(self.announceVolumeChk.GetValue())
+            setConfigValue("announceVolume", bool(self.announceVolumeChk.GetValue()))
         if hasattr(self, "announceSeekChk"):
-            cfg["announceSeek"] = bool(self.announceSeekChk.GetValue())
+            setConfigValue("announceSeek", bool(self.announceSeekChk.GetValue()))
         if hasattr(self, "announceSpeedChk"):
-            cfg["announceSpeed"] = bool(self.announceSpeedChk.GetValue())
+            setConfigValue("announceSpeed", bool(self.announceSpeedChk.GetValue()))
         if hasattr(self, "announceTrackChk"):
-            cfg["announceTrack"] = bool(self.announceTrackChk.GetValue())
+            setConfigValue("announceTrack", bool(self.announceTrackChk.GetValue()))
         if hasattr(self, "announceLoopChk"):
-            cfg["announceLoop"] = bool(self.announceLoopChk.GetValue())
+            setConfigValue("announceLoop", bool(self.announceLoopChk.GetValue()))
         if hasattr(self, "announceChapterChk"):
-            cfg["announceChapter"] = bool(self.announceChapterChk.GetValue())
+            setConfigValue("announceChapter", bool(self.announceChapterChk.GetValue()))
 
         # Update seek step sizes
         if hasattr(self, "seekStepNormalCtrl"):
-            cfg["seekStepNormal"] = int(self.seekStepNormalCtrl.GetValue())
+            setConfigValue("seekStepNormal", int(self.seekStepNormalCtrl.GetValue()))
         if hasattr(self, "seekStepSlowCtrl"):
-            cfg["seekStepSlow"] = int(self.seekStepSlowCtrl.GetValue())
+            setConfigValue("seekStepSlow", int(self.seekStepSlowCtrl.GetValue()))
         if hasattr(self, "seekStepFastCtrl"):
-            cfg["seekStepFast"] = int(self.seekStepFastCtrl.GetValue())
+            setConfigValue("seekStepFast", int(self.seekStepFastCtrl.GetValue()))
         if hasattr(self, "seekStepUltrafastCtrl"):
-            cfg["seekStepUltrafast"] = int(self.seekStepUltrafastCtrl.GetValue())
+            setConfigValue("seekStepUltrafast", int(self.seekStepUltrafastCtrl.GetValue()))
 
         # Update default speed
         if hasattr(self, "defaultSpeedChoice"):
             speedSel = self.defaultSpeedChoice.GetSelection()
             if 0 <= speedSel < len(SPEED_CHOICES):
-                cfg["defaultSpeed"] = float(SPEED_CHOICES[speedSel][0])
+                setConfigValue("defaultSpeed", float(SPEED_CHOICES[speedSel][0]))
 
         # Update default repeat mode
         if hasattr(self, "defaultRepeatChoice"):
             repeatSel = self.defaultRepeatChoice.GetSelection()
             if 0 <= repeatSel < len(REPEAT_CHOICES):
-                cfg["defaultRepeatMode"] = REPEAT_CHOICES[repeatSel][0]
+                setConfigValue("defaultRepeatMode", REPEAT_CHOICES[repeatSel][0])
 
         # Update playback behavior options
         if hasattr(self, "autoNextChk"):
-            cfg["defaultAutoNext"] = bool(self.autoNextChk.GetValue())
+            setConfigValue("defaultAutoNext", bool(self.autoNextChk.GetValue()))
         if hasattr(self, "resumePositionChk"):
-            cfg["resumePosition"] = bool(self.resumePositionChk.GetValue())
+            setConfigValue("resumePosition", bool(self.resumePositionChk.GetValue()))
         if hasattr(self, "playModalTonesChk"):
-            cfg["playModalTones"] = bool(self.playModalTonesChk.GetValue())
+            setConfigValue("playModalTones", bool(self.playModalTonesChk.GetValue()))
         if hasattr(self, "autoEnterPlayerModeChk"):
-            cfg["autoEnterPlayerMode"] = bool(self.autoEnterPlayerModeChk.GetValue())
+            setConfigValue("autoEnterPlayerMode", bool(self.autoEnterPlayerModeChk.GetValue()))
 
         # Update YouTube & online streaming options
         if hasattr(self, "searchResultsCountCtrl"):
-            cfg["searchResultsCount"] = int(self.searchResultsCountCtrl.GetValue())
+            setConfigValue("searchResultsCount", int(self.searchResultsCountCtrl.GetValue()))
         if hasattr(self, "maxStreamItemsCtrl"):
-            cfg["maxStreamPlaylistItems"] = int(self.maxStreamItemsCtrl.GetValue())
+            setConfigValue("maxStreamPlaylistItems", int(self.maxStreamItemsCtrl.GetValue()))
         if hasattr(self, "cookiesBrowserChoice"):
             browserSel = self.cookiesBrowserChoice.GetSelection()
             if 0 <= browserSel < len(self.cookiesBrowserChoices):
-                cfg["ytdlpCookiesBrowser"] = self.cookiesBrowserChoices[browserSel][0]
+                setConfigValue("ytdlpCookiesBrowser", self.cookiesBrowserChoices[browserSel][0])
         if hasattr(self, "cookiesFileCtrl"):
-            cfg["ytdlpCookiesFile"] = self.cookiesFileCtrl.GetValue().strip().strip('"')
+            setConfigValue("ytdlpCookiesFile", self.cookiesFileCtrl.GetValue().strip().strip('"'))
 
-        # Save to NVDA config store
+        # Save to SQLite store
         saveConfig()
 
         # Notify active player controller or engine of configuration update
-        self._notifyActiveEngine(cfg)
+        self._notifyActiveEngine(getConfig())
 
     def _notifyActiveEngine(self, cfg: dict) -> None:
         """
