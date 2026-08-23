@@ -65,6 +65,7 @@ DEFAULT_KEYMAP: Dict[str, str] = {
     "last_track": "control+end",
     "next_chapter": "control+shift+rightarrow",
     "prev_chapter": "control+shift+leftarrow",
+    "cycle_audio_track": "a",
     "point_a": "[",
     "point_b": "]",
     "toggle_repeat": "r",
@@ -81,6 +82,7 @@ DEFAULT_KEYMAP: Dict[str, str] = {
     "open_url": "u",
     "copy_url": "v",
     "account_feed": "p",
+    "close_player": "x",
     "exit_mode": "escape",
 }
 

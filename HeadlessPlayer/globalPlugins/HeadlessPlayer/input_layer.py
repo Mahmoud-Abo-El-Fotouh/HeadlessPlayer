@@ -104,6 +104,7 @@ VK_R = 0x52
 VK_S = 0x53
 VK_U = 0x55
 VK_V = 0x56
+VK_X = 0x58
 VK_Z = 0x5A
 VK_TAB = 0x09
 
@@ -404,6 +405,7 @@ class ModalInputLayer:
             "speak_remaining_time": ["speak_remaining_time", "announce_remaining_time", "get_remaining_time"],
             "speak_elapsed_time": ["speak_elapsed_time", "announce_elapsed_time", "get_elapsed_time"],
             "show_shortcuts_help": ["show_shortcuts_help", "show_help", "help", "shortcuts_help"],
+            "close_player": ["close_player", "quit_player", "close", "quit", "exit_player"],
         }
 
         candidate_names = aliases.get(method_name, [method_name])
@@ -747,7 +749,7 @@ class ModalInputLayer:
         # -------------------------------------------------------------
         # 6. Audio Tracks Switching
         # -------------------------------------------------------------
-        if (main_key == "a" or vk == VK_A) and not (has_ctrl or has_alt):
+        if self._matches_action(gesture, "cycle_audio_track", ((main_key in ("a", "ش") or vk == VK_A) and not (has_ctrl or has_alt or has_shift))):
             self._safe_call("cycle_audio_track")
             return True
 
@@ -831,6 +833,11 @@ class ModalInputLayer:
 
         if self._matches_action(gesture, "show_help", ((main_key in HELP_KEYS or vk == VK_H) and not (has_ctrl or has_alt))):
             self._safe_call("show_shortcuts_help")
+            return True
+
+        # Close / Quit player completely (x / ء)
+        if self._matches_action(gesture, "close_player", ((main_key in ("x", "ء") or vk == VK_X) and not (has_ctrl or has_alt or has_shift))):
+            self._safe_call("close_player")
             return True
 
         # Unmapped key
