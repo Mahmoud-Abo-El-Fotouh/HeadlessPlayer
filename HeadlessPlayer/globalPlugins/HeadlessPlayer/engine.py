@@ -146,11 +146,13 @@ class HeadlessEngine:
             # 3. Setup Property Observers
             self._setup_property_observers()
 
-            # 4. Re-apply persistent audio filters (e.g. bass) after restart
+            # 4. Re-apply persistent audio settings (volume, speed, bass) after launch
+            self._ipc.send_command_async(["set_property", "volume", float(self.volume)])
+            self._ipc.send_command_async(["set_property", "speed", float(self.speed)])
             if self.bass_gain:
                 self._apply_bass_filter()
 
-            logger.info("HeadlessEngine initialized and connected successfully.")
+            logger.info("HeadlessEngine initialized and connected successfully (vol=%.1f, speed=%.2fx).", self.volume, self.speed)
             return True
 
     def shutdown(self) -> None:
@@ -372,6 +374,11 @@ class HeadlessEngine:
             # Space pressed while the player was idle) would otherwise freeze
             # every new track at 0:00 with the time never moving.
             self._ipc.send_command_async(["set_property", "pause", False])
+            # Re-apply active speed and volume to the newly loaded track
+            if self.speed != 1.0:
+                self._ipc.send_command_async(["set_property", "speed", float(self.speed)])
+            if self.volume != 100.0:
+                self._ipc.send_command_async(["set_property", "volume", float(self.volume)])
             with self._lock:
                 self.paused = False
         return ok

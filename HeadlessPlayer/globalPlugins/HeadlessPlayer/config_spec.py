@@ -44,6 +44,9 @@ ytdlpCookiesBrowser = string(default="none")
 ytdlpCookiesFile = string(default="")
 searchResultsCount = integer(default=20, min=5, max=50)
 maxStreamPlaylistItems = integer(default=300, min=10, max=1000)
+
+# Allow custom shortcuts and dynamic config keys
+__many__ = string(default="")
 """
 
 DEFAULT_CONFIG: Dict[str, Any] = {

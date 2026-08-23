@@ -26,7 +26,7 @@ from .state_store import StateStore, get_state_store
 from .tones_helper import ToneCueManager, tone_manager
 from .speech_feedback import SpeechFeedback, get_speech_feedback
 from .input_layer import ModalInputLayer
-from .config_spec import getConfig, getConfigValue, setConfigValue
+from .config_spec import getConfig, getConfigValue, setConfigValue, saveConfig
 from .dialog_utils import prompt_open_file_dialog, prompt_open_folder_dialog, prompt_help_dialog
 from .explorer_utils import get_active_explorer_or_focus_paths
 from .utils import format_time, is_supported_media_file
@@ -94,11 +94,36 @@ class PlayerController:
         self.engine.on_seek = self._on_engine_seek
 
     def _apply_initial_config(self, cfg: Dict[str, Any]) -> None:
-        """Initialize controller and playlist options from NVDA configuration."""
-        repeat_str = cfg.get("defaultRepeatMode", "off")
+        """Initialize controller, engine, and playlist options from persistent storage."""
+        # 1. Restore Repeat Mode and Auto-Next
+        repeat_str = self.state_store.get_repeat_mode() or cfg.get("defaultRepeatMode", "off")
         self.playlist.set_repeat_mode(repeat_str)
-        auto_next = cfg.get("defaultAutoNext", True)
+        saved_auto_next = self.state_store.get_auto_next()
+        auto_next = saved_auto_next if saved_auto_next is not None else cfg.get("defaultAutoNext", True)
         self.playlist.set_auto_next(auto_next)
+
+        # 2. Restore Volume
+        saved_vol = self.state_store.get_volume()
+        if saved_vol is not None:
+            vol = float(saved_vol)
+        else:
+            vol = float(cfg.get("volume", 100))
+        self.engine.volume = max(0.0, min(150.0, vol))
+
+        # 3. Restore Speed
+        saved_speed = self.state_store.get_speed()
+        if saved_speed is not None:
+            spd = float(saved_speed)
+        else:
+            spd = float(cfg.get("defaultSpeed", 1.0))
+        self.engine.speed = max(0.1, min(4.0, spd))
+
+        # 4. Restore Bass Equalizer Gain
+        saved_bass = self.state_store.get_setting("bass_gain", 0.0)
+        try:
+            self.engine.bass_gain = float(saved_bass) if saved_bass is not None else 0.0
+        except (ValueError, TypeError):
+            self.engine.bass_gain = 0.0
 
     def _apply_config_to_input_layer(self, cfg: Dict[str, Any]) -> None:
         """Propagate seek/speed/volume step sizes to input_layer."""
@@ -117,6 +142,18 @@ class PlayerController:
                 self.playlist.set_repeat_mode(cfg["defaultRepeatMode"])
             if "defaultAutoNext" in cfg:
                 self.playlist.set_auto_next(cfg["defaultAutoNext"])
+            if "defaultSpeed" in cfg:
+                spd = float(cfg["defaultSpeed"])
+                self.engine.speed = spd
+                if self.engine.is_running:
+                    self.engine.set_speed(spd)
+                self.state_store.save_speed(spd)
+            if "volume" in cfg:
+                vol = float(cfg["volume"])
+                self.engine.volume = vol
+                if self.engine.is_running:
+                    self.engine.set_volume(vol)
+                self.state_store.save_volume(int(vol))
             if "playModalTones" in cfg and self.tone_manager:
                 self.tone_manager.is_enabled = bool(cfg["playModalTones"])
 
@@ -244,6 +281,8 @@ class PlayerController:
             new_vol = self.engine.adjust_volume(delta)
             self.speech.announce_volume(new_vol)
             self.state_store.save_volume(int(new_vol))
+            setConfigValue("volume", int(new_vol))
+            saveConfig()
             return new_vol
 
     def adjust_bass(self, delta: float) -> float:
@@ -252,6 +291,7 @@ class PlayerController:
             if not self.engine.is_running:
                 self.start()
             new_gain = self.engine.adjust_bass(delta)
+            self.state_store.save_setting("bass_gain", float(new_gain))
             if new_gain:
                 self.speech.speak(_("Bass: %s dB") % (f"+{new_gain:g}" if new_gain > 0 else f"{new_gain:g}"))
             else:
@@ -266,6 +306,8 @@ class PlayerController:
             new_vol = self.engine.set_volume(volume)
             self.speech.announce_volume(new_vol)
             self.state_store.save_volume(int(new_vol))
+            setConfigValue("volume", int(new_vol))
+            saveConfig()
             return new_vol
 
     # -------------------------------------------------------------------------
@@ -333,6 +375,8 @@ class PlayerController:
             new_speed = self.engine.adjust_speed(delta)
             self.speech.announce_speed(new_speed, is_preset=False)
             self.state_store.save_speed(new_speed)
+            setConfigValue("defaultSpeed", float(new_speed))
+            saveConfig()
             return new_speed
 
     def cycle_speed_preset(self, forward: bool = True) -> float:
@@ -343,6 +387,8 @@ class PlayerController:
             new_speed = self.engine.cycle_speed_preset(forward=forward)
             self.speech.announce_speed(new_speed, is_preset=True)
             self.state_store.save_speed(new_speed)
+            setConfigValue("defaultSpeed", float(new_speed))
+            saveConfig()
             return new_speed
 
     def set_speed(self, speed: float) -> float:
@@ -353,6 +399,8 @@ class PlayerController:
             new_speed = self.engine.set_speed(speed)
             self.speech.announce_speed(new_speed, is_preset=False)
             self.state_store.save_speed(new_speed)
+            setConfigValue("defaultSpeed", float(new_speed))
+            saveConfig()
             return new_speed
 
     # -------------------------------------------------------------------------
