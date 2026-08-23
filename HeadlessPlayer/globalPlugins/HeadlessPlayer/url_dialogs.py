@@ -162,27 +162,27 @@ def _trending_country_sections() -> List[StreamItem]:
     return [
         StreamItem(
             ITEM_LISTING,
-            "https://www.youtube.com/feed/trending",
+            "https://www.youtube.com/results?search_query=trending",
             _("Trending Videos (Now / General)"),
-            requires_login=True,
+            requires_login=False,
         ),
         StreamItem(
             ITEM_LISTING,
-            "https://www.youtube.com/feed/trending?bp=4gINGgt5dG1hX2NoYXJ0cw%3D%3D",
+            "https://www.youtube.com/playlist?list=PL4fGSI1pDJn6puJdseH2Rt9sMvt9E2M4i",
             _("Trending Music (Local Charts)"),
-            requires_login=True,
+            requires_login=False,
         ),
         StreamItem(
             ITEM_LISTING,
             "https://www.youtube.com/feed/trending?bp=4gIcGhpnYW1pbmdfY29ycHVzX21vc3RfcG9wdWxhcg%3D%3D",
             _("Trending Gaming"),
-            requires_login=True,
+            requires_login=False,
         ),
         StreamItem(
             ITEM_LISTING,
-            "https://www.youtube.com/feed/trending?bp=4gIKGgh0cmFpbGVycw%3D%3D",
+            "https://www.youtube.com/results?search_query=new+movie+trailers",
             _("Trending Movies & Entertainment"),
-            requires_login=True,
+            requires_login=False,
         ),
     ]
 

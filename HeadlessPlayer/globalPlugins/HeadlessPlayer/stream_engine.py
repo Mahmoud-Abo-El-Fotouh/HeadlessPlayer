@@ -295,7 +295,7 @@ def get_account_sections() -> List["StreamItem"]:
             ITEM_LISTING,
             "internal://trending_country",
             _("Trending in your country"),
-            requires_login=True,
+            requires_login=False,
         ),
         # Direct global top 100 music chart (works for everyone without login)
         StreamItem(

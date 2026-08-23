@@ -1127,6 +1127,9 @@ class PlayerController:
             generation = self._stream_play_generation
             self._last_loaded_path = track.path
 
+            # Stop previous playback in engine immediately so audio buffer clears
+            self.engine.stop()
+
             cfg = getConfig()
             if cfg.get("resumePosition", True) and not track.metadata.get("is_live"):
                 saved_pos = self.state_store.get_position(track.path)
@@ -1156,6 +1159,7 @@ class PlayerController:
             with self._lock:
                 stale = generation != self._stream_play_generation
             if not stale:
+                self.engine.stop()
                 from . import stream_engine as se
                 if se.is_cookie_error(str(e)):
                     self.speech.speak(self._stream_error_message(e))
