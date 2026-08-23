@@ -97,6 +97,7 @@ class Track:
             self.is_video = is_video_file(self.path)
         self.duration: Optional[float] = float(duration) if duration is not None else None
         self.metadata: Dict[str, Any] = dict(metadata) if metadata else {}
+        self.chapters: List[Dict[str, Any]] = list(self.metadata.get("chapters", [])) if isinstance(self.metadata.get("chapters"), list) else []
 
     @classmethod
     def from_path(cls, path: str) -> Track:

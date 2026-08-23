@@ -64,8 +64,8 @@ When Player Mode is active (<kbd>NVDA+Ctrl+Shift+P</kbd>):
 ### 3.4. A-B Segment Repeat & Track Repeat
 | Key | Action | Description |
 | :--- | :--- | :--- |
-| <kbd>[</kbd> *(or Arabic <kbd>ج</kbd>)* | Mark Point A | Sets loop starting point. |
-| <kbd>]</kbd> *(or Arabic <kbd>د</kbd>)* | Mark Point B | Sets loop ending point and begins endless A-B repetition. |
+| <kbd>[</kbd>  | Mark Point A | Sets loop starting point. |
+| <kbd>]</kbd>  | Mark Point B | Sets loop ending point and begins endless A-B repetition. |
 | <kbd>c</kbd> | Clear A-B Loop | Clears loop points and returns to sequential playback. |
 | <kbd>r</kbd> | Toggle Repeat Mode | Cycles: Track Repeat -> Playlist Repeat -> Repeat Off. |
 
@@ -89,12 +89,12 @@ When Player Mode is active (<kbd>NVDA+Ctrl+Shift+P</kbd>):
 | <kbd>i</kbd> | Speak Media Info | Announces title, formatted duration, and track index (e.g. *Track 3 of 15*). |
 | <kbd>Ctrl + i</kbd> | Speak Remaining Time | Announces remaining time in hours:minutes:seconds. |
 | <kbd>Shift + i</kbd> | Speak Elapsed Time | Announces elapsed playback time. |
-| <kbd>h</kbd> *(or Arabic <kbd>ا</kbd>)* | Shortcuts Help | Opens accessible shortcuts quick reference dialog. |
+| <kbd>h</kbd>  | Shortcuts Help | Opens accessible shortcuts quick reference dialog. |
 
 ---
 
 ## 4. YouTube & Online Streaming
-- **Search (<kbd>u</kbd>):** Press <kbd>u</kbd>, type query, press <kbd>Enter</kbd>. Browse results with Up/Down arrows and press <kbd>Enter</kbd> to play. Press <kbd>Tab</kbd> on a playlist to queue all tracks at once.
+- **Search (<kbd>u</kbd>):** Press <kbd>u</kbd>, type any search query (e.g., *Beethoven Symphony 5* or *Podcast episode*), and press <kbd>Enter</kbd>. Browse results with Up/Down arrows and press <kbd>Enter</kbd> to play. Press <kbd>Tab</kbd> on a playlist to queue all tracks at once.
 - **Direct URLs (<kbd>u</kbd>):** Paste any YouTube video/playlist URL, Twitch stream, SoundCloud link, or radio stream.
 - **YouTube Portal (<kbd>p</kbd>):** Browse Regional Trending videos, My Subscriptions, and My Playlists.
 - **Copy Link (<kbd>v</kbd>):** Copies active stream URL to Windows Clipboard.

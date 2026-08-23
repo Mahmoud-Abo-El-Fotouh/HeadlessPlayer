@@ -73,6 +73,7 @@ class PlayerController:
 
         # Generation counter guarding async online stream resolution races
         self._stream_play_generation: int = 0
+        self._current_stream_chapters: List[Dict[str, Any]] = []
 
         # Bind engine event callbacks
         self._bind_engine_callbacks()
@@ -512,28 +513,78 @@ class PlayerController:
         with self._lock:
             if not self.engine.is_running:
                 return False
-            res = self.engine.next_chapter()
-            if res:
-                chap_num = self.engine.chapter + 1
-                title = self.engine.get_current_chapter_title()
-                self.speech.announce_chapter(chap_num, title)
-            else:
-                self.speech.announce_no_chapters()
-            return res
+
+            # 1. Native mpv chapters for local media containers
+            if self.engine.chapter_count > 0:
+                res = self.engine.next_chapter()
+                if res:
+                    chap_num = self.engine.chapter + 1
+                    title = self.engine.get_current_chapter_title()
+                    self.speech.announce_chapter(chap_num, title)
+                    return True
+
+            # 2. Extracted stream chapters for YouTube / online media
+            cur_track = self.playlist.get_current_track()
+            chapters = getattr(self, "_current_stream_chapters", None) or (cur_track.chapters if cur_track else None) or []
+            if chapters:
+                cur_time = self.engine.time_pos or 0.0
+                next_idx = None
+                for i, ch in enumerate(chapters):
+                    if float(ch.get("start_time", 0.0)) > (cur_time + 0.5):
+                        next_idx = i
+                        break
+
+                if next_idx is not None:
+                    target_ch = chapters[next_idx]
+                    target_sec = float(target_ch.get("start_time", 0.0))
+                    title = target_ch.get("title", f"Chapter {next_idx + 1}")
+                    self.engine.seek(target_sec, absolute=True)
+                    self.speech.announce_chapter(next_idx + 1, title)
+                    return True
+
+            self.speech.announce_no_chapters()
+            return False
 
     def prev_chapter(self) -> bool:
         """Jumps to previous chapter and announces title/index."""
         with self._lock:
             if not self.engine.is_running:
                 return False
-            res = self.engine.prev_chapter()
-            if res:
-                chap_num = max(1, self.engine.chapter + 1)
-                title = self.engine.get_current_chapter_title()
-                self.speech.announce_chapter(chap_num, title)
-            else:
-                self.speech.announce_no_chapters()
-            return res
+
+            # 1. Native mpv chapters for local media containers
+            if self.engine.chapter_count > 0:
+                res = self.engine.prev_chapter()
+                if res:
+                    chap_num = max(1, self.engine.chapter + 1)
+                    title = self.engine.get_current_chapter_title()
+                    self.speech.announce_chapter(chap_num, title)
+                    return True
+
+            # 2. Extracted stream chapters for YouTube / online media
+            cur_track = self.playlist.get_current_track()
+            chapters = getattr(self, "_current_stream_chapters", None) or (cur_track.chapters if cur_track else None) or []
+            if chapters:
+                cur_time = self.engine.time_pos or 0.0
+                cur_ch_idx = 0
+                for i, ch in enumerate(chapters):
+                    if float(ch.get("start_time", 0.0)) <= cur_time + 0.5:
+                        cur_ch_idx = i
+
+                ch_start = float(chapters[cur_ch_idx].get("start_time", 0.0))
+                if (cur_time - ch_start) > 3.0 or cur_ch_idx == 0:
+                    target_idx = cur_ch_idx
+                else:
+                    target_idx = max(0, cur_ch_idx - 1)
+
+                target_ch = chapters[target_idx]
+                target_sec = float(target_ch.get("start_time", 0.0))
+                title = target_ch.get("title", f"Chapter {target_idx + 1}")
+                self.engine.seek(target_sec, absolute=True)
+                self.speech.announce_chapter(target_idx + 1, title)
+                return True
+
+            self.speech.announce_no_chapters()
+            return False
 
     def cycle_audio_track(self) -> bool:
         """Cycles audio tracks / language streams in video files."""
@@ -563,6 +614,7 @@ class PlayerController:
             return self._play_stream_track(track)
 
         with self._lock:
+            self._current_stream_chapters = list(getattr(track, "chapters", [])) if getattr(track, "chapters", None) else []
             # Invalidate any in-flight online stream resolution
             self._stream_play_generation += 1
             # 1. Save playback position of previous track before loading the new one
@@ -1126,6 +1178,13 @@ class PlayerController:
             if info.get("is_live"):
                 track.metadata["is_live"] = True
                 self._pending_resume_pos = None
+
+            if info.get("chapters"):
+                track.chapters = list(info["chapters"])
+                track.metadata["chapters"] = list(info["chapters"])
+                self._current_stream_chapters = list(info["chapters"])
+            else:
+                self._current_stream_chapters = []
 
             success = self.engine.load_stream(info["stream_url"], info.get("http_headers"))
             if success:

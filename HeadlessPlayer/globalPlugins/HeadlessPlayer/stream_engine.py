@@ -578,6 +578,22 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
     except (TypeError, ValueError):
         dur = 0.0
 
+    raw_chapters = info.get("chapters") or []
+    parsed_chapters = []
+    for i, ch in enumerate(raw_chapters):
+        if isinstance(ch, dict) and ch.get("start_time") is not None:
+            try:
+                st = float(ch["start_time"])
+                et = float(ch["end_time"]) if ch.get("end_time") is not None else None
+                title = str(ch.get("title") or f"Chapter {i+1}")
+                parsed_chapters.append({
+                    "title": title,
+                    "start_time": st,
+                    "end_time": et,
+                })
+            except (TypeError, ValueError):
+                pass
+
     result = {
         "stream_url": str(stream_url),
         "http_headers": dict(info.get("http_headers") or {}),
@@ -585,6 +601,7 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
         "duration": dur,
         "is_live": bool(info.get("is_live")),
         "webpage_url": str(info.get("webpage_url") or url),
+        "chapters": parsed_chapters,
     }
 
     with _resolve_cache_lock:

@@ -39,14 +39,14 @@ When Player Mode is active (<kbd>NVDA+Ctrl+Shift+P</kbd>):
 - **Volume & Bass:** <kbd>Up/Down Arrow</kbd> (Volume ±5%), <kbd>b</kbd> (Bass +3dB), <kbd>Shift + b</kbd> (Bass -3dB).
 - **Seeking:** <kbd>Left/Right Arrow</kbd> (5s seek), <kbd>Alt + Left/Right</kbd> (1s slow seek), <kbd>Ctrl + Left/Right</kbd> (30s fast seek), <kbd>Shift + Left/Right</kbd> (5m ultrafast seek), <kbd>1</kbd> to <kbd>9</kbd> (10% to 90% direct jump), <kbd>0</kbd> (Jump to start).
 - **Pitch-Preserved Speed:** <kbd>Ctrl + Up/Down</kbd> (Fine ±0.1x), <kbd>Shift + Up/Down</kbd> (Preset speeds from 1.0x up to 4.0x).
-- **A-B Looping & Repeat:** <kbd>[</kbd> / <kbd>ج</kbd> (Set Point A), <kbd>]</kbd> / <kbd>د</kbd> (Set Point B & Loop), <kbd>c</kbd> (Clear Loop), <kbd>r</kbd> (Toggle Repeat mode).
+- **A-B Looping & Repeat:** <kbd>[</kbd> (Set Point A), <kbd>]</kbd> (Set Point B & Loop), <kbd>c</kbd> (Clear Loop), <kbd>r</kbd> (Toggle Repeat mode).
 - **Navigation:** <kbd>Page Down</kbd> / <kbd>Tab</kbd> (Next track), <kbd>Page Up</kbd> / <kbd>Shift+Tab</kbd> (Previous track), <kbd>n</kbd> (Toggle Auto-Next), <kbd>z</kbd> (Toggle Shuffle), <kbd>o</kbd> (Open file), <kbd>f</kbd> (Open folder), <kbd>e</kbd> (Play Explorer selection).
-- **Speech Queries:** <kbd>i</kbd> (Full media info), <kbd>Ctrl + i</kbd> (Remaining time), <kbd>Shift + i</kbd> (Elapsed time), <kbd>h</kbd> / <kbd>ا</kbd> (Shortcuts help dialog).
+- **Speech Queries:** <kbd>i</kbd> (Full media info), <kbd>Ctrl + i</kbd> (Remaining time), <kbd>Shift + i</kbd> (Elapsed time), <kbd>h</kbd> (Shortcuts help dialog).
 
 ---
 
 ## 4. YouTube & Online Streaming
-- **Search (<kbd>u</kbd>):** Press <kbd>u</kbd>, type query, press <kbd>Enter</kbd>. Browse results with Up/Down arrows and press <kbd>Enter</kbd> to play. Press <kbd>Tab</kbd> on a playlist to queue all tracks at once.
+- **Search (<kbd>u</kbd>):** Press <kbd>u</kbd>, type any search query (e.g., *Beethoven Symphony 5* or *Podcast episode*), and press <kbd>Enter</kbd>. Browse results with Up/Down arrows and press <kbd>Enter</kbd> to play. Press <kbd>Tab</kbd> on a playlist to queue all tracks at once.
 - **Direct URLs (<kbd>u</kbd>):** Paste any YouTube video/playlist URL, Twitch stream, SoundCloud link, or radio stream.
 - **YouTube Portal (<kbd>p</kbd>):** Browse Regional Trending videos, My Subscriptions, and My Playlists.
 - **Copy Link (<kbd>v</kbd>):** Copies active stream URL to Windows Clipboard.
