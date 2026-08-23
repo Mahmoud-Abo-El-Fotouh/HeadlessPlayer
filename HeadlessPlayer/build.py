@@ -154,7 +154,8 @@ class PurePythonMsgfmt:
 
 def compile_locales(base_dir: str) -> None:
     """
-    Compiles all .po files under locale/*/LC_MESSAGES/ into .mo binary files.
+    Compiles all .po files under locale/*/LC_MESSAGES/ into binary .mo files,
+    generating both domain-specific .mo and NVDA's standard nvda.mo.
     """
     locale_dir = os.path.join(base_dir, "locale")
     if not os.path.exists(locale_dir):
@@ -168,10 +169,13 @@ def compile_locales(base_dir: str) -> None:
                 po_path = os.path.join(root, f)
                 mo_name = os.path.splitext(f)[0] + ".mo"
                 mo_path = os.path.join(root, mo_name)
-                print(f"[*] Compiling translation: {os.path.relpath(po_path, base_dir)} -> {mo_name}")
+                nvda_mo_path = os.path.join(root, "nvda.mo")
+
+                print(f"[*] Compiling translation: {os.path.relpath(po_path, base_dir)} -> {mo_name} & nvda.mo")
                 compiler.parse_po(po_path)
                 compiler.generate_mo(mo_path)
-                print(f"    Compiled {len(compiler.messages)} translation strings.")
+                compiler.generate_mo(nvda_mo_path)
+                print(f"    Compiled {len(compiler.messages)} translation strings into {mo_name} and nvda.mo.")
 
 
 def parse_manifest(manifest_path: str) -> Dict[str, str]:

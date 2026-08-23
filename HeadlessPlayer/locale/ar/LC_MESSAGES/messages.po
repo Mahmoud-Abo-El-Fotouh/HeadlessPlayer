@@ -1014,3 +1014,19 @@ msgstr "الفصل التالي (Ctrl+Shift+سهم يمين)"
 msgid "Previous Chapter (Ctrl+Shift+Left)"
 msgstr "الفصل السابق (Ctrl+Shift+سهم يسار)"
 
+msgid "Cancel"
+msgstr "إلغاء"
+
+msgid "OK"
+msgstr "موافق"
+
+msgid "HEADLESS MEDIA PLAYER — KEYBOARD SHORTCUTS REFERENCE"
+msgstr "مشغل الوسائط الخفي — مرجع اختصارات لوحة المفاتيح"
+
+msgid "MODE ACTIVATION & EXIT:"
+msgstr "تفعيل الوضع والخروج:"
+
+msgid "Select Folder to Play"
+msgstr "تحديد مجلد لتشغيله"
+
+
