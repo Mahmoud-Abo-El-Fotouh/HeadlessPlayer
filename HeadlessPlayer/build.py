@@ -314,6 +314,16 @@ def package_addon(base_dir: str, output_dir: str, custom_label: str = None) -> s
     EXCLUDE_DIRS = {".git", ".github", ".vscode", "__pycache__", ".agents", "tests", "dist"}
     EXCLUDE_EXTS = {".pyc", ".pyo", ".gitattributes", ".gitignore", ".tmp"}
 
+    # Guard: Ensure mpv.exe binary is present and not a tiny Git LFS text pointer
+    mpv_binary_path = os.path.join(base_dir, "resources", "bin", "x64", "mpv.exe")
+    if os.path.exists(mpv_binary_path):
+        mpv_size = os.path.getsize(mpv_binary_path)
+        if mpv_size < 1024 * 1024:
+            raise RuntimeError(
+                f"FATAL: {mpv_binary_path} is only {mpv_size} bytes (Git LFS pointer) instead of the full binary! "
+                "Please run 'git lfs pull' or enable 'lfs: true' in GitHub Actions checkout."
+            )
+
     print(f"\n[*] Packaging NVDA Add-on: {addon_filename}")
     added_count = 0
     with zipfile.ZipFile(addon_filepath, "w", zipfile.ZIP_DEFLATED) as zipf:
