@@ -140,8 +140,11 @@ def _kind_label(item: StreamItem) -> str:
 
 def _item_display(item: StreamItem) -> str:
     parts = [f"{_kind_label(item)}: {item.title}"]
-    if item.uploader:
-        parts.append(item.uploader)
+    if item.kind not in (ITEM_CHANNEL, ITEM_LISTING) and item.uploader:
+        clean_up = item.uploader.strip()
+        clean_title = item.title.strip()
+        if clean_up and clean_up.lower() != clean_title.lower():
+            parts.append(clean_up)
     if item.duration and item.duration > 0:
         parts.append(format_time(item.duration))
     return " — ".join(parts)

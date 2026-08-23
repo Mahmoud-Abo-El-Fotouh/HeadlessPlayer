@@ -96,7 +96,7 @@ When Player Mode is active (<kbd>NVDA+Ctrl+Shift+P</kbd>):
 ## 4. YouTube & Online Streaming
 - **Search (<kbd>u</kbd>):** Press <kbd>u</kbd>, type any search query (e.g., *Beethoven Symphony 5* or *Podcast episode*), and press <kbd>Enter</kbd>. Browse results with Up/Down arrows and press <kbd>Enter</kbd> to play. Press <kbd>Tab</kbd> on a playlist to queue all tracks at once.
 - **Direct URLs (<kbd>u</kbd>):** Paste any YouTube video/playlist URL, Twitch stream, SoundCloud link, or radio stream.
-- **YouTube Portal (<kbd>p</kbd>):** Browse Regional Trending videos, My Subscriptions, and My Playlists.
+- **YouTube Portal (<kbd>p</kbd>):** Browse Subscribed Channels, Latest Subscriptions, Watch History, Liked Videos, Watch Later, and Global Top 100 Music Charts.
 - **Copy Link (<kbd>v</kbd>):** Copies active stream URL to Windows Clipboard.
 
 ---
