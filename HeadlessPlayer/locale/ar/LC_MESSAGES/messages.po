@@ -1014,11 +1014,107 @@ msgstr "الفصل التالي (Ctrl+Shift+سهم يمين)"
 msgid "Previous Chapter (Ctrl+Shift+Left)"
 msgstr "الفصل السابق (Ctrl+Shift+سهم يسار)"
 
+msgid "No other audio tracks available in this media"
+msgstr "لا توجد مسارات صوتية أخرى في هذا المقطع"
+
+msgid "Cycle Audio Track"
+msgstr "تبديل المسار الصوتي"
+
+msgid "Plays or pauses Headless Media Player playback from anywhere."
+msgstr "تشغيل أو إيقاف تشغيل المشغل الخفي مؤقتاً من أي مكان في النظام."
+
+msgid "Plays the next track in Headless Media Player playlist from anywhere."
+msgstr "تشغيل المقطع التالي في المشغل الخفي من أي مكان في النظام."
+
+msgid "Plays the previous track in Headless Media Player playlist from anywhere."
+msgstr "تشغيل المقطع السابق في المشغل الخفي من أي مكان في النظام."
+
+msgid "Stops Headless Media Player playback from anywhere."
+msgstr "إيقاف تشغيل المشغل الخفي من أي مكان في النظام."
+
+msgid "Player closed"
+msgstr "تم إغلاق المشغل"
+
+msgid "Close Player (Quit)"
+msgstr "إغلاق المشغل بالكامل (إنهاء)"
+
+msgid "Cycle Audio Track / Languages"
+msgstr "تبديل المسار الصوتي / اللغات"
+
+msgid "Headless Media Player Add-on Updates"
+msgstr "تحديثات إضافة المشغل الخفي (Headless Media Player)"
+
+msgid "Installed add-on version: %s"
+msgstr "إصدار الإضافة المثبت: %s"
+
+msgid "Check for &Add-on Updates on GitHub..."
+msgstr "التحقق من &تحديثات الإضافة على GitHub..."
+
+msgid "Checking for add-on updates..."
+msgstr "جاري التحقق من تحديثات الإضافة..."
+
+msgid "Checking for add-on updates, please wait..."
+msgstr "جاري التحقق من تحديثات الإضافة، يرجى الانتظار..."
+
+msgid "You are already using the latest version of Headless Media Player (version %s)."
+msgstr "أنت تستخدم بالفعل أحدث إصدار من إضافة المشغل الخفي (الإصدار %s)."
+
+msgid "Could not check for add-on updates.\nPlease check your internet connection and try again.\n\nDetails: %s"
+msgstr "تعذر التحقق من تحديثات الإضافة.\nيرجى التحقق من اتصالك بالإنترنت والمحاولة مجدداً.\n\nالتفاصيل: %s"
+
+msgid "Update Check Failed"
+msgstr "فشل التحقق من التحديثات"
+
+msgid "Headless Media Player - Add-on Update Available"
+msgstr "المشغل الخفي - يتوفر تحديث جديد للإضافة"
+
+msgid "A new version (%s) of Headless Media Player is available! (Current version: %s)"
+msgstr "يتوفر إصدار جديد (%s) من إضافة المشغل الخفي! (الإصدار الحالي: %s)"
+
+msgid "What's New in Version %s:"
+msgstr "ما الجديد في الإصدار %s:"
+
+msgid "Ready to download. Download size: %.2f MB"
+msgstr "جاهز للتنزيل. حجم التنزيل: %.2f ميجابايت"
+
+msgid "&Download and Install Update"
+msgstr "&تنزيل وتثبيت التحديث"
+
+msgid "Downloading update..."
+msgstr "جاري تنزيل التحديث..."
+
+msgid "Connecting to download server..."
+msgstr "جاري الاتصال بخادم التنزيل..."
+
+msgid "Downloaded %.2f MB of %.2f MB (%d%%)"
+msgstr "تم تنزيل %.2f ميجابايت من %.2f ميجابايت (%d%%)"
+
+msgid "Downloaded %.2f MB"
+msgstr "تم تنزيل %.2f ميجابايت"
+
+msgid "Download complete! Launching add-on installation..."
+msgstr "اكتمل التنزيل بنجاح! جاري فتح نافذة تثبيت الإضافة..."
+
+msgid "&Retry Download"
+msgstr "إعادة &المحاولة"
+
+msgid "Download failed: %s"
+msgstr "فشل التنزيل: %s"
+
+msgid "Failed to download the add-on update.\n\nDetails: %s"
+msgstr "فشل تنزيل تحديث الإضافة.\n\nالتفاصيل: %s"
+
+msgid "Download Failed"
+msgstr "فشل التنزيل"
+
 msgid "Cancel"
 msgstr "إلغاء"
 
 msgid "OK"
 msgstr "موافق"
+
+msgid "Downloaded file is empty."
+msgstr "الملف الذي تم تنزيله فارغ."
 
 msgid "HEADLESS MEDIA PLAYER — KEYBOARD SHORTCUTS REFERENCE"
 msgstr "مشغل الوسائط الخفي — مرجع اختصارات لوحة المفاتيح"
@@ -1026,7 +1122,14 @@ msgstr "مشغل الوسائط الخفي — مرجع اختصارات لوح�
 msgid "MODE ACTIVATION & EXIT:"
 msgstr "تفعيل الوضع والخروج:"
 
+msgid "No changelog description provided."
+msgstr "لا يوجد وصف لسجل التغييرات في هذا الإصدار."
+
 msgid "Select Folder to Play"
 msgstr "تحديد مجلد لتشغيله"
+
+
+
+
 
 
