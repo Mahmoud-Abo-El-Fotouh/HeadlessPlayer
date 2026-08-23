@@ -83,6 +83,10 @@ class GlobalPlugin(_BaseGlobalPlugin):
         "kb:NVDA+control+windows+e": "addFromExplorer",
         "kb:insert+control+windows+e": "addFromExplorer",
         "kb:capslock+control+windows+e": "addFromExplorer",
+        "kb:mediaplaypause": "mediaPlayPause",
+        "kb:medianexttrack": "mediaNextTrack",
+        "kb:mediaprevtrack": "mediaPrevTrack",
+        "kb:mediastop": "mediaStop",
     }
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -162,6 +166,54 @@ class GlobalPlugin(_BaseGlobalPlugin):
         """Directly loads and plays active media selection from Windows Explorer."""
         if self.controller:
             self.controller.load_from_explorer()
+
+    @script(
+        description=_("Plays or pauses Headless Media Player playback from anywhere."),
+        category=_("Headless Media Player"),
+        gesture="kb:mediaplaypause"
+    )
+    def script_mediaPlayPause(self, gesture: Any) -> None:
+        """Global Media Play/Pause key handler."""
+        if self.controller and (self.controller.engine.is_loaded or not self.controller.playlist.is_empty()):
+            self.controller.toggle_play_pause()
+        else:
+            gesture.send()
+
+    @script(
+        description=_("Plays the next track in Headless Media Player playlist from anywhere."),
+        category=_("Headless Media Player"),
+        gesture="kb:medianexttrack"
+    )
+    def script_mediaNextTrack(self, gesture: Any) -> None:
+        """Global Media Next Track key handler."""
+        if self.controller and not self.controller.playlist.is_empty():
+            self.controller.next_track(manual=True)
+        else:
+            gesture.send()
+
+    @script(
+        description=_("Plays the previous track in Headless Media Player playlist from anywhere."),
+        category=_("Headless Media Player"),
+        gesture="kb:mediaprevtrack"
+    )
+    def script_mediaPrevTrack(self, gesture: Any) -> None:
+        """Global Media Previous Track key handler."""
+        if self.controller and not self.controller.playlist.is_empty():
+            self.controller.prev_track()
+        else:
+            gesture.send()
+
+    @script(
+        description=_("Stops Headless Media Player playback from anywhere."),
+        category=_("Headless Media Player"),
+        gesture="kb:mediastop"
+    )
+    def script_mediaStop(self, gesture: Any) -> None:
+        """Global Media Stop key handler."""
+        if self.controller and (self.controller.engine.is_loaded or not self.controller.playlist.is_empty()):
+            self.controller.stop()
+        else:
+            gesture.send()
 
     def terminate(self) -> None:
         """
