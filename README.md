@@ -91,4 +91,4 @@ In modern Google Chrome and Microsoft Edge on Windows (Chrome 120+), Google enfo
 ---
 
 ## License
-Released under the [MIT License](LICENSE).
+Released under the [GNU General Public License v2.0 (GPLv2)](LICENSE).
