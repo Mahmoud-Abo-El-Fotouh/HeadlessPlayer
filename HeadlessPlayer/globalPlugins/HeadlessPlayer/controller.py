@@ -597,18 +597,21 @@ class PlayerController:
             return False
 
     def cycle_audio_track(self) -> bool:
-        """Cycles audio tracks / language streams in video files."""
+        """Cycles audio tracks / language streams in video and audio files."""
         with self._lock:
             if not self.engine.is_running:
                 return False
-            res = self.engine.cycle_audio_track()
-            info = self.engine.get_current_audio_track_info()
-            if info:
-                t_id = info.get("id", 1)
-                title = info.get("title")
-                lang = info.get("lang")
+            success, track_info, total = self.engine.cycle_audio_track()
+            if total <= 1:
+                self.speech.announce_no_other_audio_tracks()
+                return False
+            if success and track_info:
+                t_id = track_info.get("id", 1)
+                title = track_info.get("title")
+                lang = track_info.get("lang")
                 self.speech.announce_audio_track(t_id, title, lang)
-            return res
+                return True
+            return False
 
     # -------------------------------------------------------------------------
     # Playlist & Queue Navigation
@@ -860,6 +863,26 @@ class PlayerController:
             resume_capture=self._resume_input,
             custom_toggle_gesture=toggle_str
         )
+
+    def close_player(self) -> None:
+        """
+        Completely closes and stops the media player:
+        1. Saves current playback position if enabled.
+        2. Stops mpv playback and releases media resources.
+        3. Shuts down / terminates background engine process.
+        4. Clears active playlist queue.
+        5. Exits Player Mode and announces 'Player closed'.
+        """
+        with self._lock:
+            self.save_current_position()
+            self.engine.stop()
+            self.engine.shutdown()
+            self.playlist.clear()
+            self._last_loaded_path = ""
+            self._current_stream_chapters = []
+            if self.input_layer:
+                self.input_layer.set_player_mode(False, announce=False)
+            self.speech.announce_player_closed()
 
     def load_from_explorer(self) -> None:
         """Extracts active selection from Windows Explorer and loads into playlist."""

@@ -509,6 +509,12 @@ class SpeechFeedback:
             msg = _("Audio track %d") % track_id
         self.speak(msg)
 
+    def announce_no_other_audio_tracks(self) -> None:
+        """
+        Announces that no additional audio tracks or languages are available in this media.
+        """
+        self.speak(_("No other audio tracks available in this media"))
+
     def announce_auto_next(self, enabled: bool) -> None:
         """
         Announces auto-next toggle state.
@@ -549,6 +555,12 @@ class SpeechFeedback:
         Announces no media files found in selected directory.
         """
         self.speak(_("No media files found in selected folder"))
+
+    def announce_player_closed(self) -> None:
+        """
+        Announces that the media player has been completely closed and stopped.
+        """
+        self.speak(_("Player closed"))
 
 
 # Module singleton instance

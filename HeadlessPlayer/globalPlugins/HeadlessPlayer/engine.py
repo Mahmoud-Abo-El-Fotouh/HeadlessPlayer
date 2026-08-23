@@ -237,6 +237,10 @@ class HeadlessEngine:
         elif evt == "end-file":
             reason = msg.get("reason", "eof")
             with self._lock:
+                if self.ab_loop_active and self.ab_loop_a is not None:
+                    self.seek_absolute(self.ab_loop_a)
+                    self.resume()
+                    return
                 if reason == "eof":
                     self.eof_reached = True
                 elif reason in ("stop", "quit", "error"):
@@ -274,6 +278,10 @@ class HeadlessEngine:
             elif name == "time-pos" and data is not None:
                 try:
                     self.time_pos = float(data)
+                    # Enforce A-B loop boundary to ensure robust looping across all media & stream types
+                    if self.ab_loop_active and self.ab_loop_a is not None and self.ab_loop_b is not None:
+                        if self.time_pos >= self.ab_loop_b:
+                            self.seek_absolute(self.ab_loop_a)
                 except (ValueError, TypeError):
                     pass
             elif name == "duration" and data is not None:
@@ -669,6 +677,8 @@ class HeadlessEngine:
 
         self._ipc.send_command_async(["set_property", "ab-loop-b", pos])
         logger.info("Marked A-B Point B: %.2fs (Segment: %.2fs - %.2fs)", pos, self.ab_loop_a, pos)
+        if self.ab_loop_a is not None:
+            self.seek_absolute(self.ab_loop_a)
         return pos, True
 
     def toggle_repeat(self) -> str:
@@ -696,6 +706,7 @@ class HeadlessEngine:
                     self.ab_loop_active = True
                     self._ipc.send_command_async(["set_property", "ab-loop-a", self.ab_loop_a])
                     self._ipc.send_command_async(["set_property", "ab-loop-b", self.ab_loop_b])
+                    self.seek_absolute(self.ab_loop_a)
                     return "ab_loop_on"
 
             # Case 2: Track Repeat fallback
@@ -755,11 +766,47 @@ class HeadlessEngine:
     # Audio Stream Tracks
     # -------------------------------------------------------------------------
 
-    def cycle_audio_track(self) -> bool:
-        """Cycle to next audio track / language stream."""
+    def cycle_audio_track(self) -> Tuple[bool, Optional[Dict[str, Any]], int]:
+        """
+        Safely cycles strictly between available audio tracks without disabling audio (never sets aid='no').
+        Returns tuple of (success, track_info, total_audio_tracks).
+        """
         if not self.is_running:
-            return False
-        return self._ipc.send_command_async(["cycle", "aid"])
+            return False, None, 0
+
+        with self._lock:
+            tracks = list(self.audio_tracks or [])
+            total = len(tracks)
+            if total <= 1:
+                # Single audio track: do not cycle (which would mute/disable audio in mpv)
+                cur_info = tracks[0] if tracks else None
+                return False, cur_info, total
+
+            # Find current track index by active aid first, then by selected flag
+            cur_idx = 0
+            found = False
+            for idx, t in enumerate(tracks):
+                if self.aid is not None and t.get("id") == self.aid:
+                    cur_idx = idx
+                    found = True
+                    break
+            if not found:
+                for idx, t in enumerate(tracks):
+                    if t.get("selected"):
+                        cur_idx = idx
+                        break
+
+            # Next track in circular list (1 -> 2 -> ... -> 1, skipping 'no')
+            next_idx = (cur_idx + 1) % total
+            next_track = tracks[next_idx]
+            target_aid = next_track.get("id", next_idx + 1)
+            self.aid = target_aid
+            for t in tracks:
+                t["selected"] = (t.get("id") == target_aid)
+
+        self._ipc.send_command_async(["set_property", "aid", target_aid])
+        logger.info("Switched audio track to ID %s: %s", target_aid, next_track)
+        return True, next_track, total
 
     def get_current_audio_track_info(self) -> Optional[Dict[str, Any]]:
         """Get details about the currently selected audio track."""
