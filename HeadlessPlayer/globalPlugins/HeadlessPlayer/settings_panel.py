@@ -93,6 +93,8 @@ ACTION_DISPLAY_NAMES: List[Tuple[str, str]] = [
     ("remaining_time", _("Speak Remaining Time")),
     ("elapsed_time", _("Speak Elapsed Time")),
     ("show_help", _("Show Shortcuts Help Dialog")),
+    ("cycle_audio_track", _("Cycle Audio Track / Languages")),
+    ("close_player", _("Close Player (Quit)")),
     ("exit_mode", _("Exit Player Mode")),
 ]
 
@@ -868,6 +870,31 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
 
             helper.addItem(shortcutsGroup.sizer)
 
+        # -------------------------------------------------------------
+        # Section 6: Add-on Self-Updater
+        # -------------------------------------------------------------
+        if hasattr(wx, "Button") and hasattr(wx, "StaticBox"):
+            addonUpdatesGroupLabel = _("Headless Media Player Add-on Updates")
+            addonUpdatesBox = wx.StaticBox(self, label=addonUpdatesGroupLabel)
+            addonUpdatesGroup = guiHelper.BoxSizerHelper(
+                self,
+                sizer=wx.StaticBoxSizer(addonUpdatesBox, wx.VERTICAL)
+            )
+
+            from . import addon_updater
+            cur_ver_str = addon_updater.get_current_addon_version()
+            self.addonVersionText = addonUpdatesGroup.addItem(
+                wx.StaticText(self, label=_("Installed add-on version: %s") % cur_ver_str)
+            )
+
+            self.checkAddonUpdatesBtn = addonUpdatesGroup.addItem(
+                wx.Button(self, label=_("Check for &Add-on Updates on GitHub..."))
+            )
+            if hasattr(wx, "EVT_BUTTON"):
+                self.checkAddonUpdatesBtn.Bind(wx.EVT_BUTTON, self.onCheckAddonUpdates)
+
+            helper.addItem(addonUpdatesGroup.sizer)
+
     def onBrowseCookiesFile(self, evt: Any) -> None:
         """Opens a file picker for the manual cookies.txt file."""
         if not wx:
@@ -972,6 +999,71 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         dlg = HeadlessPlayerShortcutsDialog(self)
         dlg.ShowModal()
         dlg.Destroy()
+
+    def onCheckAddonUpdates(self, evt: Any) -> None:
+        """
+        Checks GitHub Releases for a newer version of the HeadlessPlayer add-on.
+        If an update is found, presents the AddonUpdateDialog with changelog and live download progress.
+        """
+        if not wx:
+            return
+        import threading
+        from . import addon_updater
+
+        self.checkAddonUpdatesBtn.Disable()
+        self.checkAddonUpdatesBtn.SetLabel(_("Checking for add-on updates..."))
+        try:
+            import ui
+            ui.message(_("Checking for add-on updates, please wait..."))
+        except Exception:
+            pass
+
+        def worker() -> None:
+            try:
+                available, info, status = addon_updater.check_for_addon_update()
+            except Exception as e:
+                available, info, status = False, None, f"error:{e}"
+            wx.CallAfter(self._onAddonUpdateCheckFinished, available, info, status)
+
+        threading.Thread(target=worker, daemon=True, name="HeadlessPlayer-AddonUpdateCheck").start()
+
+    def _onAddonUpdateCheckFinished(self, available: bool, info: Optional[dict], status: str) -> None:
+        if not wx:
+            return
+        self.checkAddonUpdatesBtn.Enable()
+        self.checkAddonUpdatesBtn.SetLabel(_("Check for &Add-on Updates on GitHub..."))
+
+        if available and info:
+            from .addon_updater import AddonUpdateDialog
+            dlg = AddonUpdateDialog(self, info)
+            dlg.ShowModal()
+            dlg.Destroy()
+        elif status == "up_to_date" and info:
+            cur_ver = info.get("current_version", "")
+            text = _("You are already using the latest version of Headless Media Player (version %s).") % cur_ver
+            caption = _("No Update Needed")
+            if gui and hasattr(gui, "messageBox"):
+                gui.messageBox(text, caption, wx.OK | wx.ICON_INFORMATION)
+            else:
+                try:
+                    import ui
+                    ui.message(text)
+                except Exception:
+                    pass
+        else:
+            text = _(
+                "Could not check for add-on updates.\n"
+                "Please check your internet connection and try again.\n\nDetails: %s"
+            ) % status
+            caption = _("Update Check Failed")
+            if gui and hasattr(gui, "messageBox"):
+                gui.messageBox(text, caption, wx.OK | wx.ICON_ERROR)
+            else:
+                try:
+                    import ui
+                    ui.message(text)
+                except Exception:
+                    pass
 
     def onSave(self) -> None:
         """
