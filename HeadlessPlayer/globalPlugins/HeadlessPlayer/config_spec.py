@@ -63,6 +63,8 @@ DEFAULT_KEYMAP: Dict[str, str] = {
     "track_end": "end",
     "first_track": "control+home",
     "last_track": "control+end",
+    "next_chapter": "control+shift+rightarrow",
+    "prev_chapter": "control+shift+leftarrow",
     "point_a": "[",
     "point_b": "]",
     "toggle_repeat": "r",

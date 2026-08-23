@@ -1,6 +1,6 @@
 # دليل مستخدم إضافة Headless Media Player لقارئ الشاشة NVDA
 
-**الإصدار:** 1.1.6  
+**الإصدار:** 1.2.0  
 **المطور:** محمود أبو الفتوح <mahmoudaboelfotouh.20@gmail.com>  
 **المستودع:** [https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer](https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer)  
 **التوافق:** NVDA 2022.1 إلى 2025.3 وأحدث

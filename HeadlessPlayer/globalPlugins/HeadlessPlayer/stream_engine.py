@@ -381,8 +381,21 @@ def search_youtube(query: str, limit: int = 20) -> List[StreamItem]:
         "playlist_items": f"1-{limit}",
     })
     url = "https://www.youtube.com/results?search_query=" + urllib.parse.quote(query)
-    with ytdlp.YoutubeDL(opts) as ydl:
-        info = ydl.extract_info(url, download=False)
+    try:
+        with ytdlp.YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+    except Exception as e:
+        if login_cookies_enabled():
+            logger.warning("Search with cookies failed (%s); retrying without cookies", e)
+            opts_no_cookies = _base_ydl_opts(use_cookies=False)
+            opts_no_cookies.update({
+                "extract_flat": True,
+                "playlist_items": f"1-{limit}",
+            })
+            with ytdlp.YoutubeDL(opts_no_cookies) as ydl:
+                info = ydl.extract_info(url, download=False)
+        else:
+            raise
 
     items: List[StreamItem] = []
     for entry in (info or {}).get("entries") or []:
@@ -447,8 +460,22 @@ def fetch_listing(url: str, limit: int = 300) -> Tuple[str, List[StreamItem]]:
         "extract_flat": True,
         "playlist_items": f"1-{limit}",
     })
-    with ytdlp.YoutubeDL(opts) as ydl:
-        info = ydl.extract_info(url, download=False)
+    try:
+        with ytdlp.YoutubeDL(opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+    except Exception as e:
+        is_private = any(p in url for p in ["/feed/subscriptions", "/feed/channels", "playlist?list=WL", "playlist?list=LL", "/feed/history"])
+        if not is_private and login_cookies_enabled():
+            logger.warning("Listing fetch with cookies failed (%s); retrying without cookies", e)
+            opts_no_cookies = _base_ydl_opts(use_cookies=False)
+            opts_no_cookies.update({
+                "extract_flat": True,
+                "playlist_items": f"1-{limit}",
+            })
+            with ytdlp.YoutubeDL(opts_no_cookies) as ydl:
+                info = ydl.extract_info(url, download=False)
+        else:
+            raise
 
     if not info:
         return "", []

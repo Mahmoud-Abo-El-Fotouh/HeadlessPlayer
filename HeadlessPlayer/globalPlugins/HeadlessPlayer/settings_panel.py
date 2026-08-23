@@ -75,6 +75,8 @@ ACTION_DISPLAY_NAMES: List[Tuple[str, str]] = [
     ("track_end", _("Jump to end of current track (End)")),
     ("first_track", _("First Track in Playlist (Control+Home)")),
     ("last_track", _("Last Track in Playlist (Control+End)")),
+    ("next_chapter", _("Next Chapter (Ctrl+Shift+Right)")),
+    ("prev_chapter", _("Previous Chapter (Ctrl+Shift+Left)")),
     ("point_a", _("Mark A-B Loop Start (Point A)")),
     ("point_b", _("Mark A-B Loop End (Point B)")),
     ("toggle_repeat", _("Toggle Repeat Mode")),

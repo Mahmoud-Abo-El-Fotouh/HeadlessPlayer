@@ -617,10 +617,10 @@ class ModalInputLayer:
         is_left = main_key in ("leftarrow", "left") or vk == VK_LEFT
         is_right = main_key in ("rightarrow", "right") or vk == VK_RIGHT
 
-        if is_left and has_ctrl and has_shift:
+        if self._matches_action(gesture, "prev_chapter", (is_left and has_ctrl and has_shift)):
             self._safe_call("prev_chapter")
             return True
-        if is_right and has_ctrl and has_shift:
+        if self._matches_action(gesture, "next_chapter", (is_right and has_ctrl and has_shift)):
             self._safe_call("next_chapter")
             return True
 

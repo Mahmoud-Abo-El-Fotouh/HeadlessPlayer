@@ -1022,3 +1022,10 @@ msgstr "خفض البيز (-3 ديسيبل)"
 
 msgid "Raise / lower bass (+/- 3 dB)."
 msgstr "رفع / خفض البيز (+/- 3 ديسيبل)."
+
+msgid "Next Chapter (Ctrl+Shift+Right)"
+msgstr "الفصل التالي (Ctrl+Shift+سهم يمين)"
+
+msgid "Previous Chapter (Ctrl+Shift+Left)"
+msgstr "الفصل السابق (Ctrl+Shift+سهم يسار)"
+
