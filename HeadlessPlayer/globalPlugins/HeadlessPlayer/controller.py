@@ -538,7 +538,7 @@ class PlayerController:
                     target_ch = chapters[next_idx]
                     target_sec = float(target_ch.get("start_time", 0.0))
                     title = target_ch.get("title", f"Chapter {next_idx + 1}")
-                    self.engine.seek(target_sec, absolute=True)
+                    self.engine.seek_absolute(target_sec)
                     self.speech.announce_chapter(next_idx + 1, title)
                     return True
 
@@ -579,7 +579,7 @@ class PlayerController:
                 target_ch = chapters[target_idx]
                 target_sec = float(target_ch.get("start_time", 0.0))
                 title = target_ch.get("title", f"Chapter {target_idx + 1}")
-                self.engine.seek(target_sec, absolute=True)
+                self.engine.seek_absolute(target_sec)
                 self.speech.announce_chapter(target_idx + 1, title)
                 return True
 
@@ -1126,9 +1126,7 @@ class PlayerController:
             self._stream_play_generation += 1
             generation = self._stream_play_generation
             self._last_loaded_path = track.path
-
-            # Stop previous playback in engine immediately so audio buffer clears
-            self.engine.stop()
+            self._current_stream_chapters = list(getattr(track, "chapters", [])) if getattr(track, "chapters", None) else []
 
             cfg = getConfig()
             if cfg.get("resumePosition", True) and not track.metadata.get("is_live"):

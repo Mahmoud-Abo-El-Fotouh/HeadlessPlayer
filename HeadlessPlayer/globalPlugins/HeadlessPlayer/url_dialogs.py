@@ -157,36 +157,6 @@ def _channel_sections(channel: StreamItem) -> List[StreamItem]:
     ]
 
 
-def _trending_country_sections() -> List[StreamItem]:
-    """Builds synthetic browsable sub-categories for trending in user's country."""
-    return [
-        StreamItem(
-            ITEM_LISTING,
-            "https://www.youtube.com/results?search_query=trending",
-            _("Trending Videos (Now / General)"),
-            requires_login=False,
-        ),
-        StreamItem(
-            ITEM_LISTING,
-            "https://www.youtube.com/playlist?list=PL4fGSI1pDJn6puJdseH2Rt9sMvt9E2M4i",
-            _("Trending Music (Local Charts)"),
-            requires_login=False,
-        ),
-        StreamItem(
-            ITEM_LISTING,
-            "https://www.youtube.com/feed/trending?bp=4gIcGhpnYW1pbmdfY29ycHVzX21vc3RfcG9wdWxhcg%3D%3D",
-            _("Trending Gaming"),
-            requires_login=False,
-        ),
-        StreamItem(
-            ITEM_LISTING,
-            "https://www.youtube.com/results?search_query=new+movie+trailers",
-            _("Trending Movies & Entertainment"),
-            requires_login=False,
-        ),
-    ]
-
-
 class _Level:
     """One drill-down level in the results browser."""
 
@@ -454,16 +424,6 @@ class _ResultsDialog(_DialogBase):
 
     def _enter_listing(self, item: StreamItem) -> None:
         import wx
-        if item.url == "internal://trending_country":
-            if getattr(item, "requires_login", False) and not stream_engine.login_cookies_enabled():
-                _ui_message(_(
-                    "This section requires YouTube sign-in. Enable sign-in cookies from "
-                    "your browser in HeadlessPlayer settings, then try again."
-                ))
-                return
-            self._push_level(_Level(item.title, _trending_country_sections(), False))
-            return
-
         if getattr(item, "requires_login", False) and not stream_engine.login_cookies_enabled():
             _ui_message(_(
                 "This section requires YouTube sign-in. Enable sign-in cookies from "

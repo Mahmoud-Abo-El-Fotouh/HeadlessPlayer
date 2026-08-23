@@ -291,12 +291,6 @@ def get_account_sections() -> List["StreamItem"]:
             _("Watch history"),
             requires_login=True,
         ),
-        StreamItem(
-            ITEM_LISTING,
-            "internal://trending_country",
-            _("Trending in your country"),
-            requires_login=False,
-        ),
         # Direct global top 100 music chart (works for everyone without login)
         StreamItem(
             ITEM_LISTING,
@@ -620,6 +614,26 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
                 })
             except (TypeError, ValueError):
                 pass
+
+    if not parsed_chapters:
+        desc = str(info.get("description") or "")
+        lines = desc.splitlines()
+        ts_re = re.compile(r"(?:^|\s)(?:(?:(\d{1,2}):)?(\d{1,2}):(\d{2}))\s*[-–—:]?\s*(.+)$")
+        for line in lines:
+            m = ts_re.search(line.strip())
+            if m:
+                h_str, m_str, s_str, t_str = m.groups()
+                hrs = int(h_str) if h_str else 0
+                mins = int(m_str)
+                secs = int(s_str)
+                total_sec = float(hrs * 3600 + mins * 60 + secs)
+                t_clean = t_str.strip().strip("-–—:[]()")
+                if t_clean:
+                    parsed_chapters.append({
+                        "title": t_clean,
+                        "start_time": total_sec,
+                        "end_time": None,
+                    })
 
     result = {
         "stream_url": str(stream_url),

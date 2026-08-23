@@ -519,30 +519,33 @@ class HeadlessEngine:
     # Granular Seek Controls
     # -------------------------------------------------------------------------
 
-    def seek(self, delta_sec: float) -> bool:
+    def seek(self, delta_sec: float, absolute: bool = False) -> bool:
         """
-        Relative high-resolution seek in seconds.
-        Normal: 5s, Alt: 1s, Ctrl: 30s, Shift: 300s (5min).
+        High-resolution seek.
+        If absolute is True, seeks to exact timestamp in seconds.
+        Otherwise performs relative seek by delta_sec.
         """
-        if not self.is_running:
-            return False
+        if absolute:
+            return self.seek_absolute(delta_sec)
         with self._lock:
             # Optimistically adjust cached time_pos clamped to [0, duration]
             if self.duration > 0:
                 self.time_pos = max(0.0, min(self.duration, self.time_pos + delta_sec))
             else:
                 self.time_pos = max(0.0, self.time_pos + delta_sec)
+        if not self._ipc or not self._ipc.is_connected():
+            return False
         return self._ipc.send_command_async(["seek", delta_sec, "relative"])
 
     def seek_absolute(self, pos_sec: float) -> bool:
         """Seek to an exact timestamp in seconds."""
-        if not self.is_running:
-            return False
         with self._lock:
             target = max(0.0, float(pos_sec))
             if self.duration > 0:
                 target = min(self.duration, target)
             self.time_pos = target
+        if not self._ipc or not self._ipc.is_connected():
+            return False
         return self._ipc.send_command_async(["seek", self.time_pos, "absolute"])
 
     def seek_percent(self, percent: float) -> bool:
@@ -550,12 +553,12 @@ class HeadlessEngine:
         Jump to percentage of file duration (e.g. 10.0 to 90.0 for keys 1-9).
         Clamped between 0.0% and 100.0%.
         """
-        if not self.is_running:
-            return False
         target_pct = max(0.0, min(100.0, float(percent)))
         with self._lock:
             if self.duration > 0:
                 self.time_pos = (target_pct / 100.0) * self.duration
+        if not self._ipc or not self._ipc.is_connected():
+            return False
         return self._ipc.send_command_async(["seek", target_pct, "absolute-percent"])
 
     # -------------------------------------------------------------------------
@@ -734,9 +737,10 @@ class HeadlessEngine:
         self._ipc.send_command_async(["set_property", "ab-loop-b", "no"])
         logger.info("Cleared A-B loop points.")
 
-    # -------------------------------------------------------------------------
-    # Chapter Navigation & Query
-    # -------------------------------------------------------------------------
+    @property
+    def chapter_count(self) -> int:
+        """Returns the total number of chapters in the active file."""
+        return self.chapters or len(self.chapter_list or [])
 
     def next_chapter(self) -> bool:
         """Jump to next chapter."""
