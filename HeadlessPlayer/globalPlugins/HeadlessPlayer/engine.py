@@ -370,15 +370,8 @@ class HeadlessEngine:
         logger.info("Loading media: %s (mode: %s)", file_path, mode)
         ok = self._ipc.send_command_async(["loadfile", file_path, mode])
         if ok and not append:
-            # Always start fresh loads unpaused: a stale paused state (e.g.
-            # Space pressed while the player was idle) would otherwise freeze
-            # every new track at 0:00 with the time never moving.
+            # Always start fresh loads unpaused
             self._ipc.send_command_async(["set_property", "pause", False])
-            # Re-apply active speed and volume to the newly loaded track
-            if self.speed != 1.0:
-                self._ipc.send_command_async(["set_property", "speed", float(self.speed)])
-            if self.volume != 100.0:
-                self._ipc.send_command_async(["set_property", "volume", float(self.volume)])
             with self._lock:
                 self.paused = False
         return ok
@@ -395,10 +388,6 @@ class HeadlessEngine:
             for k, v in headers.items():
                 if k and v is not None:
                     field_list.append(f"{k}: {v}")
-                    if k.lower() == "user-agent":
-                        self._ipc.send_command_async(["set_property", "user-agent", str(v)])
-                    elif k.lower() in ("referrer", "referer"):
-                        self._ipc.send_command_async(["set_property", "referrer", str(v)])
         self._ipc.send_command_async(["set_property", "http-header-fields", field_list])
 
     def load_stream(self, stream_url: str, headers: Optional[Dict[str, str]] = None) -> bool:

@@ -43,7 +43,7 @@ _ADDON_DIR = os.path.dirname(os.path.abspath(__file__))
 LIB_DIR = os.path.join(_ADDON_DIR, "lib")
 
 if LIB_DIR not in sys.path:
-    sys.path.append(LIB_DIR)
+    sys.path.insert(0, LIB_DIR)
 
 _ytdlp_module: Any = None
 _ytdlp_import_error: Optional[str] = None

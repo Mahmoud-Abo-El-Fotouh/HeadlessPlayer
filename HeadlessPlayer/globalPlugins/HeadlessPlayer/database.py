@@ -275,18 +275,30 @@ class DatabaseManager:
     def save_position(
         self,
         file_path: str,
-        position: float,
+        position_sec: Optional[float] = None,
+        duration_sec: Optional[float] = None,
+        filename: Optional[str] = None,
+        position: Optional[float] = None,
         duration: Optional[float] = None,
-        filename: Optional[str] = None
+        end_threshold_sec: float = 3.0,
+        **kwargs: Any
     ) -> None:
+        pos = position_sec if position_sec is not None else position
+        if pos is None:
+            return
+        dur = duration_sec if duration_sec is not None else duration
+        if dur and dur > 0 and (dur - pos) <= end_threshold_sec:
+            self.clear_position(file_path)
+            return
+
         norm_path = normalize_file_path(file_path)
         if not norm_path:
             return
         with self._lock:
             fn = filename or (os.path.basename(file_path) if not file_path.startswith("http") else file_path)
             self._cache["positions"][norm_path] = {
-                "position": float(position),
-                "duration": float(duration) if duration is not None else None,
+                "position": float(pos),
+                "duration": float(dur) if dur is not None else None,
                 "filename": fn,
                 "updated_at": time.time()
             }
