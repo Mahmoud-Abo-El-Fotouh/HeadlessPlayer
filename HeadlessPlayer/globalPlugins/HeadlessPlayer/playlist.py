@@ -405,6 +405,24 @@ class Playlist:
                     return self.jump_to_original_index(orig_idx)
             return None
 
+    def first_track(self) -> Optional[Track]:
+        """
+        Jumps directly to the first track in the active playlist sequence (Control + Home).
+        """
+        with self._lock:
+            if not self._tracks:
+                return None
+            return self.jump_to_index(0)
+
+    def last_track(self) -> Optional[Track]:
+        """
+        Jumps directly to the last track in the active playlist sequence (Control + End).
+        """
+        with self._lock:
+            if not self._tracks:
+                return None
+            return self.jump_to_index(len(self._tracks) - 1)
+
     # -------------------------------------------------------------------------
     # Auto-Next Coordination API
     # -------------------------------------------------------------------------

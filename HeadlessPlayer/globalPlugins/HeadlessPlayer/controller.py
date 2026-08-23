@@ -363,6 +363,33 @@ class PlayerController:
                 return False
             return self.engine.seek_absolute(pos_sec)
 
+    def jump_to_track_start(self) -> bool:
+        """Jumps directly to the beginning (0:00) of the current playing track (Home key)."""
+        with self._lock:
+            if not self.engine.is_running:
+                return False
+            res = self.engine.seek_absolute(0.0)
+            self.tone_manager.play_seek_click()
+            self.speech.announce_percent_jump(0, 0.0)
+            return res
+
+    def jump_to_track_end(self) -> bool:
+        """Jumps directly to the end of the current playing track (End key)."""
+        with self._lock:
+            if not self.engine.is_running:
+                return False
+            dur = self.engine.duration
+            if dur and dur > 2.0:
+                target = max(0.0, dur - 1.0)
+                res = self.engine.seek_absolute(target)
+                self.tone_manager.play_seek_click()
+                self.speech.speak(_("Track end"))
+                return res
+            elif dur and dur > 0:
+                res = self.engine.seek_absolute(dur)
+                return res
+            return False
+
     # -------------------------------------------------------------------------
     # Pitch-Preserved Speed Engine
     # -------------------------------------------------------------------------
@@ -595,6 +622,32 @@ class PlayerController:
                 self.tone_manager.play_boundary_hit()
                 self.speech.announce_boundary(is_start=True)
                 return None
+
+    def jump_to_first_track(self) -> Optional[Track]:
+        """Jumps directly to the first track in the playlist (Control + Home)."""
+        with self._lock:
+            if self.playlist.is_empty():
+                self.tone_manager.play_boundary_hit()
+                self.speech.announce_boundary(is_start=True)
+                return None
+            first_t = self.playlist.first_track()
+            if first_t:
+                self.play_track(first_t)
+                return first_t
+            return None
+
+    def jump_to_last_track(self) -> Optional[Track]:
+        """Jumps directly to the last track in the playlist (Control + End)."""
+        with self._lock:
+            if self.playlist.is_empty():
+                self.tone_manager.play_boundary_hit()
+                self.speech.announce_boundary(is_start=False)
+                return None
+            last_t = self.playlist.last_track()
+            if last_t:
+                self.play_track(last_t)
+                return last_t
+            return None
 
     def toggle_auto_next(self) -> bool:
         """Toggles auto-next track playback."""

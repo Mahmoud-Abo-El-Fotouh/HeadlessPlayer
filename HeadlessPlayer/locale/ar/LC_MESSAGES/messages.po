@@ -490,6 +490,33 @@ msgstr "المقطع التالي في قائمة التشغيل"
 msgid "Previous Track in Playlist"
 msgstr "المقطع السابق في قائمة التشغيل"
 
+msgid "Jump to start of current track (Home)"
+msgstr "الانتقال إلى بداية المقطع الحالي (Home)"
+
+msgid "Jump to end of current track (End)"
+msgstr "الانتقال إلى نهاية المقطع الحالي (End)"
+
+msgid "First Track in Playlist (Control+Home)"
+msgstr "المقطع الأول في قائمة التشغيل (Control + Home)"
+
+msgid "Last Track in Playlist (Control+End)"
+msgstr "المقطع الأخير في قائمة التشغيل (Control + End)"
+
+msgid "Jump to start of current playing track."
+msgstr "الانتقال إلى بداية المقطع الذي يعمل حالياً."
+
+msgid "Jump to end of current playing track."
+msgstr "الانتقال إلى نهاية المقطع الذي يعمل حالياً."
+
+msgid "Jump to first track in playlist."
+msgstr "الانتقال إلى المقطع الأول في قائمة التشغيل."
+
+msgid "Jump to last track in playlist."
+msgstr "الانتقال إلى المقطع الأخير في قائمة التشغيل."
+
+msgid "Track end"
+msgstr "نهاية المقطع"
+
 msgid "Mark A-B Loop Start (Point A)"
 msgstr "تحديد بداية المقطع A-B (النقطة A)"
 

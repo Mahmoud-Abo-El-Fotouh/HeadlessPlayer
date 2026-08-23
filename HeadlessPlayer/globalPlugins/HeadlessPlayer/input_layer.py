@@ -57,6 +57,8 @@ VK_ESCAPE = 0x1B
 VK_SPACE = 0x20
 VK_PRIOR = 0x21  # Page Up
 VK_NEXT = 0x22   # Page Down
+VK_END = 0x23
+VK_HOME = 0x24
 VK_LEFT = 0x25
 VK_UP = 0x26
 VK_RIGHT = 0x27
@@ -392,6 +394,10 @@ class ModalInputLayer:
             "load_from_explorer": ["load_from_explorer", "load_explorer_selection", "play_explorer_selection"],
             "prev_track": ["prev_track", "previous_track", "playlist_prev", "prev"],
             "next_track": ["next_track", "playlist_next", "next"],
+            "jump_to_first_track": ["jump_to_first_track", "first_track", "first_playlist_track"],
+            "jump_to_last_track": ["jump_to_last_track", "last_track", "last_playlist_track"],
+            "jump_to_track_start": ["jump_to_track_start", "track_start", "seek_track_start"],
+            "jump_to_track_end": ["jump_to_track_end", "track_end", "seek_track_end"],
             "toggle_auto_next": ["toggle_auto_next", "toggle_autonext", "set_auto_next"],
             "toggle_shuffle": ["toggle_shuffle", "shuffle_toggle", "set_shuffle"],
             "speak_media_info": ["speak_media_info", "announce_media_info", "get_media_info"],
@@ -530,6 +536,10 @@ class ModalInputLayer:
             main_key = "escape"
         elif main_key in ("space", "spacebar"):
             main_key = "space"
+        elif main_key in ("home", "extendedhome"):
+            main_key = "home"
+        elif main_key in ("end", "extendedend"):
+            main_key = "end"
 
         mod_prefix = "+".join(mods)
         current_rep = f"{mod_prefix}+{main_key}" if mod_prefix else main_key
@@ -545,6 +555,14 @@ class ModalInputLayer:
             if custom_key == "tab" and (main_key == "tab" or vk == VK_TAB) and not mods:
                 return True
             if custom_key == "shift+tab" and (main_key == "tab" or vk == VK_TAB) and mods == ["shift"]:
+                return True
+            if custom_key == "home" and (main_key == "home" or vk == VK_HOME) and not mods:
+                return True
+            if custom_key == "end" and (main_key == "end" or vk == VK_END) and not mods:
+                return True
+            if custom_key == "control+home" and (main_key == "home" or vk == VK_HOME) and mods == ["control"]:
+                return True
+            if custom_key == "control+end" and (main_key == "end" or vk == VK_END) and mods == ["control"]:
                 return True
             if custom_key in ("control", "ctrl") and (main_key in ("control", "ctrl") or vk in (0x11, 0xA2, 0xA3)):
                 return True
@@ -739,6 +757,26 @@ class ModalInputLayer:
 
         if self._matches_action(gesture, "next_track", (main_key in ("pagedown", "page_down", "next") or vk == VK_NEXT)):
             self._safe_call("next_track")
+            return True
+
+        # Home & End: Start/End of current track vs First/Last in playlist
+        is_home = main_key in ("home", "extendedhome") or vk == VK_HOME
+        is_end = main_key in ("end", "extendedend") or vk == VK_END
+
+        if self._matches_action(gesture, "first_track", (is_home and has_ctrl and not has_shift)):
+            self._safe_call("jump_to_first_track")
+            return True
+
+        if self._matches_action(gesture, "last_track", (is_end and has_ctrl and not has_shift)):
+            self._safe_call("jump_to_last_track")
+            return True
+
+        if self._matches_action(gesture, "track_start", (is_home and not (has_ctrl or has_alt or has_shift))):
+            self._safe_call("jump_to_track_start")
+            return True
+
+        if self._matches_action(gesture, "track_end", (is_end and not (has_ctrl or has_alt or has_shift))):
+            self._safe_call("jump_to_track_end")
             return True
 
         if self._matches_action(gesture, "toggle_auto_next", ((main_key == "n" or vk == VK_N) and not (has_ctrl or has_alt))):
