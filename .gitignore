@@ -3,9 +3,7 @@ __pycache__/
 *.py[codz]
 *$py.class
 
-# Packaging & Build artifacts
-build.py
-**/build.py
+# Packaging & Build output artifacts
 dist/
 **/dist/
 *.nvda-addon

@@ -370,7 +370,7 @@ class ModalInputLayer:
 
         # Primary and alias method names
         aliases = {
-            "toggle_pause": ["toggle_pause", "play_pause", "pause_toggle"],
+            "toggle_pause": ["toggle_pause", "toggle_play_pause", "play_pause", "pause_toggle"],
             "stop": ["stop", "stop_playback"],
             "toggle_mute": ["toggle_mute", "mute_toggle"],
             "seek": ["seek", "seek_relative"],
@@ -548,22 +548,49 @@ class ModalInputLayer:
             if current_rep == custom_key:
                 return True
 
-            if custom_key == "space" and (main_key == "space" or vk == VK_SPACE) and not mods:
-                return True
-            if custom_key in ("escape", "esc") and (main_key in ("escape", "esc") or vk == VK_ESCAPE) and not mods:
-                return True
-            if custom_key == "tab" and (main_key == "tab" or vk == VK_TAB) and not mods:
-                return True
-            if custom_key == "shift+tab" and (main_key == "tab" or vk == VK_TAB) and mods == ["shift"]:
-                return True
-            if custom_key == "home" and (main_key == "home" or vk == VK_HOME) and not mods:
-                return True
-            if custom_key == "end" and (main_key == "end" or vk == VK_END) and not mods:
-                return True
-            if custom_key == "control+home" and (main_key == "home" or vk == VK_HOME) and mods == ["control"]:
-                return True
-            if custom_key == "control+end" and (main_key == "end" or vk == VK_END) and mods == ["control"]:
-                return True
+            # Layout-invariant matching via vkCode:
+            # Parse custom_key into target_mods and target_base_key
+            parts = custom_key.split("+")
+            target_base = parts[-1].lower()
+            target_mods = sorted(parts[:-1])
+
+            if mods == target_mods:
+                # Single letter key A-Z
+                if len(target_base) == 1 and target_base.isalpha():
+                    if main_key == target_base or vk == ord(target_base.upper()):
+                        return True
+                # Digit key 0-9
+                elif len(target_base) == 1 and target_base.isdigit():
+                    if main_key == target_base or vk == ord(target_base) or vk == (0x60 + int(target_base)):
+                        return True
+                # Special keys
+                elif target_base in ("space", "spacebar") and (main_key in ("space", "spacebar") or vk == VK_SPACE):
+                    return True
+                elif target_base in ("escape", "esc") and (main_key in ("escape", "esc") or vk == VK_ESCAPE):
+                    return True
+                elif target_base == "tab" and (main_key == "tab" or vk == VK_TAB):
+                    return True
+                elif target_base == "home" and (main_key == "home" or vk == VK_HOME):
+                    return True
+                elif target_base == "end" and (main_key == "end" or vk == VK_END):
+                    return True
+                elif target_base == "pageup" and (main_key == "pageup" or vk == VK_PRIOR):
+                    return True
+                elif target_base == "pagedown" and (main_key == "pagedown" or vk == VK_NEXT):
+                    return True
+                elif target_base == "leftarrow" and (main_key == "leftarrow" or vk == VK_LEFT):
+                    return True
+                elif target_base == "rightarrow" and (main_key == "rightarrow" or vk == VK_RIGHT):
+                    return True
+                elif target_base == "uparrow" and (main_key == "uparrow" or vk == VK_UP):
+                    return True
+                elif target_base == "downarrow" and (main_key == "downarrow" or vk == VK_DOWN):
+                    return True
+                elif target_base in ("[", "bracketleft", "ج") and (main_key in POINT_A_KEYS or vk == VK_OEM_4):
+                    return True
+                elif target_base in ("]", "bracketright", "د") and (main_key in POINT_B_KEYS or vk == VK_OEM_6):
+                    return True
+
             if custom_key in ("control", "ctrl") and (main_key in ("control", "ctrl") or vk in (0x11, 0xA2, 0xA3)):
                 return True
 

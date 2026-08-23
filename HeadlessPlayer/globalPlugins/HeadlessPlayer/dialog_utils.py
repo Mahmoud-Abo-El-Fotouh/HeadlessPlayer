@@ -159,6 +159,12 @@ def prompt_open_file_dialog(
             except Exception as e:
                 logger.error(f"Error in on_cancelled callback: {e}")
 
+    if suspend_capture:
+        try:
+            suspend_capture()
+        except Exception:
+            pass
+
     try:
         import wx
         wx.CallAfter(_show_dialog)
@@ -274,6 +280,12 @@ def prompt_open_files_dialog(
             except Exception:
                 pass
 
+    if suspend_capture:
+        try:
+            suspend_capture()
+        except Exception:
+            pass
+
     try:
         import wx
         wx.CallAfter(_show_dialog)
@@ -349,7 +361,7 @@ def prompt_open_folder_dialog(
                 pass
 
         selected_folder: Optional[str] = None
-        dlg_title = title or _("Select Media Folder to Queue")
+        dlg_title = title or _("Select Folder to Play")
         initial_dir = default_dir or os.path.expanduser("~")
 
         try:
@@ -390,6 +402,12 @@ def prompt_open_folder_dialog(
                 on_cancelled()
             except Exception:
                 pass
+
+    if suspend_capture:
+        try:
+            suspend_capture()
+        except Exception:
+            pass
 
     try:
         import wx

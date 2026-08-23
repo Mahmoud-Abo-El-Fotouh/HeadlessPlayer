@@ -1,0 +1,53 @@
+name: Build and Release NVDA Add-on
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Publish Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Compile Translations & Package Add-on
+        shell: pwsh
+        run: |
+          python HeadlessPlayer/build.py
+          $addonFiles = Get-ChildItem -Path "HeadlessPlayer/dist/*.nvda-addon"
+          if ($addonFiles.Count -eq 0) {
+            Write-Error "No .nvda-addon file was generated in dist directory!"
+            exit 1
+          }
+          foreach ($file in $addonFiles) {
+            $hash = (Get-FileHash -Path $file.FullName -Algorithm SHA256).Hash
+            Write-Host "Built Add-on: $($file.Name)"
+            Write-Host "SHA-256: $hash"
+          }
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Headless Media Player ${{ github.ref_name }}
+          files: |
+            HeadlessPlayer/dist/*.nvda-addon
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

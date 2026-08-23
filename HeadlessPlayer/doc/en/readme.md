@@ -1,9 +1,9 @@
 # Headless Media Player — NVDA Add-on User Guide
 
-**Version:** 1.2.0  
+**Version:** 1.2.1  
 **Author:** Mahmoud Abo El Fotouh <mahmoudaboelfotouh.20@gmail.com>  
 **Repository:** [https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer](https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer)  
-**NVDA Compatibility:** NVDA 2022.1 to 2025.3+
+**NVDA Compatibility:** NVDA 2022.1 to 2026.1+
 
 ---
 

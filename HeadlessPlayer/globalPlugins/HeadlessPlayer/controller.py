@@ -188,23 +188,28 @@ class PlayerController:
     # Core Playback Controls
     # -------------------------------------------------------------------------
 
-    def toggle_pause(self) -> bool:
-        """Toggles play / pause state and announces status. If media reached end, restarts from beginning."""
+    def toggle_play_pause(self) -> bool:
+        """
+        Toggles playback state (play <-> pause).
+        If stopped, idle, or EOF reached: restarts playback of current track.
+        """
         with self._lock:
+            if hasattr(self.speech, "cancel_debounced_seek"):
+                self.speech.cancel_debounced_seek()
+
             if not self.engine.is_running:
-                # If playlist has tracks, start playback
+                self.start()
                 cur_track = self.playlist.get_current_track()
                 if cur_track:
-                    self.play_track(cur_track)
-                    return False
+                    return self.play_track(cur_track)
                 return False
 
-            # Engine running but idle (nothing loaded): Space should (re)start
-            # the current track, never cycle mpv's pause flag into the void.
-            if not getattr(self.engine, "is_loaded", False) and not getattr(self.engine, "path", None):
+            # Engine running but idle (nothing loaded) or finished:
+            # Replay the active track from playlist instead of toggling pause into void
+            if not getattr(self.engine, "is_loaded", False):
                 cur_track = self.playlist.get_current_track()
                 if cur_track:
-                    self.play_track(cur_track)
+                    return self.play_track(cur_track)
                 return False
 
             time_pos = getattr(self.engine, "time_pos", 0.0)
@@ -212,10 +217,11 @@ class PlayerController:
             is_eof = getattr(self.engine, "eof_reached", False) or (duration > 0 and time_pos >= duration - 0.5)
 
             if is_eof:
-                # Track finished/stopped at end: restart from beginning
+                cur_track = self.playlist.get_current_track()
+                if cur_track:
+                    return self.play_track(cur_track)
                 self.engine.seek_absolute(0.0)
-                self.engine.set_property("pause", False)
-                self.engine.is_paused = False
+                self.engine.resume()
                 self.speech.announce_playback_state("playing")
                 return False
 
@@ -226,6 +232,10 @@ class PlayerController:
             else:
                 self.speech.announce_playback_state("playing")
             return new_pause
+
+    def toggle_pause(self) -> bool:
+        """Alias for toggle_play_pause."""
+        return self.toggle_play_pause()
 
     def play(self) -> bool:
         """Explicitly starts or resumes playback."""
@@ -770,8 +780,9 @@ class PlayerController:
         recent = self.state_store.get_recent_files()
         if recent:
             for r in recent:
-                if os.path.exists(r):
-                    return os.path.abspath(os.path.dirname(r) if os.path.isfile(r) else r)
+                p = r.get("file_path") if isinstance(r, dict) else r
+                if p and isinstance(p, str) and os.path.exists(p):
+                    return os.path.abspath(os.path.dirname(p) if os.path.isfile(p) else p)
 
         return os.path.expanduser("~")
 
@@ -792,10 +803,11 @@ class PlayerController:
 
     def open_file_dialog(self) -> None:
         """Opens native file dialog to select and play a media file."""
+        self._exit_player_mode_for_dialog()
         default_dir = self._get_last_browse_dir()
         prompt_open_file_dialog(
             on_file_selected=self._on_file_selected,
-            on_cancelled=None,
+            on_cancelled=self._on_dialog_cancelled,
             suspend_capture=self._suspend_input,
             resume_capture=self._resume_input,
             default_dir=default_dir
@@ -803,14 +815,19 @@ class PlayerController:
 
     def open_folder_dialog(self) -> None:
         """Opens native folder browser dialog to queue and play an entire folder."""
+        self._exit_player_mode_for_dialog()
         default_dir = self._get_last_browse_dir()
         prompt_open_folder_dialog(
             on_folder_selected=self._on_folder_selected,
-            on_cancelled=None,
+            on_cancelled=self._on_dialog_cancelled,
             suspend_capture=self._suspend_input,
             resume_capture=self._resume_input,
             default_dir=default_dir
         )
+
+    def _on_dialog_cancelled(self) -> None:
+        """Invoked when user cancels an open file/folder dialog."""
+        self._check_auto_enter_player_mode()
 
     def get_toggle_gesture_display(self) -> str:
         """Retrieves active toggle shortcut string dynamically from NVDA."""
