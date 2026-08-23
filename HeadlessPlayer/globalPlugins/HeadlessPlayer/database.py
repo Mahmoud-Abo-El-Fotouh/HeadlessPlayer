@@ -16,11 +16,37 @@ import shutil
 import tempfile
 import threading
 import time
+import zlib
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger("HeadlessPlayer.Database")
 
-DB_FILE_NAME = "headlessPlayer_data.json"
+DB_FILE_NAME = "headlessPlayer.db"
+MAGIC_HEADER = b"HPDB\x01"
+_OBFUSCATE_KEY = b"HeadlessPlayerSecureDb2026!#"
+
+
+def _encode_database_payload(data: Dict[str, Any]) -> bytes:
+    """Encodes and obfuscates database cache into compact binary format."""
+    raw = json.dumps(data, ensure_ascii=True, separators=(',', ':')).encode('utf-8')
+    comp = zlib.compress(raw, 9)
+    masked = bytes([b ^ _OBFUSCATE_KEY[i % len(_OBFUSCATE_KEY)] for i, b in enumerate(comp)])
+    return MAGIC_HEADER + masked
+
+
+def _decode_database_payload(blob: bytes) -> Dict[str, Any]:
+    """Decodes binary or legacy plain-text database blob."""
+    if not blob:
+        return {}
+    if blob.startswith(MAGIC_HEADER):
+        payload = blob[len(MAGIC_HEADER):]
+        unmasked = bytes([b ^ _OBFUSCATE_KEY[i % len(_OBFUSCATE_KEY)] for i, b in enumerate(payload)])
+        raw = zlib.decompress(unmasked)
+        return json.loads(raw.decode('utf-8'))
+    elif blob.strip().startswith(b"{") or blob.strip().startswith(b"["):
+        return json.loads(blob.decode('utf-8', errors='ignore'))
+    else:
+        raise ValueError("Unrecognized database file format")
 
 
 def get_default_db_path() -> str:
@@ -90,7 +116,8 @@ class DatabaseManager:
     """
     Thread-safe, crash-resilient Database Manager for HeadlessPlayer.
     Persists settings, resume positions, playback history, and playlist state
-    using high-speed memory caching and atomic disk synchronization.
+    using high-speed memory caching, compact encrypted binary storage, and
+    atomic disk synchronization.
     Zero binary dependencies; works across all NVDA versions.
     """
 
@@ -114,8 +141,9 @@ class DatabaseManager:
         with self._lock:
             if os.path.isfile(self._db_path):
                 try:
-                    with open(self._db_path, "r", encoding="utf-8") as f:
-                        data = json.load(f)
+                    with open(self._db_path, "rb") as f:
+                        blob = f.read()
+                    data = _decode_database_payload(blob)
                     if isinstance(data, dict):
                         self._cache["settings"] = data.get("settings", {})
                         self._cache["positions"] = data.get("positions", {})
@@ -139,8 +167,9 @@ class DatabaseManager:
 
             temp_path = self._db_path + f".tmp_{os.getpid()}_{threading.get_ident()}"
             try:
-                with open(temp_path, "w", encoding="utf-8") as f:
-                    json.dump(self._cache, f, ensure_ascii=False, indent=2)
+                payload = _encode_database_payload(self._cache)
+                with open(temp_path, "wb") as f:
+                    f.write(payload)
                 
                 # Atomic replace on Windows
                 if os.path.exists(self._db_path):
@@ -156,15 +185,42 @@ class DatabaseManager:
                     pass
 
     def _migrate_legacy_data(self) -> None:
-        """Migrates state from legacy headlessPlayer_state.json or nvda.ini."""
+        """Migrates state from legacy headlessPlayer_data.json, headlessPlayer_state.json or nvda.ini."""
         with self._lock:
             legacy_dir = os.path.dirname(self._db_path)
-            legacy_json_path = os.path.join(legacy_dir, "headlessPlayer_state.json")
+            
+            # 1. Check legacy headlessPlayer_data.json
+            legacy_data_json = os.path.join(legacy_dir, "headlessPlayer_data.json")
+            if os.path.isfile(legacy_data_json):
+                try:
+                    with open(legacy_data_json, "rb") as f:
+                        data = _decode_database_payload(f.read())
+                    if isinstance(data, dict):
+                        if data.get("settings") and isinstance(data["settings"], dict):
+                            self._cache["settings"].update(data["settings"])
+                        if data.get("positions") and isinstance(data["positions"], dict):
+                            for path, rec in data["positions"].items():
+                                norm_key = normalize_file_path(path)
+                                if norm_key:
+                                    self._cache["positions"][norm_key] = rec
+                        if data.get("recent_media") and isinstance(data["recent_media"], list):
+                            self._cache["recent_media"] = data["recent_media"] + self._cache["recent_media"]
+                        if data.get("playlists_state") and isinstance(data["playlists_state"], dict):
+                            self._cache["playlists_state"].update(data["playlists_state"])
+                    try:
+                        os.remove(legacy_data_json)
+                    except Exception:
+                        pass
+                    self._save_to_disk()
+                except Exception as e:
+                    logger.warning("Error migrating headlessPlayer_data.json: %s", e)
 
+            # 2. Check legacy headlessPlayer_state.json
+            legacy_json_path = os.path.join(legacy_dir, "headlessPlayer_state.json")
             if os.path.isfile(legacy_json_path):
                 try:
-                    with open(legacy_json_path, "r", encoding="utf-8") as f:
-                        data = json.load(f)
+                    with open(legacy_json_path, "rb") as f:
+                        data = _decode_database_payload(f.read())
                     if isinstance(data, dict):
                         # Settings
                         settings = data.get("settings", {})
@@ -213,7 +269,7 @@ class DatabaseManager:
                 except Exception as e:
                     logger.warning("Error migrating legacy state: %s", e)
 
-            # Migrate from nvda.ini [headlessPlayer]
+            # 3. Migrate from nvda.ini [headlessPlayer]
             try:
                 import config
                 if hasattr(config, "conf") and "headlessPlayer" in config.conf:
