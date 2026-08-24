@@ -562,6 +562,17 @@ class SpeechFeedback:
         """
         self.speak(_("Player closed"))
 
+    def announce_sponsor_skipped(self, category: str) -> None:
+        """
+        Announces that a sponsor or promotional segment was automatically skipped.
+        """
+        if not self._should_announce("announceSponsorSkip"):
+            return
+        from .sponsorblock import get_category_display_name
+        cat_name = get_category_display_name(category)
+        msg = _("Skipped %s") % cat_name
+        self.speak(msg)
+
 
 # Module singleton instance
 _global_speech_feedback: Optional[SpeechFeedback] = None

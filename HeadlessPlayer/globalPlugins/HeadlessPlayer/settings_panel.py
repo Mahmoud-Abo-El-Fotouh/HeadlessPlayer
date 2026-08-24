@@ -852,7 +852,36 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         helper.addItem(streamGroup.sizer)
 
         # -------------------------------------------------------------
-        # Section 5: Customizable Shortcuts Dialog
+        # Section 5: SponsorBlock (YouTube Ad & Sponsor Skipping)
+        # -------------------------------------------------------------
+        if hasattr(wx, "CheckBox") and hasattr(wx, "StaticBox"):
+            sbGroupLabel = _("SponsorBlock (Auto-Skip YouTube Ads & Sponsors)")
+            sbBox = wx.StaticBox(self, label=sbGroupLabel)
+            sbGroup = guiHelper.BoxSizerHelper(
+                self,
+                sizer=wx.StaticBoxSizer(sbBox, wx.VERTICAL)
+            )
+
+            self.sponsorBlockEnabledChk = sbGroup.addItem(
+                wx.CheckBox(
+                    self,
+                    label=_("Enable &SponsorBlock (Auto-skip YouTube sponsors, promos & intros)")
+                )
+            )
+            self.sponsorBlockEnabledChk.SetValue(bool(cfg.get("sponsorBlockEnabled", True)))
+
+            self.announceSponsorSkipChk = sbGroup.addItem(
+                wx.CheckBox(
+                    self,
+                    label=_("&Announce when a sponsor or promo segment is skipped")
+                )
+            )
+            self.announceSponsorSkipChk.SetValue(bool(cfg.get("announceSponsorSkip", True)))
+
+            helper.addItem(sbGroup.sizer)
+
+        # -------------------------------------------------------------
+        # Section 6: Customizable Shortcuts Dialog
         # -------------------------------------------------------------
         if hasattr(wx, "Button") and hasattr(wx, "StaticBox"):
             shortcutsGroupLabel = _("Player Mode Keyboard Shortcuts")
@@ -1130,6 +1159,12 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
                 setConfigValue("ytdlpCookiesBrowser", self.cookiesBrowserChoices[browserSel][0])
         if hasattr(self, "cookiesFileCtrl"):
             setConfigValue("ytdlpCookiesFile", self.cookiesFileCtrl.GetValue().strip().strip('"'))
+
+        # Update SponsorBlock options
+        if hasattr(self, "sponsorBlockEnabledChk"):
+            setConfigValue("sponsorBlockEnabled", bool(self.sponsorBlockEnabledChk.GetValue()))
+        if hasattr(self, "announceSponsorSkipChk"):
+            setConfigValue("announceSponsorSkip", bool(self.announceSponsorSkipChk.GetValue()))
 
         # Save to SQLite store
         saveConfig()

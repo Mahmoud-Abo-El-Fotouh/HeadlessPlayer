@@ -86,13 +86,14 @@ class PlayerController:
         # Apply initial settings from config
         self._apply_initial_config(cfg)
 
-    def _bind_engine_callbacks(self) -> None:
+    def _setup_engine_callbacks(self) -> None:
         """Register listeners for engine property changes and lifecycle events."""
         self.engine.on_file_loaded = self._on_engine_file_loaded
         self.engine.on_track_end = self._on_engine_track_end
         self.engine.on_property_change = self._on_engine_property_change
         self.engine.on_playback_restart = self._on_engine_playback_restart
         self.engine.on_seek = self._on_engine_seek
+        self.engine.on_sponsor_skipped = self._on_sponsor_skipped
 
     def _apply_initial_config(self, cfg: Dict[str, Any]) -> None:
         """Initialize controller, engine, and playlist options from persistent storage."""
@@ -157,6 +158,8 @@ class PlayerController:
                 self.state_store.save_volume(int(vol))
             if "playModalTones" in cfg and self.tone_manager:
                 self.tone_manager.is_enabled = bool(cfg["playModalTones"])
+            if "sponsorBlockEnabled" in cfg and self.engine:
+                self.engine.set_sponsor_block_enabled(bool(cfg["sponsorBlockEnabled"]))
 
     # -------------------------------------------------------------------------
     # Lifecycle Management
@@ -655,6 +658,7 @@ class PlayerController:
             success = self.engine.load_file(target_path, append=False)
             if success:
                 self.state_store.save_recent_file(target_path)
+                self._load_sponsor_segments_for_url(target_path)
 
                 # Announce active track
                 orig_idx = self.playlist.current_index + 1
@@ -883,6 +887,36 @@ class PlayerController:
             if self.input_layer:
                 self.input_layer.set_player_mode(False, announce=False)
             self.speech.announce_player_closed()
+
+    def _on_sponsor_skipped(self, category: str, start: float, end: float) -> None:
+        """Invoked when engine automatically skips a SponsorBlock segment."""
+        logger.info("Controller: SponsorBlock skipped %s segment [%.2f -> %.2f]", category, start, end)
+        self.speech.announce_sponsor_skipped(category)
+
+    def _load_sponsor_segments_for_url(self, url: str) -> None:
+        """Fetches SponsorBlock skip segments asynchronously for YouTube URLs/IDs."""
+        if not self.engine:
+            return
+        self.engine.clear_sponsor_segments()
+        if not getConfigValue("sponsorBlockEnabled", True):
+            return
+
+        from .sponsorblock import extract_youtube_id, fetch_sponsor_segments
+        video_id = extract_youtube_id(url)
+        if not video_id:
+            return
+
+        def worker(vid: str) -> None:
+            try:
+                cats_str = str(getConfigValue("sponsorBlockCategories", "sponsor,selfpromo,interaction,intro,outro"))
+                cats = [c.strip() for c in cats_str.split(",") if c.strip()]
+                segs = fetch_sponsor_segments(vid, categories=cats)
+                if segs and self.engine:
+                    self.engine.set_sponsor_segments(segs)
+            except Exception as e:
+                logger.debug("Error in SponsorBlock worker for %s: %s", vid, e)
+
+        threading.Thread(target=worker, args=(video_id,), daemon=True, name="HeadlessPlayer-SponsorBlock").start()
 
     def load_from_explorer(self) -> None:
         """Extracts active selection from Windows Explorer and loads into playlist."""
@@ -1231,6 +1265,7 @@ class PlayerController:
             success = self.engine.load_stream(info["stream_url"], info.get("http_headers"))
             if success:
                 self.state_store.save_recent_file(track.path)
+                self._load_sponsor_segments_for_url(track.path or info.get("webpage_url") or info.get("id"))
                 self.speech.announce_track(orig_idx, total, track.display_name)
             else:
                 self.speech.speak(_("Playback engine failed to start."))

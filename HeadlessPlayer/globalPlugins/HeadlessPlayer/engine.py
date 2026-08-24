@@ -96,12 +96,18 @@ class HeadlessEngine:
         self.is_loaded: bool = False
         self.bass_gain: float = 0.0
 
+        # SponsorBlock segment auto-skipping
+        self.sponsor_segments: List[Tuple[float, float, str]] = []
+        self.sponsor_block_enabled: bool = True
+        self._last_skipped_segment: Optional[Tuple[float, float]] = None
+
         # Upstream event callbacks
         self.on_file_loaded: Optional[Callable[[], None]] = None
         self.on_track_end: Optional[Callable[[str], None]] = None
         self.on_property_change: Optional[Callable[[str, Any], None]] = None
         self.on_playback_restart: Optional[Callable[[], None]] = None
         self.on_seek: Optional[Callable[[], None]] = None
+        self.on_sponsor_skipped: Optional[Callable[[str, float, float], None]] = None
 
     @property
     def is_running(self) -> bool:
@@ -282,6 +288,24 @@ class HeadlessEngine:
                     if self.ab_loop_active and self.ab_loop_a is not None and self.ab_loop_b is not None:
                         if self.time_pos >= self.ab_loop_b:
                             self.seek_absolute(self.ab_loop_a)
+
+                    # SponsorBlock auto-skip enforcement
+                    if self.sponsor_block_enabled and self.sponsor_segments:
+                        for seg_start, seg_end, seg_cat in self.sponsor_segments:
+                            if seg_start <= self.time_pos < seg_end:
+                                if self._last_skipped_segment != (seg_start, seg_end):
+                                    self._last_skipped_segment = (seg_start, seg_end)
+                                    logger.info(
+                                        "SponsorBlock: skipping %s segment [%.2f -> %.2f] at pos %.2f",
+                                        seg_cat, seg_start, seg_end, self.time_pos
+                                    )
+                                    self.seek_absolute(seg_end)
+                                    if self.on_sponsor_skipped:
+                                        try:
+                                            self.on_sponsor_skipped(seg_cat, seg_start, seg_end)
+                                        except Exception as cb_err:
+                                            logger.error("Error in on_sponsor_skipped callback: %s", cb_err)
+                                    break
                 except (ValueError, TypeError):
                     pass
             elif name == "duration" and data is not None:
@@ -870,4 +894,25 @@ class HeadlessEngine:
                 "current_aid": self.aid,
                 "is_loaded": self.is_loaded,
                 "core_idle": self.core_idle,
+                "sponsor_segments_count": len(self.sponsor_segments),
+                "sponsor_block_enabled": self.sponsor_block_enabled,
             }
+
+    def set_sponsor_segments(self, segments: List[Tuple[float, float, str]]) -> None:
+        """Sets active SponsorBlock segments for the current media."""
+        with self._lock:
+            self.sponsor_segments = list(segments)
+            self._last_skipped_segment = None
+            logger.debug("Engine: set %d sponsor segments", len(self.sponsor_segments))
+
+    def clear_sponsor_segments(self) -> None:
+        """Clears all active SponsorBlock segments."""
+        with self._lock:
+            self.sponsor_segments = []
+            self._last_skipped_segment = None
+
+    def set_sponsor_block_enabled(self, enabled: bool) -> None:
+        """Toggles SponsorBlock auto-skipping."""
+        with self._lock:
+            self.sponsor_block_enabled = bool(enabled)
+            self._last_skipped_segment = None

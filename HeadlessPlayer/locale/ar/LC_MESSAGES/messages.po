@@ -1133,3 +1133,39 @@ msgstr "تحديد مجلد لتشغيله"
 
 
 
+
+msgid "sponsor segment"
+msgstr "إعلان الراعي"
+
+msgid "self-promotion"
+msgstr "الترويج الذاتي"
+
+msgid "subscribe reminder"
+msgstr "تذكير الاشتراك والتفاعل"
+
+msgid "intro animation"
+msgstr "مقدمة المقطع"
+
+msgid "outro credits"
+msgstr "خاتمة المقطع"
+
+msgid "non-music section"
+msgstr "مقطع غير موسيقي"
+
+msgid "preview recap"
+msgstr "ملخص تمهيدي"
+
+msgid "filler segment"
+msgstr "مقطع حشو"
+
+msgid "Skipped %s"
+msgstr "تم تخطي %s"
+
+msgid "SponsorBlock (Auto-Skip YouTube Ads & Sponsors)"
+msgstr "SponsorBlock (تخطي إعلانات الرعاة والترويج في يوتيوب تلقائياً)"
+
+msgid "Enable &SponsorBlock (Auto-skip YouTube sponsors, promos & intros)"
+msgstr "تفعيل &SponsorBlock (تخطي إعلانات الرعاة والترويج والمقدمات في يوتيوب تلقائياً)"
+
+msgid "&Announce when a sponsor or promo segment is skipped"
+msgstr "&نطق إشعار عند تخطي إعلان راعي أو ترويج"

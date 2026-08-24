@@ -35,6 +35,9 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "ytdlpCookiesFile": "",
     "searchResultsCount": 20,
     "maxStreamPlaylistItems": 300,
+    "sponsorBlockEnabled": True,
+    "announceSponsorSkip": True,
+    "sponsorBlockCategories": "sponsor,selfpromo,interaction,intro,outro",
 }
 
 DEFAULT_KEYMAP: Dict[str, str] = {
