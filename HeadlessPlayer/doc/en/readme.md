@@ -1,152 +1,115 @@
-# Headless Media Player — NVDA Add-on User Guide
+# Headless Media Player User Guide for NVDA
 
-**Version:** 1.2.1  
-**Author:** Mahmoud Abo El Fotouh <mahmoudaboelfotouh.20@gmail.com>  
+**Version:** 1.2.2  
+**Author:** Mahmoud Abo El-Fotouh <mahmoudaboelfotouh.20@gmail.com>  
 **Repository:** [https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer](https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer)  
+**Telegram:** [https://t.me/mahmoud_EG_1](https://t.me/mahmoud_EG_1)  
 **NVDA Compatibility:** NVDA 2022.1 to 2026.1+
 
 ---
 
 ## Overview
-**Headless Media Player** is a high-performance, completely headless, privacy-oriented background media player add-on for the NVDA screen reader. It enables seamless playback of local audio and video files, entire directories, playlists, and online streams (YouTube videos, playlists, channels, search queries, live streams, Twitch, SoundCloud, web radio) with **zero visible UI, zero floating windows, and zero taskbar presence**.
+**Headless Media Player** is an ultra-lightweight, high-performance NVDA add-on designed specifically for blind and vision-impaired users to play any audio, video, playlist, or YouTube stream in the background **with zero windows, zero taskbar presence, and zero interruption to your active applications**.
 
 ---
 
-## 1. Core Concept: Modal Keyboard Capture (Player Mode)
-When Player Mode is active (<kbd>NVDA+Ctrl+Shift+P</kbd>):
-- All keystrokes are captured exclusively by the media engine and blocked from leaking into background applications.
-- Single keystrokes control playback, seeking, speed, volume, and YouTube searching without typing into documents.
+## 1. Core Concept: Modal Player Mode
+When entering Player Mode (<kbd>NVDA+Ctrl+Shift+P</kbd>):
+- All keystrokes are captured exclusively by the media player and will NOT leak into background applications like Microsoft Word or web browsers.
+- You can use single-key actions (Space for play/pause, Arrows for seeking, <kbd>u</kbd> for YouTube search, <kbd>Tab</kbd> for next track).
 - Press <kbd>Escape</kbd> or <kbd>NVDA+Ctrl+Shift+P</kbd> at any time to exit Player Mode and restore normal keyboard input.
 
 ---
 
-## 2. Global NVDA Shortcuts
+## 2. Global NVDA Shortcuts & Multimedia Keys
 | Shortcut | Action | Description |
 | :--- | :--- | :--- |
-| <kbd>NVDA+Ctrl+Shift+P</kbd> *(or Insert/CapsLock)* | Toggle Player Mode | Enters or exits modal keyboard capture. |
-| <kbd>NVDA+Ctrl+Windows+E</kbd> *(or Insert/Win)* | Play from Explorer / Desktop | Queues and plays the currently focused/selected file or folder in Explorer. |
+| <kbd>NVDA+Ctrl+Shift+P</kbd> | Toggle Player Mode | Enters or exits exclusive player mode layer. |
+| <kbd>NVDA+Ctrl+Win+E</kbd> | Play from Windows Explorer | Immediately plays focused or selected file/folder in Explorer or Desktop. |
+| <kbd>Media Play/Pause</kbd> | Global Play / Pause | Controls playback from any application or Bluetooth headset. |
+| <kbd>Media Next / Previous</kbd> | Global Next / Previous Track | Navigates playlist globally. |
+| <kbd>Media Stop</kbd> | Global Stop | Stops playback globally. |
 
 ---
 
-## 3. Complete Player Mode Shortcuts Reference
+## 3. Player Mode Key Commands
 
-### 3.1. Playback & Volume
+### 3.1. Basic Playback & Volume
 | Key | Action | Description |
 | :--- | :--- | :--- |
-| <kbd>Space</kbd> | Play / Pause | Toggles playback. Restarts from start if track reached end. |
-| <kbd>s</kbd> | Stop | Stops playback, saves position, rewinds to 0:00. |
+| <kbd>Space</kbd> | Play / Pause | Toggles playback. Replays from start if track finished. |
+| <kbd>s</kbd> | Stop | Stops playback, saves resume position, and rewinds to 0:00. |
+| <kbd>x</kbd> | Close Player | Completely stops engine, terminates background process, and exits mode. |
 | <kbd>m</kbd> | Mute / Unmute | Toggles audio mute. |
-| <kbd>Up Arrow</kbd> | Volume Up | Increases volume by +5%. |
-| <kbd>Down Arrow</kbd> | Volume Down | Decreases volume by -5%. |
-| <kbd>b</kbd> | Bass Boost | Increases equalizer bass (+3 dB). |
-| <kbd>Shift + b</kbd> | Bass Reduce | Decreases equalizer bass (-3 dB). |
-| <kbd>Escape</kbd> | Exit Player Mode | Deactivates modal capture immediately. |
-| <kbd>Control</kbd> | Silence Speech | Instantly cancels ongoing speech. |
+| <kbd>Up Arrow</kbd> | Volume Up | Increases volume by +5% with speech. |
+| <kbd>Down Arrow</kbd> | Volume Down | Decreases volume by -5% with speech. |
+| <kbd>b</kbd> | Bass Boost | Increases bass frequencies by +3 dB. |
+| <kbd>Shift + b</kbd> | Bass Reduce | Decreases bass frequencies by -3 dB. |
+| <kbd>Escape</kbd> | Exit Player Mode | Exits modal layer and restores normal keyboard input. |
+| <kbd>Control</kbd> | Silence Speech | Instantly silences NVDA speech without affecting background audio. |
 
-### 3.2. Granular Seeking & Direct Percentage Jumps
+### 3.2. Seeking and Percentage Jumps
 | Key | Action | Default Step |
 | :--- | :--- | :--- |
-| <kbd>Left</kbd> / <kbd>Right Arrow</kbd> | Normal Seek | - / + 5 seconds (Configurable) |
-| <kbd>Alt + Left</kbd> / <kbd>Alt + Right</kbd> | Slow / Precise Seek | - / + 1 second (Configurable) |
-| <kbd>Ctrl + Left</kbd> / <kbd>Ctrl + Right</kbd> | Fast Seek | - / + 30 seconds (Configurable) |
-| <kbd>Shift + Left</kbd> / <kbd>Shift + Right</kbd> | Ultrafast Seek | - / + 5 minutes (300s, Configurable) |
-| <kbd>1</kbd> to <kbd>9</kbd> | Percentage Jump | Jumps directly to 10% through 90% of file. |
-| <kbd>0</kbd> | Jump to Start | Rewinds directly to 0%. |
+| <kbd>Left / Right Arrow</kbd> | Normal Seek | 5 seconds (configurable) |
+| <kbd>Alt + Left / Right Arrow</kbd> | Precise / Slow Seek | 1 second (configurable) |
+| <kbd>Ctrl + Left / Right Arrow</kbd> | Fast Seek | 30 seconds (configurable) |
+| <kbd>Shift + Left / Right Arrow</kbd> | Ultrafast Seek | 5 minutes (300s - configurable) |
+| <kbd>1</kbd> to <kbd>9</kbd> | Percent Jumps | Jumps directly to 10% through 90% of file duration. |
+| <kbd>0</kbd> | Rewind to 0% | Rewinds to beginning. |
+| <kbd>Home</kbd> / <kbd>End</kbd> | Track Start / End | Jumps to beginning (0:00) or end of current track. |
 
-### 3.3. Pitch-Preserved Variable Speed
+### 3.3. Pitch-Preserved Speed Engine
 | Key | Action | Description |
 | :--- | :--- | :--- |
-| <kbd>Ctrl + Up</kbd> | Fine Speed Up | +0.1x speed adjustment with 100% natural pitch. |
-| <kbd>Ctrl + Down</kbd> | Fine Speed Down | -0.1x speed adjustment. |
-| <kbd>Shift + Up</kbd> | Next Preset Speed | Cycles: 1.0x -> 1.25x -> 1.5x -> 1.75x -> 2.0x -> 2.25x -> 2.5x -> 3.0x -> 3.5x -> 4.0x. |
-| <kbd>Shift + Down</kbd> | Previous Preset Speed | Cycles down through presets. |
+| <kbd>Ctrl + Up / Down</kbd> | Fine Speed Adjustment | +/-0.1x speed change with 100% pitch preservation. |
+| <kbd>Shift + Up / Down</kbd> | Preset Speeds | Cycles standard presets (1.0x, 1.25x, 1.5x, 1.75x, 2.0x, 2.5x, 3.0x, 4.0x). |
 
-### 3.4. A-B Segment Repeat & Track Repeat
+### 3.4. Repeat Modes & A-B Looping
 | Key | Action | Description |
 | :--- | :--- | :--- |
-| <kbd>[</kbd>  | Mark Point A | Sets loop starting point. |
-| <kbd>]</kbd>  | Mark Point B | Sets loop ending point and begins endless A-B repetition. |
-| <kbd>c</kbd> | Clear A-B Loop | Clears loop points and returns to sequential playback. |
-| <kbd>r</kbd> | Toggle Repeat Mode | Cycles: Track Repeat -> Playlist Repeat -> Repeat Off. |
+| <kbd>[</kbd> | Set Point A | Sets start point of A-B loop segment. |
+| <kbd>]</kbd> | Set Point B | Sets end point and begins infinite loop playback between A and B. |
+| <kbd>c</kbd> | Clear A-B Loop | Clears loop points and returns to normal playback. |
+| <kbd>r</kbd> | Toggle Repeat Mode | Cycles: Single Track Repeat -> Playlist Repeat -> Off. |
 
-### 3.5. Playlist, Files, and Chapter Navigation
+### 3.5. Playlist Navigation & Chapters
 | Key | Action | Description |
 | :--- | :--- | :--- |
-| <kbd>Page Down</kbd> *(or Tab)* | Next Track | Advances to next track in playlist. |
-| <kbd>Page Up</kbd> *(or Shift+Tab)* | Previous Track | Returns to previous track in playlist. |
+| <kbd>Page Down</kbd> *(or Tab)* | Next Track | Plays next track in queue. |
+| <kbd>Page Up</kbd> *(or Shift+Tab)* | Previous Track | Plays previous track in queue. |
+| <kbd>Ctrl + Home</kbd> / <kbd>Ctrl + End</kbd> | First / Last Track | Jumps to first or last track in queue. |
 | <kbd>n</kbd> | Toggle Auto-Next | Toggles automatic advancement to next track upon completion. |
-| <kbd>z</kbd> | Toggle Shuffle | Non-destructive shuffle/unshuffle. |
-| <kbd>Ctrl + Shift + Right</kbd> | Next Chapter | Jumps to next chapter (speaks title/index). |
-| <kbd>Ctrl + Shift + Left</kbd> | Previous Chapter | Jumps to previous chapter. |
-| <kbd>a</kbd> | Cycle Audio Track | Switches audio tracks/languages in video files. |
-| <kbd>o</kbd> | Open File Dialog | Prompts for single audio/video file. |
-| <kbd>f</kbd> | Open Folder Dialog | Prompts for folder to queue in natural order. |
-| <kbd>e</kbd> | Play Explorer Selection | Plays focused file/folder from Windows Explorer. |
+| <kbd>z</kbd> | Toggle Shuffle | Toggles random shuffle playback. |
+| <kbd>Ctrl + Shift + Left / Right</kbd> | Previous / Next Chapter | Jumps to chapter and speaks chapter title/index. |
+| <kbd>a</kbd> | Switch Audio Track | Cycles between multiple audio tracks/languages in video files and YouTube streams while preserving exact playback position. |
+| <kbd>o</kbd> | Open File | Opens file selection dialog. |
+| <kbd>f</kbd> | Open Folder | Queues entire directory into an ordered playlist. |
+| <kbd>e</kbd> | Play Explorer Selection | Immediately plays selected Explorer items. |
 
-### 3.6. Speech Queries & Help
+### 3.6. Speech Queries
 | Key | Action | Description |
 | :--- | :--- | :--- |
-| <kbd>i</kbd> | Speak Media Info | Announces title, formatted duration, and track index (e.g. *Track 3 of 15*). |
-| <kbd>Ctrl + i</kbd> | Speak Remaining Time | Announces remaining time in hours:minutes:seconds. |
-| <kbd>Shift + i</kbd> | Speak Elapsed Time | Announces elapsed playback time. |
-| <kbd>h</kbd>  | Shortcuts Help | Opens accessible shortcuts quick reference dialog. |
+| <kbd>i</kbd> | Media Info | Speaks title, total duration, and playlist index (e.g. *Track 3 of 15*). |
+| <kbd>Ctrl + i</kbd> | Remaining Time | Speaks remaining playback time. |
+| <kbd>Shift + i</kbd> | Elapsed Time | Speaks elapsed playback time. |
+| <kbd>h</kbd> | Quick Help | Opens interactive key reference dialog. |
 
 ---
 
-## 4. YouTube & Online Streaming
-- **Search (<kbd>u</kbd>):** Press <kbd>u</kbd>, type any search query (e.g., *Beethoven Symphony 5* or *Podcast episode*), and press <kbd>Enter</kbd>. Browse results with Up/Down arrows and press <kbd>Enter</kbd> to play. Press <kbd>Tab</kbd> on a playlist to queue all tracks at once.
-- **Direct URLs (<kbd>u</kbd>):** Paste any YouTube video/playlist URL, Twitch stream, SoundCloud link, or radio stream.
-- **YouTube Portal (<kbd>p</kbd>):** Browse Subscribed Channels, Latest Subscriptions, Watch History, Liked Videos, Watch Later, and Global Top 100 Music Charts.
-- **Copy Link (<kbd>v</kbd>):** Copies active stream URL to Windows Clipboard.
+## 4. YouTube Streaming & SponsorBlock
+- **YouTube Search & URL (<kbd>u</kbd>):** Enter search queries or paste direct URLs (videos, playlists, channels, live streams).
+- **Trending & Subscriptions Portal (<kbd>p</kbd>):** Browse user playlists, subscriptions, and global trending music.
+- **Copy Stream Link (<kbd>v</kbd>):** Copies active stream URL to clipboard.
+- **SponsorBlock Integration:** Automatically skips YouTube sponsored segments, self-promotions, interaction reminders, and intros with instant spoken announcements.
 
 ---
 
-## 5. YouTube Cookies & Long-Lived Session Solutions
-
-> [!NOTE]
-> **Important Note:** 99% of YouTube features (searching by name with <kbd>u</kbd>, playing any video, public playlists, channels, trending music with <kbd>p</kbd>, and live streams) **do NOT require any sign-in or cookies at all!** Cookies are only needed for Private playlists (such as Watch Later `WL` or Liked Videos `LL`) and age-restricted videos.
-
-### Why do Chrome cookies stop working quickly?
-In modern Google Chrome and Microsoft Edge on Windows (Chrome 120+), Google enforces **App-Bound Encryption** (preventing direct file extraction) and **Session Token Rotation** (invalidating old cookie snapshots whenever you browse or open other Google services).
-
-### Recommended Solutions for Long-Lived Cookies (lasting months/years):
-
-1. **Option 1 (Best & Most Recommended — Mozilla Firefox):**
-   - Firefox uses an independent cookie engine without aggressive session rotation.
-   - Install the **[cookies.txt extension for Firefox](https://addons.mozilla.org/firefox/addon/cookies-txt/)**.
-   - Log in to [YouTube.com](https://www.youtube.com), export your `cookies.txt`, and set it in HeadlessPlayer settings.
-   - **Result:** Cookies exported from Firefox typically last for **6 to 12+ months** without interruption as long as you don't log out.
-
-2. **Option 2 (Dedicated Chrome/Brave/Edge Profile):**
-   - Create a separate user profile in Chrome/Brave (e.g. named `Player`).
-   - Install **[Get cookies.txt LOCALLY for Chrome/Edge/Brave](https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc)**.
-   - Log in to YouTube, export `cookies.txt`, and save it.
-   - **Crucial:** Keep this profile dedicated to the player and avoid using it for heavy daily web browsing so Google doesn't rotate its session tokens.
-
-3. **Option 3 (Incognito / Private Window):**
-   - Open an Incognito / InPrivate window in your browser.
-   - Log in to YouTube and export `cookies.txt` using the extension (make sure the extension is enabled in Incognito).
-   - Close the Incognito window.
-
----
-
-## 6. NVDA Settings & Customization
-Located in **NVDA Menu -> Preferences -> Settings -> Headless Media Player**:
-- **Speech Verbosity:** Toggle individual announcements for volume, seek, speed, track changes, repeat, and A-B points.
-- **Seek Step Sizes:** Configure seconds for Normal (5s), Slow (1s), Fast (30s), and Ultrafast (300s) seeks.
-- **Defaults:** Resume playback position, default speed, auto-next, and auto-entering Player Mode.
-- **YouTube Options:** Audio stream quality (Opus, M4A, Best), Custom Cookies file, and In-App "Check for Updates" button.
-- **Interactive Shortcut Customizer:** Assign combined modifier keys (e.g. `Shift + Tab`) to any action with live key capture.
-
----
-
-## 7. Supported Formats
-- **Audio:** `.mp3`, `.wav`, `.flac`, `.m4a`, `.aac`, `.ogg`, `.opus`, `.wma`, `.alac`, `.aiff`, `.ape`, `.ac3`, `.dts`, `.mka`, `.mid`, `.amr`, `.spx`
-- **Video (Headless):** `.mp4`, `.mkv`, `.avi`, `.webm`, `.mov`, `.wmv`, `.flv`, `.ts`, `.m2ts`, `.vob`, `.ogv`, `.3gp`, `.mpg`
-- **Playlists:** `.m3u`, `.m3u8`, `.pls`, `.cue`
-- **Online:** YouTube (Videos, Playlists, Channels, Shorts, Live), Twitch, SoundCloud, HTTP/HTTPS audio, HLS (`.m3u8`) radio.
-
----
-
-## License
-Released under the [MIT License](LICENSE).
+## 5. Add-on Settings & Customization
+Available via **NVDA Menu &larr; Preferences &larr; Settings &larr; Headless Media Player**:
+- **Announcement Toggles:** Custom speech feedback for every action.
+- **Seek Step Sizes:** Configure jump sizes in seconds.
+- **SponsorBlock:** Toggle auto-skipping and speech announcements for YouTube sponsors.
+- **In-App Add-on Updater:** Check for updates on GitHub, view changelogs, and install with 1-click.
+- **Developer Links:** Follow and connect with developer via Telegram ([@mahmoud_EG_1](https://t.me/mahmoud_EG_1)).
+- **Shortcuts Remapper:** Assign multi-key combinations (e.g. `Shift+Tab`) to any action.

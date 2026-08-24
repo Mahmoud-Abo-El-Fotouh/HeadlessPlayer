@@ -74,6 +74,8 @@ class PlayerController:
         # Generation counter guarding async online stream resolution races
         self._stream_play_generation: int = 0
         self._current_stream_chapters: List[Dict[str, Any]] = []
+        self._stream_audio_tracks: List[Dict[str, Any]] = []
+        self._stream_audio_track_idx: int = 0
 
         # Bind engine event callbacks
         self._bind_engine_callbacks()
@@ -86,7 +88,7 @@ class PlayerController:
         # Apply initial settings from config
         self._apply_initial_config(cfg)
 
-    def _setup_engine_callbacks(self) -> None:
+    def _bind_engine_callbacks(self) -> None:
         """Register listeners for engine property changes and lifecycle events."""
         self.engine.on_file_loaded = self._on_engine_file_loaded
         self.engine.on_track_end = self._on_engine_track_end
@@ -600,10 +602,32 @@ class PlayerController:
             return False
 
     def cycle_audio_track(self) -> bool:
-        """Cycles audio tracks / language streams in video and audio files."""
+        """Cycles audio tracks / language streams in video and audio files or online streams."""
         with self._lock:
             if not self.engine.is_running:
                 return False
+
+            # 1. If currently playing an online stream with multi-language audio tracks
+            if self._stream_audio_tracks and len(self._stream_audio_tracks) > 1:
+                total = len(self._stream_audio_tracks)
+                self._stream_audio_track_idx = (self._stream_audio_track_idx + 1) % total
+                target = self._stream_audio_tracks[self._stream_audio_track_idx]
+                cur_pos = self.engine.get_elapsed_time()
+                is_paused = getattr(self.engine, "paused", False)
+
+                self._pending_resume_pos = cur_pos if cur_pos >= 0.5 else None
+                self._silence_resume_announcement = True
+                self.engine.load_stream(target["url"], target.get("http_headers"))
+                if is_paused:
+                    self.engine.pause()
+
+                t_id = self._stream_audio_track_idx + 1
+                title = target.get("title")
+                lang = target.get("lang")
+                self.speech.announce_audio_track(t_id, title, lang)
+                return True
+
+            # 2. Local media with container tracks
             success, track_info, total = self.engine.cycle_audio_track()
             if total <= 1:
                 self.speech.announce_no_other_audio_tracks()
@@ -1266,6 +1290,8 @@ class PlayerController:
             if success:
                 self.state_store.save_recent_file(track.path)
                 self._load_sponsor_segments_for_url(track.path or info.get("webpage_url") or info.get("id"))
+                self._stream_audio_tracks = list(info.get("audio_tracks", []))
+                self._stream_audio_track_idx = 0
                 self.speech.announce_track(orig_idx, total, track.display_name)
             else:
                 self.speech.speak(_("Playback engine failed to start."))
@@ -1351,11 +1377,13 @@ class PlayerController:
     def _on_engine_file_loaded(self) -> None:
         """Fired when mpv finishes parsing a newly loaded media file."""
         with self._lock:
-            if self._pending_resume_pos is not None and self._pending_resume_pos >= 1.0:
+            if self._pending_resume_pos is not None and self._pending_resume_pos >= 0.5:
                 target = self._pending_resume_pos
                 self._pending_resume_pos = None
                 self.engine.seek_absolute(target)
-                self.speech.announce_resume_position(target)
+                if not getattr(self, "_silence_resume_announcement", False):
+                    self.speech.announce_resume_position(target)
+                self._silence_resume_announcement = False
 
     def _on_engine_track_end(self, reason: str) -> None:
         """Fired when playback of current media item finishes."""

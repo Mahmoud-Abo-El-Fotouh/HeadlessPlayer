@@ -924,6 +924,33 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
 
             helper.addItem(addonUpdatesGroup.sizer)
 
+        # -------------------------------------------------------------
+        # Section 8: About & Developer
+        # -------------------------------------------------------------
+        if hasattr(wx, "Button") and hasattr(wx, "StaticBox"):
+            aboutGroupLabel = _("About & Developer")
+            aboutBox = wx.StaticBox(self, label=aboutGroupLabel)
+            aboutGroup = guiHelper.BoxSizerHelper(
+                self,
+                sizer=wx.StaticBoxSizer(aboutBox, wx.VERTICAL)
+            )
+
+            self.followDevBtn = aboutGroup.addItem(
+                wx.Button(self, label=_("&Follow Developer on Telegram (Mahmoud Abo El Fotouh)..."))
+            )
+            if hasattr(wx, "EVT_BUTTON"):
+                self.followDevBtn.Bind(wx.EVT_BUTTON, self.onFollowDeveloper)
+
+            helper.addItem(aboutGroup.sizer)
+
+    def onFollowDeveloper(self, evt: Any) -> None:
+        """Opens developer's Telegram link in the default browser."""
+        import webbrowser
+        try:
+            webbrowser.open("https://t.me/mahmoud_EG_1")
+        except Exception as e:
+            logger.error("Failed to open developer Telegram link: %s", e)
+
     def onBrowseCookiesFile(self, evt: Any) -> None:
         """Opens a file picker for the manual cookies.txt file."""
         if not wx:

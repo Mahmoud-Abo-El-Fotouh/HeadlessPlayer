@@ -840,6 +840,22 @@ class HeadlessEngine:
                     return track
             return self.audio_tracks[0] if self.audio_tracks else None
 
+    def add_audio_track(self, url: str, title: Optional[str] = None, lang: Optional[str] = None) -> bool:
+        """Adds an external audio track/stream to currently playing media via mpv audio-add."""
+        if not self.is_running or not self._ipc:
+            return False
+        args = ["audio-add", url, "auto"]
+        if title:
+            args.append(title)
+        if lang:
+            args.append(lang)
+        try:
+            self._ipc.send_command_async(args)
+            return True
+        except Exception as e:
+            logger.error("Error adding audio track: %s", e)
+            return False
+
     # -------------------------------------------------------------------------
     # Time & State Queries
     # -------------------------------------------------------------------------

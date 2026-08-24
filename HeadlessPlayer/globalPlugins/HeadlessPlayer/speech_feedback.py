@@ -50,6 +50,26 @@ try:
 except ImportError:
     from utils import format_time, format_spoken_time
 
+LANGUAGE_NAMES: Dict[str, str] = {
+    "ar": _("Arabic"),
+    "en": _("English"),
+    "en-us": _("English (US)"),
+    "en-gb": _("English (UK)"),
+    "fr": _("French"),
+    "es": _("Spanish"),
+    "de": _("German"),
+    "it": _("Italian"),
+    "pt": _("Portuguese"),
+    "ru": _("Russian"),
+    "ja": _("Japanese"),
+    "zh": _("Chinese"),
+    "zh-hans": _("Chinese (Simplified)"),
+    "zh-hant": _("Chinese (Traditional)"),
+    "hi": _("Hindi"),
+    "tr": _("Turkish"),
+    "ko": _("Korean"),
+}
+
 try:
     from .tones_helper import play_seek_click, tone_manager
 except ImportError:
@@ -499,10 +519,15 @@ class SpeechFeedback:
         lang: Optional[str] = None
     ) -> None:
         """
-        Announces audio stream track cycling.
+        Announces audio stream track cycling with friendly language names.
         """
-        if title and lang:
-            msg = _("Audio track %d: %s (%s)") % (track_id, title, lang)
+        lang_clean = str(lang).lower().strip() if lang else ""
+        friendly_lang = LANGUAGE_NAMES.get(lang_clean, lang) if lang_clean else None
+
+        if title and friendly_lang and title.lower() != lang_clean:
+            msg = _("Audio track %d: %s (%s)") % (track_id, title, friendly_lang)
+        elif friendly_lang:
+            msg = _("Audio track %d: %s") % (track_id, friendly_lang)
         elif title:
             msg = _("Audio track %d: %s") % (track_id, title)
         else:

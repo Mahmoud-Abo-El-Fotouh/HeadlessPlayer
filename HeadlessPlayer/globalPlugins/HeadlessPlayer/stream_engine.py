@@ -635,6 +635,27 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
                         "end_time": None,
                     })
 
+    # Extract all distinct multi-language audio tracks (e.g. YouTube multi-language audio)
+    available_audio_tracks = []
+    seen_langs = {}
+    for f in info.get("formats", []):
+        if f.get("acodec") not in (None, "none") and f.get("vcodec") in (None, "none"):
+            lang = f.get("language") or f.get("language_preference") or "default"
+            abr = f.get("abr") or f.get("tbr") or 0
+            if lang not in seen_langs or abr > (seen_langs[lang].get("abr") or 0):
+                seen_langs[lang] = f
+
+    if len(seen_langs) > 1:
+        for lang, f in seen_langs.items():
+            f_url = f.get("url")
+            if f_url:
+                available_audio_tracks.append({
+                    "url": f_url,
+                    "lang": str(lang),
+                    "title": str(f.get("format_note") or f.get("language") or lang),
+                    "http_headers": dict(f.get("http_headers") or info.get("http_headers") or {}),
+                })
+
     result = {
         "stream_url": str(stream_url),
         "http_headers": dict(info.get("http_headers") or {}),
@@ -643,6 +664,7 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
         "is_live": bool(info.get("is_live")),
         "webpage_url": str(info.get("webpage_url") or url),
         "chapters": parsed_chapters,
+        "audio_tracks": available_audio_tracks,
     }
 
     with _resolve_cache_lock:

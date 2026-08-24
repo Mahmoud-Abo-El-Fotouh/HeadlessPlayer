@@ -1169,3 +1169,63 @@ msgstr "تفعيل &SponsorBlock (تخطي إعلانات الرعاة والت�
 
 msgid "&Announce when a sponsor or promo segment is skipped"
 msgstr "&نطق إشعار عند تخطي إعلان راعي أو ترويج"
+
+msgid "About & Developer"
+msgstr "عن الإضافة والمطور"
+
+msgid "&Follow Developer on Telegram (@mahmoud_EG_1)..."
+msgstr "&متابعة المطور على تيليجرام (@mahmoud_EG_1)..."
+
+msgid "Arabic"
+msgstr "العربية"
+
+msgid "English"
+msgstr "الإنجليزية"
+
+msgid "English (US)"
+msgstr "الإنجليزية (الولايات المتحدة)"
+
+msgid "English (UK)"
+msgstr "الإنجليزية (المملكة المتحدة)"
+
+msgid "French"
+msgstr "الفرنسية"
+
+msgid "Spanish"
+msgstr "الإسبانية"
+
+msgid "German"
+msgstr "الألمانية"
+
+msgid "Italian"
+msgstr "الإيطالية"
+
+msgid "Portuguese"
+msgstr "البرتغالية"
+
+msgid "Russian"
+msgstr "الروسية"
+
+msgid "Japanese"
+msgstr "اليابانية"
+
+msgid "Chinese"
+msgstr "الصينية"
+
+msgid "Chinese (Simplified)"
+msgstr "الصينية (المبسطة)"
+
+msgid "Chinese (Traditional)"
+msgstr "الصينية (التقليدية)"
+
+msgid "Hindi"
+msgstr "الهندية"
+
+msgid "Turkish"
+msgstr "التركية"
+
+msgid "Korean"
+msgstr "الكورية"
+
+msgid "&Follow Developer on Telegram (Mahmoud Abo El Fotouh)..."
+msgstr "&متابعة المطور على تيليجرام (محمود أبو الفتوح)..."
