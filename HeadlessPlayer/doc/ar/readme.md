@@ -154,3 +154,37 @@
 - **الفيديو (يعمل كصوت خالص في الخلفية):** `.mp4`, `.mkv`, `.avi`, `.webm`, `.mov`, `.wmv`, `.flv`, `.ts`, `.m2ts`, `.vob`, `.ogv`, `.3gp`, `.mpg`
 - **قوائم التشغيل المحلية:** `.m3u`, `.m3u8`, `.pls`, `.cue`
 - **البث عبر الإنترنت:** YouTube (فيديوهات، قوائم تشغيل، قنوات، شورتس، بث مباشر)، Twitch، SoundCloud، ومحطات الراديو عبر الإنترنت HLS (`.m3u8`).
+
+---
+
+## 8. المكونات البرمجية مفتوحة المصدر وتراخيصها (Third-Party Components & Licenses)
+
+تتضمن إضافة Headless Media Player المكونات والبرمجيات مفتوحة المصدر التالية:
+
+1. **محرك QuickJS (`qjs.exe`):**
+   - **المسار:** `globalPlugins/HeadlessPlayer/lib/bin/qjs.exe`
+   - **المشروع:** [QuickJS Javascript Engine](https://bellard.org/quickjs/) / [quickjs-ng](https://github.com/quickjs-ng/quickjs) للمطورين Fabrice Bellard و Charlie Gordon.
+   - **الترخيص:** [ترخيص MIT (MIT License)](https://opensource.org/licenses/MIT).
+   - **الوظيفة:** مفسر جافا سكريبت مدمج فائق الخفة والسرعة، تستخدمه مكتبة `yt-dlp` لفك تشفير وتخطي تحديثات مشغل يوتيوب (Signature Deciphering / Challenge Solvers) في الخلفية بنظام ويندوز دون الحاجة لتثبيت أي برامج خارجية مثل Node.js.
+
+2. **مشغل mpv (`mpv.exe`):**
+   - **المسار:** `resources/bin/x64/mpv.exe`
+   - **المشروع:** [mpv Media Player](https://mpv.io/) / [mpv GitHub](https://github.com/mpv-player/mpv).
+   - **الترخيص:** [GNU General Public License v2.0+ (GPLv2+)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html) / LGPLv2.1+.
+   - **الوظيفة:** محرك التشغيل الأساسي الخفيف الذي يعمل بدون أي واجهة في الخلفية ويتواصل عبر قنوات ويندوز المسماة (Windows Named Pipe JSON IPC).
+
+3. **مكتبة yt-dlp (`lib/yt_dlp/`):**
+   - **المسار:** `globalPlugins/HeadlessPlayer/lib/yt_dlp/`
+   - **المشروع:** [yt-dlp](https://github.com/yt-dlp/yt-dlp).
+   - **الترخيص:** [ترخيص The Unlicense (ملكية عامة - Public Domain)](https://unlicense.org/).
+   - **الوظيفة:** استخراج روابط وتفاصيل البث من يوتيوب وساوند كلاود وتويتش ومحطات الراديو.
+
+4. **مكتبة yt-dlp-ejs (`lib/yt_dlp_ejs/`):**
+   - **المسار:** `globalPlugins/HeadlessPlayer/lib/yt_dlp_ejs/`
+   - **الترخيص:** [Apache License 2.0 / MIT](https://www.apache.org/licenses/LICENSE-2.0).
+   - **الوظيفة:** جسر الربط بين yt-dlp ومحرك QuickJS.
+
+---
+
+## الترخيص (License)
+إضافة Headless Media Player منشورة تحت ترخيص [GNU General Public License v2.0 (GPLv2)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html).
