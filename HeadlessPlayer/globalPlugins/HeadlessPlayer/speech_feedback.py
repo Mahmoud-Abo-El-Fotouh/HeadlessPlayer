@@ -162,6 +162,10 @@ class SpeechFeedback:
     # Configuration Verbosity Check
     # -------------------------------------------------------------------------
 
+    def reload_config(self) -> None:
+        """Reloads any cached speech feedback configuration."""
+        pass
+
     def is_announcement_enabled(self, category: str) -> bool:
         """
         Checks if speech feedback is enabled for a specific category in config_spec.
@@ -248,6 +252,10 @@ class SpeechFeedback:
         msg = _("Remaining time: %s") % rem_str
         self.speak(msg)
 
+    def announce_playback_restarted(self) -> None:
+        """Announces that the current track is restarting from the beginning."""
+        self.speak(_("Replaying from beginning"))
+
     def speak_elapsed_time(
         self,
         elapsed_sec: Optional[float] = None,
@@ -320,6 +328,15 @@ class SpeechFeedback:
         Dispatches the accumulated seek announcement once debouncing timer expires.
         """
         with self._lock:
+            now = time.time()
+            elapsed = now - getattr(self, "_seek_last_time", 0.0)
+            if elapsed < self.debounce_interval - 0.01:
+                rem = max(0.05, self.debounce_interval - elapsed)
+                self._seek_timer = threading.Timer(rem, self._flush_debounced_seek)
+                self._seek_timer.daemon = True
+                self._seek_timer.start()
+                return
+
             self._seek_timer = None
             delta = self._seek_accum_delta
             target_pos = self._seek_last_target_pos
@@ -554,11 +571,17 @@ class SpeechFeedback:
         msg = _("Shuffle enabled") if enabled else _("Shuffle disabled")
         self.speak(msg)
 
-    def announce_loaded_files(self, count: int) -> None:
+    def announce_loaded_files(self, count: int, total_duration: Optional[float] = None) -> None:
         """
-        Announces count of files loaded into playlist.
+        Announces count of files loaded into playlist, and optionally total duration if configured.
         """
-        msg = _("Loaded %d files into playlist") % count
+        cfg = getConfig()
+        announce_dur = cfg.get("announcePlaylistTotalDuration", False)
+        if announce_dur and total_duration and total_duration > 0:
+            dur_str = format_time(total_duration)
+            msg = _("Loaded %d files into playlist, total duration: %s") % (count, dur_str)
+        else:
+            msg = _("Loaded %d files into playlist") % count
         self.speak(msg)
 
     def announce_resume_position(self, pos_sec: float) -> None:
@@ -591,7 +614,7 @@ class SpeechFeedback:
         """
         Announces that a sponsor or promotional segment was automatically skipped.
         """
-        if not self._should_announce("announceSponsorSkip"):
+        if not self.is_announcement_enabled("announceSponsorSkip"):
             return
         from .sponsorblock import get_category_display_name
         cat_name = get_category_display_name(category)

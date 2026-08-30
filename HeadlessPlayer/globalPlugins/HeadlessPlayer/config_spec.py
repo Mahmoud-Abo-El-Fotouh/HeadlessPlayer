@@ -17,6 +17,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "announceTrack": True,
     "announceLoop": True,
     "announceChapter": True,
+    "announcePlaylistTotalDuration": False,
     "seekStepNormal": 5,
     "seekStepSlow": 1,
     "seekStepFast": 30,
@@ -25,7 +26,6 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "defaultRepeatMode": "off",
     "defaultAutoNext": True,
     "resumePosition": True,
-    "playModalTones": False,
     "autoEnterPlayerMode": True,
     "mpvExecutablePath": "",
     "namedPipeName": r"\\.\pipe\nvda_headless_player",
@@ -38,6 +38,8 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "sponsorBlockEnabled": True,
     "announceSponsorSkip": True,
     "sponsorBlockCategories": "sponsor,selfpromo,interaction,intro,outro",
+    "bassGain": 0.0,
+    "streamAudioFormat": "best",
 }
 
 DEFAULT_KEYMAP: Dict[str, str] = {
@@ -99,6 +101,11 @@ def initializeConfig() -> None:
     for key, default_val in DEFAULT_CONFIG.items():
         if db.get_setting(key) is None:
             db.set_setting(key, default_val)
+    # Populate any missing default keymap shortcuts
+    for action, default_key in DEFAULT_KEYMAP.items():
+        config_key = f"key_{action}"
+        if db.get_setting(config_key) is None:
+            db.set_setting(config_key, default_key)
 
 
 def getConfig() -> Dict[str, Any]:
@@ -164,6 +171,7 @@ def parseKeymapKeys(value: str) -> list:
 def getKeymap() -> Dict[str, str]:
     """
     Returns the active keymap for Player Mode, merging user customizations from SQLite over DEFAULT_KEYMAP.
+    Explicitly saved empty strings represent unassigned actions.
     """
     keymap = dict(DEFAULT_KEYMAP)
     try:
@@ -171,7 +179,7 @@ def getKeymap() -> Dict[str, str]:
         for action in DEFAULT_KEYMAP:
             config_key = f"key_{action}"
             val = db.get_setting(config_key)
-            if val and isinstance(val, str) and val.strip():
+            if val is not None and isinstance(val, str):
                 keymap[action] = val.strip().lower()
     except Exception:
         pass
@@ -187,8 +195,9 @@ def setKeymap(keymap: Dict[str, str]) -> None:
         mapping = {}
         for action, key_id in keymap.items():
             config_key = f"key_{action}"
-            mapping[config_key] = key_id.strip().lower()
-        db.set_multiple_settings(mapping)
+            val = key_id.strip().lower() if isinstance(key_id, str) else ""
+            mapping[config_key] = val
+        db.set_settings_bulk(mapping)
     except Exception:
         pass
 
@@ -199,8 +208,10 @@ def resetKeymap() -> None:
     """
     try:
         db = get_db_manager()
-        for action in DEFAULT_KEYMAP:
+        mapping = {}
+        for action, default_val in DEFAULT_KEYMAP.items():
             config_key = f"key_{action}"
-            db.set_setting(config_key, "")
+            mapping[config_key] = default_val
+        db.set_settings_bulk(mapping)
     except Exception:
         pass
