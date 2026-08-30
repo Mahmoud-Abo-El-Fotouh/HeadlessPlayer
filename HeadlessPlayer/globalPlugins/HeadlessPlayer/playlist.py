@@ -22,6 +22,8 @@ try:
         is_supported_media_file,
         is_video_file,
         natural_sort,
+        log_debug,
+        log_exception,
     )
 except ImportError:
     # Direct import fallback for standalone testing
@@ -33,6 +35,8 @@ except ImportError:
         is_supported_media_file,
         is_video_file,
         natural_sort,
+        log_debug,
+        log_exception,
     )
 
 logger = logging.getLogger("HeadlessPlayer.Playlist")
@@ -81,13 +85,19 @@ class Track:
         duration: Optional[float] = None,
         metadata: Optional[Dict[str, Any]] = None
     ) -> None:
-        self.is_stream: bool = bool(path) and path.strip().lower().startswith(("http://", "https://"))
+        self.is_stream: bool = bool(path) and str(path).strip().lower().startswith(("http://", "https://", "ytdl://", "custom://"))
+        self.metadata: Dict[str, Any] = dict(metadata) if metadata else {}
         if self.is_stream:
-            self.path = path.strip()
+            self.path = str(path).strip()
             self.filename = self.path
             self.title = title or self.path
-            self.is_audio = False
-            self.is_video = False
+            kind = (self.metadata.get("kind") or "").lower()
+            if kind in ("audio", "radio", "soundcloud") or self.path.lower().endswith((".mp3", ".m4a", ".aac", ".ogg", ".opus")):
+                self.is_audio = True
+                self.is_video = False
+            else:
+                self.is_audio = bool(self.metadata.get("is_audio", True))
+                self.is_video = bool(self.metadata.get("is_video", False))
         else:
             self.path = os.path.abspath(path) if path else ""
             self.filename = os.path.basename(self.path)
@@ -96,7 +106,6 @@ class Track:
             self.is_audio = is_audio_file(self.path)
             self.is_video = is_video_file(self.path)
         self.duration: Optional[float] = float(duration) if duration is not None else None
-        self.metadata: Dict[str, Any] = dict(metadata) if metadata else {}
         self.chapters: List[Dict[str, Any]] = list(self.metadata.get("chapters", [])) if isinstance(self.metadata.get("chapters"), list) else []
 
     @classmethod
@@ -120,13 +129,29 @@ class Track:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> Track:
+    def from_dict(cls, data: Any) -> Track:
+        if isinstance(data, Track):
+            return data
+        if not isinstance(data, dict):
+            return cls(path=str(data or ""))
         return cls(
-            path=data.get("path", ""),
+            path=str(data.get("path") or ""),
             title=data.get("title"),
             duration=data.get("duration"),
             metadata=data.get("metadata"),
         )
+
+    @staticmethod
+    def _normalize_track_key(p: Optional[str]) -> str:
+        if not p:
+            return ""
+        # Online stream URLs (YouTube, HTTP, HLS) are case-sensitive and must NOT be mangled by normcase
+        if p.startswith(("http://", "https://", "ytdl://", "custom://")):
+            return p.strip()
+        try:
+            return os.path.normcase(p)
+        except Exception:
+            return p
 
     def __repr__(self) -> str:
         return f"<Track '{self.display_name}' path='{self.path}'>"
@@ -134,10 +159,10 @@ class Track:
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, Track):
             return False
-        return os.path.normcase(self.path) == os.path.normcase(other.path)
+        return self._normalize_track_key(self.path) == self._normalize_track_key(other.path)
 
     def __hash__(self) -> int:
-        return hash(os.path.normcase(self.path))
+        return hash(self._normalize_track_key(self.path))
 
 
 class Playlist:
@@ -354,11 +379,9 @@ class Playlist:
                     # Wrap around to end
                     self._current_index = total - 1
                 else:
-                    # Stay at first track
-                    self._current_index = 0
-                    track = self.get_current_track()
-                    self._notify_listeners("track_changed", track)
-                    return track
+                    # At start boundary with no wrap — return None so the
+                    # controller can announce the boundary and play the tone
+                    return None
 
             track = self.get_current_track()
             self._notify_listeners("track_changed", track)
@@ -400,9 +423,14 @@ class Playlist:
         Jumps to a track matching the given file path.
         """
         with self._lock:
-            norm_target = os.path.normcase(os.path.abspath(file_path))
+            if not file_path:
+                return None
+            is_url = file_path.startswith(("http://", "https://", "ytdl://", "custom://"))
+            norm_target = file_path.strip() if is_url else os.path.normcase(os.path.abspath(file_path))
             for orig_idx, track in enumerate(self._tracks):
-                if os.path.normcase(track.path) == norm_target:
+                track_is_url = track.path.startswith(("http://", "https://", "ytdl://", "custom://"))
+                track_norm = track.path.strip() if track_is_url else os.path.normcase(track.path)
+                if track_norm == norm_target:
                     return self.jump_to_original_index(orig_idx)
             return None
 
@@ -535,6 +563,7 @@ class Playlist:
             self._current_index = 0
         else:
             self._shuffled_indices = remaining
+            self._current_index = 0
 
     # -------------------------------------------------------------------------
     # Loading Media API
@@ -726,6 +755,8 @@ class Playlist:
         if not track_list:
             return None
 
+        log_debug("PLAYLIST", "load_stream_tracks: received %d tracks, start_index=%d, append=%s", len(track_list), start_index, append)
+
         with self._lock:
             if not append:
                 self.clear()
@@ -734,12 +765,19 @@ class Playlist:
             self._tracks.extend(track_list)
             target_idx = start_len + max(0, min(start_index, len(track_list) - 1))
 
-            if self._shuffle:
-                self._current_index = target_idx
-                self._generate_shuffle_order(keep_current=True)
+            if not append or self._current_index < 0:
+                if self._shuffle:
+                    self._current_index = target_idx
+                    self._generate_shuffle_order(keep_current=True)
+                else:
+                    self._current_index = target_idx
             else:
-                self._current_index = target_idx
+                if self._shuffle:
+                    new_indices = list(range(start_len, len(self._tracks)))
+                    random.shuffle(new_indices)
+                    self._shuffled_indices.extend(new_indices)
 
+            log_debug("PLAYLIST", "load_stream_tracks updated: total_tracks=%d, current_index=%d", len(self._tracks), self._current_index)
             self._notify_listeners("playlist_updated", self)
             return self.get_current_track()
 
@@ -773,11 +811,31 @@ class Playlist:
             if not self._tracks or index < 0 or index >= len(self._tracks):
                 return None
 
-            orig_idx = self.original_index if (self._shuffle and self._shuffled_indices) else index
+            if self._shuffle and self._shuffled_indices:
+                # Map the active-sequence index → original track index
+                if 0 <= index < len(self._shuffled_indices):
+                    orig_idx = self._shuffled_indices[index]
+                else:
+                    return None
+            else:
+                orig_idx = index
             removed = self._tracks.pop(orig_idx)
 
             if self._shuffle:
-                self._generate_shuffle_order(keep_current=True)
+                if self._shuffled_indices:
+                    new_shuffled = []
+                    for idx in self._shuffled_indices:
+                        if idx == orig_idx:
+                            continue
+                        elif idx > orig_idx:
+                            new_shuffled.append(idx - 1)
+                        else:
+                            new_shuffled.append(idx)
+                    self._shuffled_indices = new_shuffled
+                if not self._tracks:
+                    self._current_index = -1
+                elif self._current_index >= len(self._tracks):
+                    self._current_index = len(self._tracks) - 1
             else:
                 if self._current_index >= len(self._tracks):
                     self._current_index = max(0, len(self._tracks) - 1)
@@ -786,6 +844,16 @@ class Playlist:
 
             self._notify_listeners("playlist_updated", self)
             return removed
+
+    @property
+    def total_duration(self) -> float:
+        """Returns total duration of all tracks in seconds."""
+        with self._lock:
+            total = 0.0
+            for t in self._tracks:
+                if t.duration and t.duration > 0:
+                    total += t.duration
+            return total
 
     def clear(self) -> None:
         """

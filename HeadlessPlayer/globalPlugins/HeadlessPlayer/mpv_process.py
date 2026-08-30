@@ -139,9 +139,10 @@ def find_mpv_binary(
     arch = get_system_architecture()
     candidate_bundled = [
         os.path.join(addon_root, "resources", "bin", arch, "mpv.exe"),
-        os.path.join(addon_root, "resources", "bin", "x64", "mpv.exe"),
-        os.path.join(addon_root, "resources", "bin", "mpv.exe"),
     ]
+    if arch == "x64":
+        candidate_bundled.append(os.path.join(addon_root, "resources", "bin", "x64", "mpv.exe"))
+    candidate_bundled.append(os.path.join(addon_root, "resources", "bin", "mpv.exe"))
     for path in candidate_bundled:
         if os.path.isfile(path):
             logger.info("Found bundled mpv binary: %s", path)
@@ -341,28 +342,29 @@ class MpvProcess:
         """
         Gracefully terminate the mpv subprocess, falling back to force-kill if needed.
         """
-        if not self.process:
-            return True
-
-        if self.process.poll() is not None:
-            self.process = None
-            return True
-
         try:
-            self.process.terminate()
-            self.process.wait(timeout=timeout_sec)
-            logger.info("mpv process terminated gracefully.")
-        except subprocess.TimeoutExpired:
-            logger.warning("mpv process did not terminate within timeout; killing forcefully.")
-            try:
-                self.process.kill()
-                self.process.wait(timeout=1.0)
-            except Exception as e:
-                logger.debug("Error force-killing mpv process: %s", e)
-        except Exception as e:
-            logger.error("Error stopping mpv process: %s", e)
+            if self.process and self.process.poll() is None:
+                try:
+                    self.process.terminate()
+                    self.process.wait(timeout=timeout_sec)
+                    logger.info("mpv process terminated gracefully.")
+                except subprocess.TimeoutExpired:
+                    logger.warning("mpv process did not terminate within timeout; killing forcefully.")
+                    try:
+                        self.process.kill()
+                        self.process.wait(timeout=1.0)
+                    except Exception as e:
+                        logger.debug("Error force-killing mpv process: %s", e)
+                except Exception as e:
+                    logger.error("Error stopping mpv process: %s", e)
         finally:
             self.process = None
+            if self._job_handle and kernel32 is not None:
+                try:
+                    kernel32.CloseHandle(self._job_handle)
+                except Exception:
+                    pass
+                self._job_handle = None
 
         return True
 

@@ -29,7 +29,7 @@ _OBFUSCATE_KEY = b"HeadlessPlayerSecureDb2026!#"
 def _encode_database_payload(data: Dict[str, Any]) -> bytes:
     """Encodes and obfuscates database cache into compact binary format."""
     raw = json.dumps(data, ensure_ascii=True, separators=(',', ':')).encode('utf-8')
-    comp = zlib.compress(raw, 9)
+    comp = zlib.compress(raw, 3)
     masked = bytes([b ^ _OBFUSCATE_KEY[i % len(_OBFUSCATE_KEY)] for i, b in enumerate(comp)])
     return MAGIC_HEADER + masked
 
@@ -150,13 +150,20 @@ class DatabaseManager:
                         self._cache["recent_media"] = data.get("recent_media", [])
                         self._cache["playlists_state"] = data.get("playlists_state", {})
                 except Exception as e:
-                    logger.warning("Failed to load existing database file, starting fresh: %s", e)
+                    logger.warning("Failed to load existing database file: %s", e)
+                    # Automatically preserve corrupted database before resetting cache!
+                    try:
+                        backup_name = f"{self._db_path}.corrupted_{int(time.time())}"
+                        shutil.copy2(self._db_path, backup_name)
+                        logger.info("Preserved corrupted database backup at %s", backup_name)
+                    except Exception as bkp_err:
+                        logger.error("Could not write backup for corrupted database: %s", bkp_err)
 
             # Migrate legacy state if present
             self._migrate_legacy_data()
 
     def _save_to_disk(self) -> None:
-        """Atomically writes memory cache to disk via temp file replacement."""
+        """Atomically writes memory cache to disk via temp file replacement with retry."""
         with self._lock:
             db_dir = os.path.dirname(self._db_path)
             if db_dir:
@@ -171,11 +178,21 @@ class DatabaseManager:
                 with open(temp_path, "wb") as f:
                     f.write(payload)
                 
-                # Atomic replace on Windows
-                if os.path.exists(self._db_path):
-                    os.replace(temp_path, self._db_path)
-                else:
-                    os.rename(temp_path, self._db_path)
+                # Atomic replace on Windows with retry loop for transient locks (Error 32)
+                replaced = False
+                for attempt in range(4):
+                    try:
+                        if os.path.exists(self._db_path):
+                            os.replace(temp_path, self._db_path)
+                        else:
+                            os.rename(temp_path, self._db_path)
+                        replaced = True
+                        break
+                    except (PermissionError, OSError):
+                        if attempt < 3:
+                            time.sleep(0.04 * (attempt + 1))
+                        else:
+                            raise
             except Exception as e:
                 logger.error("Error writing database to %s: %s", self._db_path, e)
                 try:
@@ -298,6 +315,8 @@ class DatabaseManager:
             self._cache["settings"].update(settings_dict)
             self._save_to_disk()
 
+    set_multiple_settings = set_settings_bulk
+
     def get_all_settings(self) -> Dict[str, Any]:
         with self._lock:
             return dict(self._cache["settings"])
@@ -336,11 +355,15 @@ class DatabaseManager:
         filename: Optional[str] = None,
         position: Optional[float] = None,
         duration: Optional[float] = None,
+        min_threshold_sec: float = 1.0,
         end_threshold_sec: float = 3.0,
         **kwargs: Any
     ) -> None:
         pos = position_sec if position_sec is not None else position
         if pos is None:
+            return
+        if pos < min_threshold_sec:
+            self.clear_position(file_path)
             return
         dur = duration_sec if duration_sec is not None else duration
         if dur and dur > 0 and (dur - pos) <= end_threshold_sec:
@@ -359,6 +382,23 @@ class DatabaseManager:
                 "updated_at": time.time()
             }
             self._save_to_disk()
+
+    def prune_positions(self, max_entries: int = 500) -> int:
+        """Prunes oldest position records when count exceeds max_entries."""
+        with self._lock:
+            positions = self._cache.get("positions", {})
+            if len(positions) <= max_entries:
+                return 0
+            # Sort keys by updated_at ascending (oldest first)
+            sorted_items = sorted(
+                positions.items(),
+                key=lambda item: float(item[1].get("updated_at", 0.0) if isinstance(item[1], dict) else 0.0)
+            )
+            to_remove_count = len(positions) - max_entries
+            for k, _ in sorted_items[:to_remove_count]:
+                positions.pop(k, None)
+            self._save_to_disk()
+            return to_remove_count
 
     def get_position(self, file_path: str) -> Optional[float]:
         norm_path = normalize_file_path(file_path)
@@ -379,6 +419,11 @@ class DatabaseManager:
             if rec and isinstance(rec, dict):
                 return dict(rec)
             return None
+
+    def get_all_positions(self) -> Dict[str, Dict[str, Any]]:
+        """Returns a copy of all stored position records."""
+        with self._lock:
+            return {k: dict(v) for k, v in self._cache.get("positions", {}).items() if isinstance(v, dict)}
 
     def clear_position(self, file_path: str) -> None:
         norm_path = normalize_file_path(file_path)

@@ -13,6 +13,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 from .ipc_client import WinNamedPipeClient
 from .mpv_process import DEFAULT_PIPE_NAME, MpvProcess, find_mpv_binary
+from .utils import log_debug, log_exception
 
 logger = logging.getLogger("HeadlessPlayer.Engine")
 
@@ -39,7 +40,7 @@ ALL_SUPPORTED_EXTENSIONS: Set[str] = (
 
 # Standard speed presets for Shift+Up / Shift+Down cycling
 SPEED_PRESETS: List[float] = [
-    1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 3.0, 3.5, 4.0
+    0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 3.0, 3.5, 4.0
 ]
 
 
@@ -242,8 +243,9 @@ class HeadlessEngine:
 
         elif evt == "end-file":
             reason = msg.get("reason", "eof")
+            trigger_cb = False
             with self._lock:
-                if self.ab_loop_active and self.ab_loop_a is not None:
+                if reason == "eof" and self.ab_loop_active and self.ab_loop_a is not None:
                     self.seek_absolute(self.ab_loop_a)
                     self.resume()
                     return
@@ -252,15 +254,17 @@ class HeadlessEngine:
                 elif reason in ("stop", "quit", "error"):
                     self.is_loaded = False
                     self.core_idle = True
-            if self.on_track_end:
-                import time
-                now = time.time()
-                if now - getattr(self, "_last_eof_time", 0.0) > 0.5:
-                    self._last_eof_time = now
-                    try:
-                        self.on_track_end(reason)
-                    except Exception as e:
-                        logger.error("Error in on_track_end callback: %s", e, exc_info=True)
+                if self.on_track_end:
+                    import time
+                    now = time.time()
+                    if now - getattr(self, "_last_eof_time", 0.0) > 0.8:
+                        self._last_eof_time = now
+                        trigger_cb = True
+            if trigger_cb and self.on_track_end:
+                try:
+                    self.on_track_end(reason)
+                except Exception as e:
+                    logger.error("Error in on_track_end callback: %s", e, exc_info=True)
 
         elif evt == "playback-restart":
             if self.on_playback_restart:
@@ -278,16 +282,25 @@ class HeadlessEngine:
 
     def _update_property_cache(self, name: str, data: Any) -> None:
         """Update internal state cache on property change event."""
+        cb_to_call = None
         with self._lock:
             if name == "pause":
                 self.paused = bool(data)
             elif name == "time-pos" and data is not None:
                 try:
                     self.time_pos = float(data)
+                    # Reset last skipped sponsor segment if user seeks back before it
+                    if self._last_skipped_segment and self.time_pos < (self._last_skipped_segment[0] - 1.0):
+                        self._last_skipped_segment = None
+
                     # Enforce A-B loop boundary to ensure robust looping across all media & stream types
                     if self.ab_loop_active and self.ab_loop_a is not None and self.ab_loop_b is not None:
                         if self.time_pos >= self.ab_loop_b:
-                            self.seek_absolute(self.ab_loop_a)
+                            import time
+                            now = time.time()
+                            if now - getattr(self, "_last_ab_seek_time", 0.0) > 0.5:
+                                self._last_ab_seek_time = now
+                                self.seek_absolute(self.ab_loop_a)
 
                     # SponsorBlock auto-skip enforcement
                     if self.sponsor_block_enabled and self.sponsor_segments:
@@ -301,10 +314,7 @@ class HeadlessEngine:
                                     )
                                     self.seek_absolute(seg_end)
                                     if self.on_sponsor_skipped:
-                                        try:
-                                            self.on_sponsor_skipped(seg_cat, seg_start, seg_end)
-                                        except Exception as cb_err:
-                                            logger.error("Error in on_sponsor_skipped callback: %s", cb_err)
+                                        cb_to_call = (self.on_sponsor_skipped, seg_cat, seg_start, seg_end)
                                     break
                 except (ValueError, TypeError):
                     pass
@@ -360,15 +370,13 @@ class HeadlessEngine:
                 self.core_idle = bool(data)
             elif name == "eof-reached":
                 self.eof_reached = bool(data)
-                if data and self.is_loaded and self.on_track_end:
-                    import time
-                    now = time.time()
-                    if now - getattr(self, "_last_eof_time", 0.0) > 0.5:
-                        self._last_eof_time = now
-                        try:
-                            self.on_track_end("eof")
-                        except Exception as e:
-                            logger.error("Error in on_track_end callback: %s", e)
+
+        if cb_to_call:
+            try:
+                fn, cat, st, en = cb_to_call
+                fn(cat, st, en)
+            except Exception as cb_err:
+                logger.error("Error in on_sponsor_skipped callback: %s", cb_err)
 
     def _update_ab_active_state(self) -> None:
         """Calculate whether A-B looping is currently active."""
@@ -400,6 +408,7 @@ class HeadlessEngine:
                 self.filename = os.path.basename(file_path) if os.path.exists(file_path) else file_path
 
         logger.info("Loading media: %s (mode: %s)", file_path, mode)
+        log_debug("ENGINE", "load_file: path='%s', append=%s, mode=%s", file_path, append, mode)
         ok = self._ipc.send_command_async(["loadfile", file_path, mode])
         if ok and not append:
             # Always start fresh loads unpaused
@@ -508,12 +517,14 @@ class HeadlessEngine:
     # -------------------------------------------------------------------------
 
     def _apply_bass_filter(self) -> bool:
-        """Applies the cached bass gain to mpv's audio filter chain."""
-        if not self.is_running:
+        """Applies the cached bass gain to mpv's audio filter chain using named label @bass."""
+        if not self.is_running or not self._ipc:
             return False
-        if self.bass_gain:
-            return self._ipc.send_command_async(["af", "set", f"bass=g={self.bass_gain:g}"])
-        return self._ipc.send_command_async(["af", "set", ""])
+        # Delete previous @bass filter instance to prevent stacking
+        self._ipc.send_command_async(["af", "del", "@bass"])
+        if self.bass_gain != 0.0:
+            return self._ipc.send_command_async(["af", "add", f"@bass:lavfi=[bass=g={self.bass_gain:g}]"])
+        return True
 
     def adjust_bass(self, delta: float) -> float:
         """
@@ -554,17 +565,19 @@ class HeadlessEngine:
                 self.time_pos = max(0.0, min(self.duration, self.time_pos + delta_sec))
             else:
                 self.time_pos = max(0.0, self.time_pos + delta_sec)
+            self._last_skipped_segment = None
         if not self._ipc or not self._ipc.is_connected():
             return False
         return self._ipc.send_command_async(["seek", delta_sec, "relative"])
 
     def seek_absolute(self, pos_sec: float) -> bool:
-        """Seek to an exact timestamp in seconds."""
+        """Seek to absolute position in seconds, clamped between 0 and duration."""
         with self._lock:
-            target = max(0.0, float(pos_sec))
             if self.duration > 0:
-                target = min(self.duration, target)
-            self.time_pos = target
+                self.time_pos = max(0.0, min(self.duration, float(pos_sec)))
+            else:
+                self.time_pos = max(0.0, float(pos_sec))
+            self._last_skipped_segment = None
         if not self._ipc or not self._ipc.is_connected():
             return False
         return self._ipc.send_command_async(["seek", self.time_pos, "absolute"])
@@ -578,6 +591,7 @@ class HeadlessEngine:
         with self._lock:
             if self.duration > 0:
                 self.time_pos = (target_pct / 100.0) * self.duration
+            self._last_skipped_segment = None
         if not self._ipc or not self._ipc.is_connected():
             return False
         return self._ipc.send_command_async(["seek", target_pct, "absolute-percent"])

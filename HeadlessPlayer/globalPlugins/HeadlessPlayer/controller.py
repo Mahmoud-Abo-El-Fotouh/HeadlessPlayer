@@ -29,7 +29,7 @@ from .input_layer import ModalInputLayer
 from .config_spec import getConfig, getConfigValue, setConfigValue, saveConfig
 from .dialog_utils import prompt_open_file_dialog, prompt_open_folder_dialog, prompt_help_dialog
 from .explorer_utils import get_active_explorer_or_focus_paths
-from .utils import format_time, is_supported_media_file
+from .utils import format_time, is_supported_media_file, log_debug, log_exception, log_info, log_error
 
 logger = logging.getLogger("HeadlessPlayer.Controller")
 
@@ -76,6 +76,18 @@ class PlayerController:
         self._current_stream_chapters: List[Dict[str, Any]] = []
         self._stream_audio_tracks: List[Dict[str, Any]] = []
         self._stream_audio_track_idx: int = 0
+
+        # Dynamic streaming queue auto-extension tracking
+        self._active_stream_source_url: Optional[str] = None
+        self._active_stream_source_target: Optional[str] = None
+        self._active_stream_source_type: str = "listing"
+        self._active_stream_next_idx: int = 1
+        self._active_stream_batch_size: int = 50
+        self._active_stream_has_more: bool = False
+        self._active_stream_fetching: bool = False
+
+        # Suppress resume announcement when cycling audio tracks
+        self._silence_resume_announcement: bool = False
 
         # Bind engine event callbacks
         self._bind_engine_callbacks()
@@ -138,30 +150,6 @@ class PlayerController:
         self.input_layer.seek_fast = float(cfg.get("seekStepFast", 30.0))
         self.input_layer.seek_ultrafast = float(cfg.get("seekStepUltrafast", 300.0))
 
-    def on_config_updated(self, cfg: Dict[str, Any]) -> None:
-        """Invoked when user updates settings in NVDA Preferences -> Settings panel."""
-        with self._lock:
-            self._apply_config_to_input_layer(cfg)
-            if "defaultRepeatMode" in cfg:
-                self.playlist.set_repeat_mode(cfg["defaultRepeatMode"])
-            if "defaultAutoNext" in cfg:
-                self.playlist.set_auto_next(cfg["defaultAutoNext"])
-            if "defaultSpeed" in cfg:
-                spd = float(cfg["defaultSpeed"])
-                self.engine.speed = spd
-                if self.engine.is_running:
-                    self.engine.set_speed(spd)
-                self.state_store.save_speed(spd)
-            if "volume" in cfg:
-                vol = float(cfg["volume"])
-                self.engine.volume = vol
-                if self.engine.is_running:
-                    self.engine.set_volume(vol)
-                self.state_store.save_volume(int(vol))
-            if "playModalTones" in cfg and self.tone_manager:
-                self.tone_manager.is_enabled = bool(cfg["playModalTones"])
-            if "sponsorBlockEnabled" in cfg and self.engine:
-                self.engine.set_sponsor_block_enabled(bool(cfg["sponsorBlockEnabled"]))
 
     # -------------------------------------------------------------------------
     # Lifecycle Management
@@ -202,6 +190,7 @@ class PlayerController:
             if hasattr(self.speech, "cancel_debounced_seek"):
                 self.speech.cancel_debounced_seek()
 
+            log_info("CONTROLLER", "toggle_play_pause invoked: running=%s, loaded=%s, paused=%s", self.engine.is_running, getattr(self.engine, "is_loaded", False), getattr(self.engine, "paused", False))
             if not self.engine.is_running:
                 self.start()
                 cur_track = self.playlist.get_current_track()
@@ -269,16 +258,31 @@ class PlayerController:
             return res
 
     def stop(self) -> bool:
-        """Stops playback, saves position, rewinds to start, and announces stopped."""
+        """Stops playback, rewinds to start (0:00), clears saved position, and announces stopped."""
+        log_info("CONTROLLER", "stop invoked: is_running=%s, last_loaded=%s", self.engine.is_running, self._last_loaded_path)
         with self._lock:
             if hasattr(self.speech, "cancel_debounced_seek"):
                 self.speech.cancel_debounced_seek()
+            cur_path = self._last_loaded_path or getattr(self.engine, "path", None)
+            if not cur_path:
+                cur_track = self.playlist.get_current_track()
+                if cur_track:
+                    cur_path = cur_track.path
+            if cur_path:
+                self.state_store.clear_position(cur_path)
+            self._pending_resume_pos = 0.0
+
             if not self.engine.is_running:
-                return False
-            self.save_current_position()
-            res = self.engine.stop()
+                self.speech.announce_playback_state("stopped")
+                return True
+
+            self.engine.pause()
+            self.engine.seek_absolute(0.0)
+            with self.engine._lock:
+                self.engine.time_pos = 0.0
+                self.engine.paused = True
             self.speech.announce_playback_state("stopped")
-            return res
+            return True
 
     def toggle_mute(self) -> bool:
         """Toggles mute state and announces result."""
@@ -308,6 +312,8 @@ class PlayerController:
                 self.start()
             new_gain = self.engine.adjust_bass(delta)
             self.state_store.save_setting("bass_gain", float(new_gain))
+            setConfigValue("bassGain", float(new_gain))
+            saveConfig()
             if new_gain:
                 self.speech.speak(_("Bass: %s dB") % (f"+{new_gain:g}" if new_gain > 0 else f"{new_gain:g}"))
             else:
@@ -403,6 +409,7 @@ class PlayerController:
                 return res
             elif dur and dur > 0:
                 res = self.engine.seek_absolute(dur)
+                self.speech.speak(_("Track end"))
                 return res
             return False
 
@@ -679,6 +686,8 @@ class PlayerController:
 
             # 5. Load into mpv engine (clearing any stream HTTP headers first)
             self.engine.set_http_headers(None)
+            if hasattr(self, "history_sync") and self.history_sync:
+                self.history_sync.stop_session(reason="track_switch")
             success = self.engine.load_file(target_path, append=False)
             if success:
                 self.state_store.save_recent_file(target_path)
@@ -696,6 +705,8 @@ class PlayerController:
             next_t = self.playlist.next_track(manual=manual)
             if next_t:
                 self.play_track(next_t)
+                # Prefetch more tracks if near the end of an online stream playlist/search
+                self._check_stream_queue_auto_extend()
                 return next_t
             else:
                 # Boundary reached
@@ -817,18 +828,41 @@ class PlayerController:
 
         return os.path.expanduser("~")
 
-    def on_config_updated(self, cfg: dict) -> None:
+    def on_config_updated(self, cfg: Optional[Dict[str, Any]] = None) -> None:
         """Called when user applies updated settings from NVDA Settings panel."""
+        if cfg is None:
+            cfg = getConfig()
         with self._lock:
+            if self.input_layer is not None:
+                self._apply_config_to_input_layer(cfg)
+                self.input_layer.invalidate_keymap_cache()
+            if self.speech is not None:
+                self.speech.reload_config()
             if "defaultAutoNext" in cfg:
                 self.playlist.set_auto_next(bool(cfg["defaultAutoNext"]))
             if "defaultRepeatMode" in cfg:
                 self.playlist.set_repeat_mode(str(cfg["defaultRepeatMode"]))
-            if "defaultSpeed" in cfg and hasattr(self.engine, "set_speed"):
+            if "defaultSpeed" in cfg:
                 try:
                     spd = float(cfg["defaultSpeed"])
-                    if not self.engine.is_loaded:
-                        self.engine.speed = spd
+                    self.engine.speed = spd
+                    if self.engine.is_running:
+                        self.engine.set_speed(spd)
+                    self.state_store.save_speed(spd)
+                except Exception:
+                    pass
+            if "volume" in cfg:
+                try:
+                    vol = float(cfg["volume"])
+                    self.engine.volume = vol
+                    if self.engine.is_running:
+                        self.engine.set_volume(vol)
+                    self.state_store.save_volume(int(vol))
+                except Exception:
+                    pass
+            if "sponsorBlockEnabled" in cfg and self.engine:
+                try:
+                    self.engine.set_sponsor_block_enabled(bool(cfg["sponsorBlockEnabled"]))
                 except Exception:
                     pass
 
@@ -902,6 +936,8 @@ class PlayerController:
         5. Exits Player Mode and announces 'Player closed'.
         """
         with self._lock:
+            if hasattr(self, "history_sync") and self.history_sync:
+                self.history_sync.stop_session(reason="stop")
             self.save_current_position()
             self.engine.stop()
             self.engine.shutdown()
@@ -930,17 +966,22 @@ class PlayerController:
         if not video_id:
             return
 
-        def worker(vid: str) -> None:
+        current_gen = self._stream_play_generation
+
+        def worker(vid: str, gen: int) -> None:
             try:
                 cats_str = str(getConfigValue("sponsorBlockCategories", "sponsor,selfpromo,interaction,intro,outro"))
                 cats = [c.strip() for c in cats_str.split(",") if c.strip()]
                 segs = fetch_sponsor_segments(vid, categories=cats)
-                if segs and self.engine:
-                    self.engine.set_sponsor_segments(segs)
+                with self._lock:
+                    if gen != self._stream_play_generation:
+                        return
+                    if segs and self.engine:
+                        self.engine.set_sponsor_segments(segs)
             except Exception as e:
                 logger.debug("Error in SponsorBlock worker for %s: %s", vid, e)
 
-        threading.Thread(target=worker, args=(video_id,), daemon=True, name="HeadlessPlayer-SponsorBlock").start()
+        threading.Thread(target=worker, args=(video_id, current_gen), daemon=True, name="HeadlessPlayer-SponsorBlock").start()
 
     def load_from_explorer(self) -> None:
         """Extracts active selection from Windows Explorer and loads into playlist."""
@@ -951,9 +992,21 @@ class PlayerController:
 
         with self._lock:
             if len(paths) == 1 and os.path.isfile(paths[0]):
+                target_path = os.path.normcase(os.path.abspath(paths[0]))
+                cur_track = self.playlist.get_current_track()
+                cur_path = os.path.normcase(os.path.abspath(cur_track.path)) if (cur_track and cur_track.path) else None
+
+                # If the exact same file is already loaded and active in the player:
+                if cur_path == target_path and self.engine.is_running:
+                    self.engine.seek_absolute(0.0)
+                    if getattr(self.engine, "paused", False):
+                        self.engine.play()
+                    self.speech.announce_playback_restarted()
+                    return
+
                 first_track = self.playlist.load_file_with_folder(paths[0], append=False)
                 if first_track:
-                    self.speech.announce_loaded_files(self.playlist.count)
+                    self.speech.announce_loaded_files(self.playlist.count, total_duration=self.playlist.total_duration)
                     self.play_track(first_track)
                     self._check_auto_enter_player_mode()
                 else:
@@ -961,7 +1014,7 @@ class PlayerController:
             else:
                 count = self.playlist.load_paths(paths, append=False)
                 if count > 0:
-                    self.speech.announce_loaded_files(count)
+                    self.speech.announce_loaded_files(count, total_duration=self.playlist.total_duration)
                     first_track = self.playlist.get_current_track()
                     if first_track:
                         self.play_track(first_track)
@@ -1031,19 +1084,25 @@ class PlayerController:
             return
 
         copied = False
-        try:
-            import api
-            copied = api.copyToClip(cur.path)
-        except Exception:
-            # Fallback outside NVDA (tests): use wx clipboard if available
+        import time
+        for _ in range(3):
+            try:
+                import api
+                copied = api.copyToClip(cur.path)
+                if copied:
+                    break
+            except Exception:
+                pass
             try:
                 import wx
                 if wx.TheClipboard.Open():
                     wx.TheClipboard.SetData(wx.TextDataObject(cur.path))
                     wx.TheClipboard.Close()
                     copied = True
+                    break
             except Exception:
-                copied = False
+                pass
+            time.sleep(0.05)
 
         if copied:
             if getattr(cur, "is_stream", False):
@@ -1093,17 +1152,21 @@ class PlayerController:
 
         cfg = getConfig()
         try:
-            if stream_engine.is_url(text):
-                url = stream_engine.normalize_url(text)
+            extracted_url = stream_engine.extract_url(text)
+            if extracted_url:
+                url = extracted_url
                 self.speech.speak(_("Loading URL, please wait..."))
-                limit = int(cfg.get("maxStreamPlaylistItems", 300))
+                limit = int(cfg.get("maxStreamPlaylistItems", 50))
                 title, items, is_multi = stream_engine.probe_url(url, limit=limit)
 
                 if is_multi:
-                    videos = [it for it in items if it.kind == stream_engine.ITEM_VIDEO]
+                    videos = [
+                        it for it in items
+                        if getattr(it, "kind", "") in (stream_engine.ITEM_VIDEO, stream_engine.ITEM_SHORTS)
+                    ]
                     if videos and len(videos) == len(items):
-                        # Pure playlist: queue it exactly like a local folder playlist
-                        self.play_stream_items(videos, start_index=0, listing_title=title)
+                        # Pure playlist: queue it and track source_target for auto-extension
+                        self.play_stream_items(videos, start_index=0, listing_title=title, source_target=url, source_type="listing", batch_size=limit)
                     else:
                         # Mixed listing (e.g. channel root): open the browser dialog
                         show_results_dialog(
@@ -1113,6 +1176,9 @@ class PlayerController:
                             suspend_capture=self._suspend_input,
                             resume_capture=self._resume_input,
                             is_playlist_context=bool(videos),
+                            source_type="listing",
+                            source_target=url,
+                            batch_size=limit,
                         )
                 else:
                     self.play_stream_items(items, start_index=0, listing_title=title)
@@ -1120,7 +1186,9 @@ class PlayerController:
                 # Free text: interactive YouTube search
                 self.speech.speak(_("Searching YouTube, please wait..."))
                 limit = int(cfg.get("searchResultsCount", 20))
+                log_debug("CONTROLLER", "Interactive YouTube search started: text='%s', limit=%d", text, limit)
                 results = stream_engine.search_youtube(text, limit=limit)
+                log_debug("CONTROLLER", "Interactive YouTube search finished: %d results found", len(results) if results else 0)
                 if not results:
                     self.speech.speak(_("No results found."))
                     return
@@ -1131,9 +1199,13 @@ class PlayerController:
                     suspend_capture=self._suspend_input,
                     resume_capture=self._resume_input,
                     is_playlist_context=False,
+                    source_type="search",
+                    source_target=text,
+                    batch_size=limit,
                 )
         except Exception as e:
             logger.error("URL/search handling failed: %s", e, exc_info=True)
+            log_exception("CONTROLLER", f"URL/search handling failed for text='{text}'", e)
             self.speech.speak(self._stream_error_message(e))
 
     def _stream_error_message(self, exc: Exception) -> str:
@@ -1153,7 +1225,11 @@ class PlayerController:
         self,
         items: Sequence[Any],
         start_index: int = 0,
-        listing_title: str = ""
+        listing_title: str = "",
+        source_target: Optional[str] = None,
+        source_url: Optional[str] = None,
+        source_type: str = "listing",
+        batch_size: Optional[int] = None,
     ) -> bool:
         """
         Queues a sequence of online StreamItems as the active playlist
@@ -1161,29 +1237,52 @@ class PlayerController:
         """
         from . import stream_engine
 
-        video_items = [it for it in items if getattr(it, "kind", "") == stream_engine.ITEM_VIDEO]
-        if not video_items:
+        target = source_target or source_url
+
+        playable_items = [
+            it for it in items
+            if getattr(it, "kind", "") in (stream_engine.ITEM_VIDEO, stream_engine.ITEM_SHORTS)
+            or getattr(it, "is_stream", False)
+            or (not getattr(it, "kind", "") and (hasattr(it, "url") or hasattr(it, "path")))
+        ]
+        if not playable_items:
             self.speech.speak(_("No playable items found."))
             return False
 
-        # Recompute start index within the filtered video list
-        if 0 <= start_index < len(items) and items[start_index] in video_items:
-            start_index = video_items.index(items[start_index])
+        # Recompute start index within the filtered playable list
+        if 0 <= start_index < len(items) and items[start_index] in playable_items:
+            start_index = playable_items.index(items[start_index])
         else:
-            start_index = max(0, min(start_index, len(video_items) - 1))
+            start_index = max(0, min(start_index, len(playable_items) - 1))
 
-        tracks = [
-            Track(
-                path=it.url,
-                title=it.title,
-                duration=it.duration if it.duration else None,
-                metadata={"is_live": bool(it.is_live), "listing": listing_title},
+        tracks = []
+        for it in playable_items:
+            meta = dict(getattr(it, "metadata", {}) or {})
+            meta.update({"is_live": bool(getattr(it, "is_live", False)), "listing": listing_title})
+            tracks.append(
+                Track(
+                    path=getattr(it, "url", None) or getattr(it, "path", ""),
+                    title=getattr(it, "title", ""),
+                    duration=getattr(it, "duration", None),
+                    metadata=meta,
+                )
             )
-            for it in video_items
-        ]
 
         with self._lock:
             first = self.playlist.load_stream_tracks(tracks, start_index=start_index, append=False)
+            if target:
+                self._active_stream_source_target = target
+                self._active_stream_source_url = target
+                self._active_stream_source_type = source_type
+                self._active_stream_next_idx = len(items) + 1
+                self._active_stream_batch_size = batch_size or len(items) or 50
+                self._active_stream_has_more = True
+                self._active_stream_fetching = False
+            else:
+                self._active_stream_source_target = None
+                self._active_stream_source_url = None
+                self._active_stream_source_type = "listing"
+                self._active_stream_has_more = False
 
         if not first:
             self.speech.speak(_("No playable items found."))
@@ -1197,22 +1296,95 @@ class PlayerController:
 
     def play_stream_listing(self, url: str, listing_title: str = "") -> None:
         """
-        Expands a playlist / channel-tab URL in the background and plays
-        all of its entries as the active queue ('Play Playlist' action).
+        Loads an online playlist or channel stream URL in the background,
+        initializes the active stream source for seamless auto-paging,
+        and starts playback.
         """
         self.speech.speak(_("Loading playlist, please wait..."))
 
         def worker() -> None:
             from . import stream_engine
             try:
-                limit = int(getConfig().get("maxStreamPlaylistItems", 300))
-                title, items = stream_engine.fetch_listing(url, limit=limit)
-                self.play_stream_items(items, start_index=0, listing_title=title or listing_title)
+                cfg = getConfig()
+                limit = int(cfg.get("maxStreamPlaylistItems", 50))
+                title, items = stream_engine.fetch_listing(url, limit=limit, start_index=1)
+                self.play_stream_items(
+                    items,
+                    start_index=0,
+                    listing_title=title or listing_title,
+                    source_target=url,
+                    source_type="listing",
+                    batch_size=limit,
+                )
             except Exception as e:
                 logger.error("Playlist expansion failed: %s", e, exc_info=True)
                 self.speech.speak(self._stream_error_message(e))
 
         threading.Thread(target=worker, daemon=True, name="HeadlessPlayer-PlayListing").start()
+
+    def _check_stream_queue_auto_extend(self) -> None:
+        """Asynchronously loads the next batch of tracks for an active online playlist/listing or search query."""
+        with self._lock:
+            target = getattr(self, "_active_stream_source_target", None) or getattr(self, "_active_stream_source_url", None)
+            stype = getattr(self, "_active_stream_source_type", "listing")
+            has_more = getattr(self, "_active_stream_has_more", False)
+            fetching = getattr(self, "_active_stream_fetching", False)
+            if not target or not has_more or fetching:
+                return
+            count = self.playlist.count
+            if count >= 500:
+                self._active_stream_has_more = False
+                return
+            cur_orig = self.playlist.original_index
+            if count == 0 or cur_orig < max(0, count - 10):
+                return
+            self._active_stream_fetching = True
+            start_idx = self._active_stream_next_idx
+            bsize = self._active_stream_batch_size
+
+        def worker() -> None:
+            try:
+                from . import stream_engine
+                if stype == "search":
+                    new_items = stream_engine.search_youtube(target, limit=bsize, start_index=start_idx)
+                else:
+                    _title, new_items = stream_engine.fetch_listing(target, limit=bsize, start_index=start_idx)
+
+                playable = [
+                    it for it in new_items
+                    if getattr(it, "kind", "") in (stream_engine.ITEM_VIDEO, stream_engine.ITEM_SHORTS)
+                    or getattr(it, "is_stream", False)
+                    or (not getattr(it, "kind", "") and (hasattr(it, "url") or hasattr(it, "path")))
+                ]
+                with self._lock:
+                    current_target = getattr(self, "_active_stream_source_target", None) or getattr(self, "_active_stream_source_url", None)
+                    if current_target == target:
+                        if not playable:
+                            self._active_stream_has_more = False
+                        else:
+                            new_tracks = []
+                            for it in playable:
+                                meta = dict(getattr(it, "metadata", {}) or {})
+                                meta.update({"is_live": bool(getattr(it, "is_live", False))})
+                                new_tracks.append(
+                                    Track(
+                                        path=getattr(it, "url", None) or getattr(it, "path", ""),
+                                        title=getattr(it, "title", ""),
+                                        duration=getattr(it, "duration", None),
+                                        metadata=meta,
+                                    )
+                                )
+                            self.playlist.load_stream_tracks(new_tracks, append=True)
+                            self._active_stream_next_idx = start_idx + len(new_items)
+                            # has_more: True only if we got a full page
+                            self._active_stream_has_more = len(new_items) >= bsize
+            except Exception as ex:
+                logger.debug("Stream queue auto-extend failed (%s, target=%s): %s", stype, target, ex)
+            finally:
+                with self._lock:
+                    self._active_stream_fetching = False
+
+        threading.Thread(target=worker, daemon=True, name="HeadlessPlayer-QueueExtend").start()
 
     def _play_stream_track(self, track: Track) -> bool:
         """
@@ -1247,6 +1419,10 @@ class PlayerController:
 
     def _resolve_and_play_stream(self, track: Track, generation: int, orig_idx: int, total: int) -> None:
         """Background worker: resolves the stream URL then loads it into mpv."""
+        with self._lock:
+            if generation != self._stream_play_generation or self._is_terminating:
+                return
+
         from . import stream_engine
         try:
             info = stream_engine.resolve_stream(track.path)
@@ -1290,9 +1466,11 @@ class PlayerController:
             if success:
                 self.state_store.save_recent_file(track.path)
                 self._load_sponsor_segments_for_url(track.path or info.get("webpage_url") or info.get("id"))
+
                 self._stream_audio_tracks = list(info.get("audio_tracks", []))
                 self._stream_audio_track_idx = 0
                 self.speech.announce_track(orig_idx, total, track.display_name)
+                self._check_stream_queue_auto_extend()
             else:
                 self.speech.speak(_("Playback engine failed to start."))
 
@@ -1308,7 +1486,7 @@ class PlayerController:
         with self._lock:
             track = self.playlist.load_file_with_folder(file_path, append=False)
             if track:
-                self.speech.announce_loaded_files(self.playlist.count)
+                self.speech.announce_loaded_files(self.playlist.count, total_duration=self.playlist.total_duration)
                 self.play_track(track)
                 self._check_auto_enter_player_mode()
 
@@ -1320,7 +1498,7 @@ class PlayerController:
         with self._lock:
             count = self.playlist.load_folder(folder_path, recursive=False, append=False)
             if count > 0:
-                self.speech.announce_loaded_files(count)
+                self.speech.announce_loaded_files(count, total_duration=self.playlist.total_duration)
                 first_track = self.playlist.get_current_track()
                 if first_track:
                     self.play_track(first_track)
@@ -1396,6 +1574,9 @@ class PlayerController:
 
     def _handle_track_end(self, reason: str) -> None:
         """Asynchronously handles track completion to prevent IPC reader stalls."""
+        if hasattr(self, "history_sync") and self.history_sync:
+            self.history_sync.stop_session(reason="eof" if reason == "eof" else "stop")
+
         with self._lock:
             cur_path = self._last_loaded_path or getattr(self.engine, "path", None)
 
@@ -1408,6 +1589,7 @@ class PlayerController:
                 next_t = self.playlist.on_track_ended()
                 if next_t:
                     self.play_track(next_t)
+                    self._check_stream_queue_auto_extend()
                 else:
                     self._last_loaded_path = None
                     self.tone_manager.play_boundary_hit()

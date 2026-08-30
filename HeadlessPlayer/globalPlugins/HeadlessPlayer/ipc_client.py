@@ -112,6 +112,9 @@ if kernel32 is not None:
     kernel32.GetLastError.argtypes = []
     kernel32.GetLastError.restype = wintypes.DWORD
 
+    kernel32.CancelIoEx.argtypes = [wintypes.HANDLE, ctypes.POINTER(OVERLAPPED)]
+    kernel32.CancelIoEx.restype = wintypes.BOOL
+
 
 def _is_valid_handle(handle: Any) -> bool:
     """Helper to verify if a Win32 handle is open and valid."""
@@ -260,6 +263,12 @@ class WinNamedPipeClient:
                                 break
 
                         if not self._running or not _is_valid_handle(self.handle):
+                            if hasattr(kernel32, "CancelIoEx") and _is_valid_handle(self.handle):
+                                try:
+                                    kernel32.CancelIoEx(self.handle, ctypes.byref(ov))
+                                    kernel32.GetOverlappedResult(self.handle, ctypes.byref(ov), ctypes.byref(bytes_read), True)
+                                except Exception:
+                                    pass
                             break
 
                         get_res = kernel32.GetOverlappedResult(
@@ -417,6 +426,14 @@ class WinNamedPipeClient:
                                 ctypes.byref(bytes_written),
                                 False
                             )
+                        else:
+                            # Write timed out: cancel pending I/O before closing event handle to prevent memory corruption!
+                            if hasattr(kernel32, "CancelIoEx") and _is_valid_handle(self.handle):
+                                try:
+                                    kernel32.CancelIoEx(self.handle, ctypes.byref(ov))
+                                    kernel32.GetOverlappedResult(self.handle, ctypes.byref(ov), ctypes.byref(bytes_written), True)
+                                except Exception:
+                                    pass
                     else:
                         logger.debug("WriteFile error code %d", err)
                 else:

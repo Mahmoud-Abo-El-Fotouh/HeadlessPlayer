@@ -713,3 +713,33 @@ msgstr "= Equals (يساوي)"
 
 
 
+
+msgid "Trending Shorts (popular in your region)"
+msgstr "Trending Shorts (popular in your region)"
+
+msgid "Trending videos (popular in your region)"
+msgstr "Trending videos (popular in your region)"
+
+msgid "New music releases & charts"
+msgstr "New music releases & charts"
+
+msgid "Load more items..."
+msgstr "Load more items..."
+
+msgid "— [Load more items...] —"
+msgstr "— [Load more items...] —"
+
+msgid "Loading more items..."
+msgstr "Loading more items..."
+
+msgid "%d more items loaded"
+msgstr "%d more items loaded"
+
+msgid "No more items found."
+msgstr "No more items found."
+
+msgid "%d more items loaded: %s"
+msgstr "%d more items loaded: %s"
+
+msgid "Loading more items, please wait..."
+msgstr "Loading more items, please wait..."

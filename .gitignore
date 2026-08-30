@@ -52,3 +52,12 @@ cover/
 *.swp
 *.swo
 *~
+
+# Logs and development tools
+*.log
+*.log.*
+HeadlessPlayer_debug.*
+manage_logs.py
+log_manager.py
+scratch/
+tests/

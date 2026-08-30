@@ -1229,3 +1229,127 @@ msgstr "الكورية"
 
 msgid "&Follow Developer on Telegram (Mahmoud Abo El Fotouh)..."
 msgstr "&متابعة المطور على تيليجرام (محمود أبو الفتوح)..."
+
+msgid "&Delete Assigned Shortcut"
+msgstr "&حذف الاختصار المعين"
+
+msgid "Shortcut deleted for %s"
+msgstr "تم حذف الاختصار للإجراء %s"
+
+msgid "Replaying from beginning"
+msgstr "إعادة التشغيل من البداية"
+
+msgid "Shorts"
+msgstr "مقاطع Shorts"
+
+msgid "Shorts of %s"
+msgstr "مقاطع Shorts لقناة %s"
+
+msgid "Shorts from your subscriptions"
+msgstr "مقاطع Shorts من اشتراكاتي"
+
+msgid "Trending Shorts worldwide"
+msgstr "مقاطع Shorts الرائجة عالمياً"
+
+msgid "Sync YouTube &watch history and playback progress with your account"
+msgstr "مزامنة &سجل المشاهدة وتقدم التشغيل مع حساب يوتيوب"
+
+msgid "Trending Shorts (popular in your region)"
+msgstr "مقاطع Shorts الرائجة (الأكثر تداولاً في منطقتك)"
+
+msgid "Trending videos (popular in your region)"
+msgstr "الفيديوهات الرائجة (الأكثر تداولاً في منطقتك)"
+
+msgid "New music releases & charts"
+msgstr "أحدث الإصدارات الموسيقية والقوائم"
+
+msgid "Google YouTube Account - Read-Only"
+msgstr "حساب جوجل يوتيوب - قراءة فقط"
+
+msgid "Google YouTube Account &Sign In (Secure Read-Only)..."
+msgstr "تسجيل الدخول بحساب &جوجل يوتيوب (قراءة فقط آمنة)..."
+
+msgid "Sign In with Google (Browser)..."
+msgstr "تسجيل الدخول عبر جوجل (المتصفح)..."
+
+msgid "Sign Out"
+msgstr "تسجيل الخروج"
+
+msgid ""
+"Security Notice:\n"
+"• Permission is strictly READ-ONLY (youtube.readonly).\n"
+"• Tokens are encrypted with Windows DPAPI and tied to your Windows account.\n"
+"• This add-on cannot upload, delete, or modify any of your YouTube content.\n"
+msgstr ""
+"تنبيه أمان:\n"
+"• الصلاحية محصورة في القراءة فقط (youtube.readonly).\n"
+"• التوكنات مشفرة بخوارزمية Windows DPAPI ومربوطة بحساب ويندوز الخاص بك.\n"
+"• لا تستطيع هذه الإضافة رفع أو حذف أو تعديل أي محتوى في حسابك.\n"
+
+msgid "Status: Signed In as '%s' (Read-Only)"
+msgstr "الحالة: مسجل الدخول باسم '%s' (قراءة فقط)"
+
+msgid "Status: Not Signed In"
+msgstr "الحالة: غير مسجل الدخول"
+
+msgid "Opening browser... Please grant permission in your browser."
+msgstr "جاري فتح المتصفح... يرجى منح الإذن في المتصفح."
+
+msgid "Opening browser for Google authorization, please grant permission..."
+msgstr "جاري فتح المتصفح لمصادقة جوجل، يرجى الموافقة على الإذن..."
+
+msgid "Successfully signed in to YouTube as %s"
+msgstr "تم تسجيل الدخول إلى يوتيوب بنجاح باسم %s"
+
+msgid "Successfully signed in to YouTube!"
+msgstr "تم تسجيل الدخول إلى يوتيوب بنجاح!"
+
+msgid "Sign in failed: %s"
+msgstr "فشل تسجيل الدخول: %s"
+
+msgid "Signed out and cleared credentials successfully."
+msgstr "تم تسجيل الخروج ومسح بيانات الاعتماد بنجاح."
+
+msgid "My Playlists (Google Account)"
+msgstr "قوائم التشغيل الخاصة بي (حساب جوجل)"
+
+msgid "My Subscriptions (Google Account)"
+msgstr "اشتراكاتي (حساب جوجل)"
+
+msgid "Liked Videos (Google Account)"
+msgstr "الفيديوهات المعجب بها (حساب جوجل)"
+
+msgid "This section requires YouTube sign-in. Sign in with Google or enable sign-in cookies in HeadlessPlayer settings, then try again."
+msgstr "يتطلب هذا القسم تسجيل الدخول إلى YouTube. سجل دخولك بحساب Google أو فعل الكوكيز في إعدادات المشغل ثم حاول مجدداً."
+
+msgid ""
+"Security Notice:\n"
+"• Permission is strictly READ-ONLY (youtube.readonly).\n"
+"• Tokens are encrypted with Windows DPAPI and tied to your Windows account.\n"
+"• This add-on cannot upload, delete, or modify any of your YouTube content.\n"
+msgstr ""
+"تنبيه أمان:\n"
+"• الصلاحية محصورة في القراءة فقط (youtube.readonly).\n"
+"• التوكنات مشفرة بخوارزمية Windows DPAPI ومربوطة بحساب ويندوز الخاص بك.\n"
+"• لا تستطيع هذه الإضافة رفع أو حذف أو تعديل أي محتوى في حسابك.\n"
+
+msgid "Load more items..."
+msgstr "تحميل المزيد من العناصر..."
+
+msgid "— [Load more items...] —"
+msgstr "— [تحميل المزيد من العناصر...] —"
+
+msgid "Loading more items..."
+msgstr "جاري تحميل المزيد من العناصر..."
+
+msgid "%d more items loaded"
+msgstr "تم تحميل %d عناصر إضافية"
+
+msgid "No more items found."
+msgstr "لا توجد عناصر إضافية."
+
+msgid "%d more items loaded: %s"
+msgstr "تم تحميل %d عناصر إضافية: %s"
+
+msgid "Loading more items, please wait..."
+msgstr "جاري تحميل المزيد من العناصر، يرجى الانتظار..."

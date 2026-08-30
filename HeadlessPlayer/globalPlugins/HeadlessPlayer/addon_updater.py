@@ -170,7 +170,11 @@ def download_addon_file(
     )
 
     with urllib.request.urlopen(req, timeout=timeout) as resp:
-        total_size = int(resp.headers.get("content-length", 0))
+        try:
+            raw_len = resp.headers.get("content-length", 0)
+            total_size = int(raw_len) if raw_len else 0
+        except (ValueError, TypeError):
+            total_size = 0
         downloaded = 0
         chunk_size = 64 * 1024
 
@@ -330,23 +334,13 @@ class AddonUpdateDialog(_WxDialog):
             except Exception as e2:
                 logger.error("Could not install via addonHandler: %s", e2)
 
-        # Schedule background deletion so the installer file is completely removed from disk
-        def delayed_cleanup(target_file: str) -> None:
+        # Schedule background cleanup sweep after sufficient delay (3 minutes) to allow NVDA installer to unpack
+        def delayed_cleanup() -> None:
             import time
-            # Check periodically for up to 2 minutes to allow NVDA installer to unpack the file
-            for _ in range(24):
-                time.sleep(5)
-                try:
-                    if os.path.isfile(target_file):
-                        os.remove(target_file)
-                        logger.info("Successfully cleaned up temporary installer: %s", target_file)
-                        break
-                except Exception:
-                    pass
-            # Final sweep of all temp add-on packages
+            time.sleep(180)
             cleanup_temp_addon_packages()
 
-        threading.Thread(target=delayed_cleanup, args=(file_path,), daemon=True, name="HeadlessPlayer-Cleanup").start()
+        threading.Thread(target=delayed_cleanup, daemon=True, name="HeadlessPlayer-Cleanup").start()
 
         # Close update dialog so NVDA's installation confirmation dialog gains focus
         self.EndModal(wx.ID_OK)

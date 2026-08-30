@@ -61,8 +61,9 @@ def format_time(
     if math.isnan(sec_val) or math.isinf(sec_val):
         return "00:00:00" if always_include_hours else "00:00"
 
-    is_negative = sec_val < 0
     total_sec = int(round(abs(sec_val)))
+    # Prevent negative zero (e.g. -0.04s displaying as "-00:00")
+    is_negative = sec_val < 0 and total_sec > 0
 
     hours = total_sec // 3600
     minutes = (total_sec % 3600) // 60
@@ -146,7 +147,7 @@ def format_spoken_time(
         lang: 'en' for English or 'ar' for Arabic.
         
     Returns:
-        Spoken string (e.g. '1 hour 25 minutes 10 seconds' or '3 minutes 5 seconds').
+        Spoken string (e.g. '1 hour 25 minutes 10 seconds' or '3 دقائق و 5 ثوانٍ').
     """
     if seconds is None:
         return "0 seconds" if lang == "en" else "0 ثانية"
@@ -167,11 +168,32 @@ def format_spoken_time(
     if lang == "ar":
         parts = []
         if hours > 0:
-            parts.append(f"{hours} ساعة" if hours > 2 else ("ساعة واحدة" if hours == 1 else "ساعتان"))
+            if hours == 1:
+                parts.append("ساعة واحدة")
+            elif hours == 2:
+                parts.append("ساعتان")
+            elif 3 <= hours <= 10:
+                parts.append(f"{hours} ساعات")
+            else:
+                parts.append(f"{hours} ساعة")
         if minutes > 0:
-            parts.append(f"{minutes} دقيقة" if minutes > 2 else ("دقيقة واحدة" if minutes == 1 else "دقيقتان"))
+            if minutes == 1:
+                parts.append("دقيقة واحدة")
+            elif minutes == 2:
+                parts.append("دقيقتان")
+            elif 3 <= minutes <= 10:
+                parts.append(f"{minutes} دقائق")
+            else:
+                parts.append(f"{minutes} دقيقة")
         if secs > 0 or not parts:
-            parts.append(f"{secs} ثانية" if secs > 2 else ("ثانية واحدة" if secs == 1 else "ثانيتان"))
+            if secs == 1:
+                parts.append("ثانية واحدة")
+            elif secs == 2:
+                parts.append("ثانيتان")
+            elif 3 <= secs <= 10:
+                parts.append(f"{secs} ثوانٍ")
+            else:
+                parts.append(f"{secs} ثانية")
         return " و ".join(parts)
     else:
         parts = []
@@ -210,20 +232,26 @@ def is_video_file(path_or_name: str) -> bool:
     return ext.lower() in SUPPORTED_VIDEO_EXTENSIONS
 
 
-def natural_sort_key(s: str) -> List[Union[int, str]]:
+def natural_sort_key(s: str) -> List[Tuple[int, Union[int, str]]]:
     """
     Generates a natural sort key list that sorts digit sequences numerically.
+    Uses type-tagged tuples (0, int) and (1, str) to guarantee crash-free
+    comparison in Python 3 across mixed numeric and alphabetic items.
     Case-insensitive.
     
     Example:
-        'track10.mp3' -> ['track', 10, '.mp3']
-        'track2.mp3'  -> ['track', 2, '.mp3']
-        Sorted: 'track2.mp3' comes before 'track10.mp3'.
+        '01 song.mp3' -> [(0, 1), (1, ' song.mp3')]
+        'intro.mp3'   -> [(1, 'intro.mp3')]
+        Sorted: '01 song.mp3' cleanly compares against 'intro.mp3'.
     """
     if not isinstance(s, str):
         s = str(s)
     chunks = _NATURAL_SORT_REGEX.split(s.lower())
-    return [int(text) if text.isdigit() else text for text in chunks if text]
+    return [
+        (0, int(text)) if text.isdigit() else (1, text)
+        for text in chunks
+        if text
+    ]
 
 
 def natural_sort(items: Iterable[str]) -> List[str]:
@@ -292,3 +320,80 @@ def get_media_dialog_wildcard() -> str:
         f"Video Files ({all_video_pattern})|{all_video_pattern}|"
         f"All Files (*.*)|*.*"
     )
+
+
+# ---------------------------------------------------------------------------
+# Standard NVDA Logger Helpers
+# ---------------------------------------------------------------------------
+
+try:
+    from . import log_manager
+except Exception:
+    try:
+        import log_manager
+    except Exception:
+        log_manager = None
+
+try:
+    from logHandler import log as _logger
+except ImportError:
+    import logging
+    _logger = logging.getLogger("HeadlessPlayer")
+
+
+def log_info(tag: str, message: str, *args: Any) -> None:
+    """Logs an info-level message directly to NVDA log and log_manager."""
+    if log_manager:
+        try:
+            log_manager.log_debug(tag, message, *args)
+        except Exception:
+            pass
+    if args:
+        try:
+            _logger.info(f"[HeadlessPlayer:{tag}] {message % args}")
+        except Exception:
+            _logger.info(f"[HeadlessPlayer:{tag}] {message} {args}")
+    else:
+        _logger.info(f"[HeadlessPlayer:{tag}] {message}")
+
+
+def log_debug(tag: str, message: str, *args: Any) -> None:
+    """Logs a debug-level message to NVDA log and log_manager."""
+    if log_manager:
+        try:
+            log_manager.log_debug(tag, message, *args)
+        except Exception:
+            pass
+    if args:
+        try:
+            _logger.debug(f"[HeadlessPlayer:{tag}] {message % args}")
+        except Exception:
+            _logger.debug(f"[HeadlessPlayer:{tag}] {message} {args}")
+    else:
+        _logger.debug(f"[HeadlessPlayer:{tag}] {message}")
+
+
+def log_error(tag: str, message: str, *args: Any) -> None:
+    """Logs an error-level message to NVDA log and log_manager."""
+    if log_manager:
+        try:
+            log_manager.log_debug(tag, f"ERROR: {message}", *args)
+        except Exception:
+            pass
+    if args:
+        try:
+            _logger.error(f"[HeadlessPlayer:{tag}] {message % args}")
+        except Exception:
+            _logger.error(f"[HeadlessPlayer:{tag}] {message} {args}")
+    else:
+        _logger.error(f"[HeadlessPlayer:{tag}] {message}")
+
+
+def log_exception(tag: str, message: str, exc: Optional[BaseException] = None) -> None:
+    """Logs an exception with traceback to NVDA log and log_manager."""
+    if log_manager:
+        try:
+            log_manager.log_exception(tag, message, exc)
+        except Exception:
+            pass
+    _logger.exception(f"[HeadlessPlayer:{tag}] {message}")

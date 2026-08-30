@@ -11,7 +11,7 @@ import logging
 import os
 import threading
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 from .database import get_db_manager, normalize_file_path, DatabaseManager, get_default_db_path
 
@@ -66,16 +66,17 @@ class StateStore:
         min_threshold_sec: float = 1.0,
         end_threshold_sec: float = 1.0
     ) -> bool:
-        return self._db.save_position(
+        self._db.save_position(
             file_path=file_path,
             position_sec=position_sec,
             duration_sec=duration_sec,
             min_threshold_sec=min_threshold_sec,
             end_threshold_sec=end_threshold_sec
         )
+        return True
 
     def get_position(self, file_path: str) -> float:
-        return self._db.get_position(file_path)
+        return self._db.get_position(file_path) or 0.0
 
     def clear_position(self, file_path: str) -> None:
         self._db.clear_position(file_path)
@@ -89,7 +90,7 @@ class StateStore:
         return positions.get(norm)
 
     def prune_positions(self, max_entries: int = 500) -> int:
-        return 0
+        return self._db.prune_positions(max_entries=max_entries)
 
     # -------------------------------------------------------------------------
     # Recent Files History API
@@ -99,7 +100,16 @@ class StateStore:
         self._db.save_recent_file(file_path=file_path, max_entries=max_entries)
 
     def get_recent_files(self) -> List[str]:
-        return self._db.get_recent_files()
+        raw = self._db.get_recent_files()
+        res: List[str] = []
+        for r in raw:
+            if isinstance(r, dict):
+                p = r.get("file_path")
+                if p and isinstance(p, str):
+                    res.append(p)
+            elif isinstance(r, str):
+                res.append(r)
+        return res
 
     def clear_recent_files(self) -> None:
         self._db.clear_recent_files()

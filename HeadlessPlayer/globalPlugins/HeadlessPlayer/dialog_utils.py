@@ -524,7 +524,7 @@ def prompt_help_dialog(
     custom_toggle_gesture: Optional[str] = None
 ) -> None:
     """
-    Presents the accessible shortcuts help window using ui.browseableMessage.
+    Presents the accessible shortcuts help window using a modal dialog.
     Safely suspends modal input while open and resumes when dismissed.
     """
     if _test_dialog_handler is not None:
@@ -539,7 +539,6 @@ def prompt_help_dialog(
 
     def _show_help() -> None:
         try:
-            import ui
             if suspend_capture:
                 try:
                     suspend_capture()
@@ -548,10 +547,56 @@ def prompt_help_dialog(
 
             help_title = _("Headless Media Player - Shortcuts Help")
             help_content = generate_help_text(custom_toggle_gesture)
-            if hasattr(ui, "browseableMessage"):
-                ui.browseableMessage(help_content, title=help_title)
-            else:
-                logger.info("[Help Dialog Output]\n%s", help_content)
+
+            try:
+                import wx
+                import gui
+                from gui import guiHelper
+
+                class _ShortcutsModalDialog(wx.Dialog):
+                    def __init__(self) -> None:
+                        parent = gui.mainFrame if gui and hasattr(gui, "mainFrame") else None
+                        super().__init__(parent, title=help_title, size=(650, 500))
+                        mainSizer = wx.BoxSizer(wx.VERTICAL)
+                        helper = guiHelper.BoxSizerHelper(self, orientation=wx.VERTICAL)
+
+                        self.textCtrl = wx.TextCtrl(
+                            self,
+                            style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_DONTWRAP | wx.HSCROLL,
+                            value=help_content
+                        )
+                        helper.addItem(self.textCtrl, flag=wx.EXPAND | wx.ALL, proportion=1)
+
+                        btnSizer = wx.BoxSizer(wx.HORIZONTAL)
+                        self.closeBtn = wx.Button(self, wx.ID_CLOSE, label=_("&Close"))
+                        self.closeBtn.Bind(wx.EVT_BUTTON, self.onClose)
+                        btnSizer.Add(self.closeBtn, 0, wx.ALL, 5)
+                        helper.addItem(btnSizer, flag=wx.ALIGN_RIGHT)
+
+                        self.SetSizer(mainSizer)
+                        self.textCtrl.SetFocus()
+
+                    def onClose(self, evt: Any) -> None:
+                        self.EndModal(wx.ID_CLOSE)
+
+                if gui and hasattr(gui, "mainFrame") and hasattr(gui.mainFrame, "prePopup"):
+                    gui.mainFrame.prePopup()
+                try:
+                    dlg = _ShortcutsModalDialog()
+                    dlg.ShowModal()
+                    dlg.Destroy()
+                finally:
+                    if gui and hasattr(gui, "mainFrame") and hasattr(gui.mainFrame, "postPopup"):
+                        gui.mainFrame.postPopup()
+
+            except Exception:
+                try:
+                    import ui
+                    if hasattr(ui, "browseableMessage"):
+                        ui.browseableMessage(help_content, title=help_title)
+                except Exception:
+                    logger.info("[Help Dialog Output]\n%s", help_content)
+
         except Exception as e:
             logger.error("Error presenting shortcuts help dialog: %s", e)
         finally:
