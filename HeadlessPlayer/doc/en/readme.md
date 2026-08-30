@@ -1,6 +1,6 @@
 # Headless Media Player User Guide for NVDA
 
-**Version:** 1.2.2  
+**Version:** 1.2.3  
 **Author:** Mahmoud Abo El-Fotouh <mahmoudaboelfotouh.20@gmail.com>  
 **Repository:** [https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer](https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer)  
 **Telegram:** [https://t.me/mahmoud_EG_1](https://t.me/mahmoud_EG_1)  

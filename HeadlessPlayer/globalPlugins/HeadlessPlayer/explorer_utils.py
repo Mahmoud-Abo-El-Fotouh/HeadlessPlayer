@@ -8,6 +8,7 @@ Windows 11 tabbed Explorer, Desktop, or NVDA focus object tree.
 from __future__ import annotations
 import logging
 import os
+import threading
 from typing import Any, List, Optional, Sequence, Set
 
 try:
@@ -64,22 +65,20 @@ def _is_descendant_window(parent_hwnd: int, child_hwnd: int) -> bool:
             return False
 
 
-def get_explorer_selected_paths() -> List[str]:
-    """
-    Extracts paths of selected items or focused item in the active Windows Explorer window or Desktop.
-    Supports Windows 10, Windows 11 (with tabbed Explorer), and Desktop selections.
-    Uses comtypes.client (standard built-in to NVDA) and NVDA focus tree.
-    
-    Returns:
-        List of absolute file/folder paths found in the active selection or open folder.
-    """
+def _query_shell_windows_com(fg_hwnd: int) -> List[str]:
+    """Helper worker: queries Shell.Application COM interface."""
     selected_paths: List[str] = []
-    fg_hwnd = _get_foreground_window()
-
-    # 1. Query open Explorer windows via comtypes (standard in NVDA)
+    co_inited = False
     try:
+        import comtypes
         import comtypes.client
         from urllib.parse import unquote
+        try:
+            comtypes.CoInitialize()
+            co_inited = True
+        except Exception:
+            pass
+
         shell_app = comtypes.client.CreateObject("Shell.Application")
         windows = shell_app.Windows()
         count = getattr(windows, "Count", 0)
@@ -139,6 +138,12 @@ def get_explorer_selected_paths() -> List[str]:
                         if os.path.isdir(dir_path):
                             selected_paths.append(os.path.abspath(dir_path))
                             return selected_paths
+                    elif url.startswith("file://"):
+                        # UNC network path
+                        dir_path = "\\\\" + unquote(url[7:]).replace("/", "\\")
+                        if os.path.isdir(dir_path):
+                            selected_paths.append(os.path.abspath(dir_path))
+                            return selected_paths
 
             except Exception as e:
                 logger.debug("Error inspecting shell window via comtypes: %s", e)
@@ -146,13 +151,48 @@ def get_explorer_selected_paths() -> List[str]:
 
     except Exception as e:
         logger.debug("comtypes Shell.Application query error: %s", e)
+    finally:
+        if co_inited:
+            try:
+                comtypes.CoUninitialize()
+            except Exception:
+                pass
+    return selected_paths
+
+
+def get_explorer_selected_paths() -> List[str]:
+    """
+    Extracts paths of selected items or focused item in the active Windows Explorer window or Desktop.
+    Supports Windows 10, Windows 11 (with tabbed Explorer), and Desktop selections.
+    Uses comtypes.client (with 0.8s timeout protection) and NVDA focus tree.
+    
+    Returns:
+        List of absolute file/folder paths found in the active selection or open folder.
+    """
+    fg_hwnd = _get_foreground_window()
+    com_results: List[str] = []
+
+    def com_worker(container: List[str]) -> None:
+        try:
+            res = _query_shell_windows_com(fg_hwnd)
+            if res:
+                container.extend(res)
+        except Exception:
+            pass
+
+    t = threading.Thread(target=com_worker, args=(com_results,), daemon=True, name="HeadlessPlayer-ExplorerCOM")
+    t.start()
+    t.join(timeout=0.8)
+
+    if com_results:
+        return com_results
 
     # 2. Fallback: NVDA accessibility focus object tree
     focus_paths = _get_focus_explorer_paths()
     if focus_paths:
-        selected_paths.extend(focus_paths)
+        return focus_paths
 
-    return selected_paths
+    return []
 
 
 def _get_focus_explorer_paths() -> List[str]:
@@ -208,21 +248,15 @@ def _get_focus_explorer_paths() -> List[str]:
         except Exception:
             pass
 
-        # 4. Standard known directories + all open explorer folders
-        search_dirs = list(open_dirs) + [
+        # 4. Safe standard directories to look for focused files
+        search_dirs = [
+            os.path.expanduser("~"),
             os.path.join(os.path.expanduser("~"), "Desktop"),
-            os.path.join(os.environ.get("PUBLIC", r"C:\Users\Public"), "Desktop"),
             os.path.join(os.path.expanduser("~"), "Downloads"),
             os.path.join(os.path.expanduser("~"), "Music"),
             os.path.join(os.path.expanduser("~"), "Videos"),
             os.path.join(os.path.expanduser("~"), "Documents"),
         ]
-
-        # Also add fixed / removable drive roots (D:\, E:\, etc.)
-        for letter in "CDEFGHIJKLMNOPQRSTUVWXYZ":
-            drive = f"{letter}:\\"
-            if os.path.exists(drive) and drive not in search_dirs:
-                search_dirs.append(drive)
 
         for d in search_dirs:
             if not os.path.isdir(d):
@@ -237,7 +271,7 @@ def _get_focus_explorer_paths() -> List[str]:
                     paths.append(os.path.abspath(cand_ext))
                     return paths
 
-            # Comprehensive filename / stem matching for hidden extensions
+            # Filename / stem matching for hidden extensions
             try:
                 name_clean = name.strip().lower()
                 for fname in os.listdir(d):

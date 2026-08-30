@@ -4,7 +4,10 @@ HeadlessPlayer Settings Panel for NVDA Preferences -> Settings Dialog.
 Provides accessible wxPython configuration controls for speech feedback, seek step sizes, and playback defaults.
 """
 
-from typing import List, Optional, Tuple, Any
+import logging
+from typing import Any, Dict, List, Optional, Tuple
+
+logger = logging.getLogger("HeadlessPlayer.SettingsPanel")
 
 try:
     import addonHandler
@@ -210,6 +213,16 @@ def get_all_key_suggestions() -> List[Tuple[str, str]]:
     ]
 
 
+ARABIC_TO_ENGLISH_KEY_MAP: Dict[str, str] = {
+    "ض": "q", "ص": "w", "ث": "e", "ق": "r", "ف": "t", "غ": "y", "ع": "u",
+    "ه": "i", "خ": "o", "ح": "p", "ج": "[", "د": "]", "ش": "a", "س": "s",
+    "ي": "d", "ب": "f", "ل": "g", "ا": "h", "أ": "h", "إ": "h", "آ": "h",
+    "ت": "j", "ن": "k", "م": "l", "ك": ";", "ط": "'", "ئ": "z", "ء": "x",
+    "ؤ": "c", "ر": "v", "ى": "n", "ة": "m", "و": ",", "ز": ".", "ظ": "/",
+    "لا": "b", "لأ": "b", "لإ": "b", "لآ": "b",
+}
+
+
 _WxDialog = getattr(wx, "Dialog", object) if wx else object
 
 
@@ -261,12 +274,26 @@ class KeyCaptureDialog(_WxDialog):
             self.EndModal(wx.ID_CANCEL)
             return
 
+        # If only a modifier key itself was pressed, update prompt status and wait for base key
+        if key_code in (wx.WXK_CONTROL, getattr(wx, "WXK_RAW_CONTROL", -1), wx.WXK_SHIFT, wx.WXK_ALT):
+            mods = []
+            if evt.ControlDown():
+                mods.append("Control")
+            if evt.AltDown():
+                mods.append("Alt")
+            if evt.ShiftDown():
+                mods.append("Shift")
+            if mods:
+                self.statusText.SetLabel(_("Holding %s... Press a key to combine.") % (" + ".join(mods)))
+            evt.Skip()
+            return
+
         mods = []
-        if evt.ControlDown() and key_code not in (wx.WXK_CONTROL, getattr(wx, "WXK_RAW_CONTROL", -1)):
+        if evt.ControlDown():
             mods.append("control")
-        if evt.AltDown() and key_code != wx.WXK_ALT:
+        if evt.AltDown():
             mods.append("alt")
-        if evt.ShiftDown() and key_code != wx.WXK_SHIFT:
+        if evt.ShiftDown():
             mods.append("shift")
 
         key_name = ""
@@ -298,12 +325,6 @@ class KeyCaptureDialog(_WxDialog):
             key_name = "return"
         elif key_code == wx.WXK_BACK:
             key_name = "backspace"
-        elif key_code == wx.WXK_CONTROL:
-            key_name = "control"
-        elif key_code == wx.WXK_SHIFT:
-            key_name = "shift"
-        elif key_code == wx.WXK_ALT:
-            key_name = "alt"
         elif ord('A') <= key_code <= ord('Z'):
             key_name = chr(key_code).lower()
         elif ord('0') <= key_code <= ord('9'):
@@ -314,23 +335,19 @@ class KeyCaptureDialog(_WxDialog):
         else:
             try:
                 ch = chr(key_code).lower()
-                if ch in ("[]();',./-="):
+                if ch in ARABIC_TO_ENGLISH_KEY_MAP:
+                    key_name = ARABIC_TO_ENGLISH_KEY_MAP[ch]
+                elif ch in ("[]();',./-="):
                     key_name = ch
             except Exception:
                 pass
 
-        if not key_name:
+        if key_name:
+            combo = "+".join(mods + [key_name]) if mods else key_name
+            self.captured_key = combo
+            self.EndModal(wx.ID_OK)
+        else:
             evt.Skip()
-            return
-
-        final_key = f"{'+'.join(mods)}+{key_name}" if mods else key_name
-        self.captured_key = final_key
-        try:
-            import ui
-            ui.message(_("Captured: %s") % final_key)
-        except Exception:
-            pass
-        self.EndModal(wx.ID_OK)
 
 
 class HeadlessPlayerShortcutsDialog(_WxDialog):
@@ -366,8 +383,8 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
         )
         helper.addItem(introText)
 
-        # 1. Action Choice
-        actionLabels = [label for _, label in ACTION_DISPLAY_NAMES]
+        # 1. Action Choice (displays Action Name + currently assigned shortcut for instant screen reader feedback)
+        actionLabels = self._get_action_choice_labels()
         self.actionChoice = helper.addLabeledControl(
             _("&Player Action:"),
             wx.Choice,
@@ -402,17 +419,16 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
         self.searchCtrl.Bind(wx.EVT_TEXT, self.onSearchFilter)
 
         # 4. Searchable Suggestions ListBox
-        initial_choices = [label for _, label in self.all_suggestions]
+        initial_choices = [label for _val, label in self.all_suggestions]
         self.suggestionsList = wx.ListBox(
             self,
             choices=initial_choices,
             style=wx.LB_SINGLE
         )
-        self.suggestionsList.Bind(wx.EVT_LISTBOX, self.onSuggestionSelected)
         self.suggestionsList.Bind(wx.EVT_LISTBOX_DCLICK, self.onSuggestionDoubleClicked)
         helper.addItem(self.suggestionsList)
 
-        # 5. Middle Action Buttons (Assign & Capture)
+        # 5. Middle Action Buttons (Assign, Capture, and Delete)
         actionBtnSizer = wx.BoxSizer(wx.HORIZONTAL)
         if hasattr(wx, "Button"):
             self.assignBtn = wx.Button(self, label=_("&Assign Selected Suggestion"))
@@ -422,6 +438,10 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
             self.captureBtn = wx.Button(self, label=_("&Press Key on Keyboard Directly..."))
             self.captureBtn.Bind(wx.EVT_BUTTON, self.onCaptureKeyDirectly)
             actionBtnSizer.Add(self.captureBtn, 0, wx.ALL, 5)
+
+            self.deleteBtn = wx.Button(self, label=_("&Delete Assigned Shortcut"))
+            self.deleteBtn.Bind(wx.EVT_BUTTON, self.onDeleteShortcut)
+            actionBtnSizer.Add(self.deleteBtn, 0, wx.ALL, 5)
 
         helper.addItem(actionBtnSizer)
 
@@ -444,6 +464,21 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
 
         helper.addItem(btnSizer)
         self.SetSizerAndFit(mainSizer)
+
+    def _get_action_choice_labels(self) -> List[str]:
+        labels = []
+        for action_id, action_name in ACTION_DISPLAY_NAMES:
+            key_str = self.current_keymap.get(action_id, "")
+            key_disp = self._format_key_display(key_str)
+            labels.append(f"{action_name}: {key_disp}")
+        return labels
+
+    def _refresh_action_choice(self, preserve_index: Optional[int] = None) -> None:
+        sel = preserve_index if preserve_index is not None else self.actionChoice.GetSelection()
+        choices = self._get_action_choice_labels()
+        self.actionChoice.Set(choices)
+        if 0 <= sel < len(choices):
+            self.actionChoice.SetSelection(sel)
 
     def _format_single_key_display(self, key_id: str) -> str:
         for k_id, label in self.all_suggestions:
@@ -507,33 +542,42 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
         if choices:
             self.suggestionsList.SetSelection(0)
 
-    def onSuggestionSelected(self, evt: Any) -> None:
+    def _do_assign_current_suggestion(self) -> None:
         sel = self.suggestionsList.GetSelection()
+        if sel == wx.NOT_FOUND or sel < 0:
+            if self.filtered_suggestions:
+                sel = 0
+                self.suggestionsList.SetSelection(0)
+            else:
+                try:
+                    import ui
+                    ui.message(_("Please select a key from the suggestions list."))
+                except Exception:
+                    pass
+                return
+
         if 0 <= sel < len(self.filtered_suggestions):
             key_id = self.filtered_suggestions[sel][0]
             action_sel = self.actionChoice.GetSelection()
             if 0 <= action_sel < len(ACTION_DISPLAY_NAMES):
-                action_id = ACTION_DISPLAY_NAMES[action_sel][0]
+                action_id, action_name = ACTION_DISPLAY_NAMES[action_sel]
                 self._assign_key(action_id, key_id)
+                assigned_str = self.current_keymap.get(action_id, "")
                 self.currentKeyStatus.SetLabel(
-                    _("Current assigned key: %s") % self._format_key_display(self.current_keymap.get(action_id, ""))
+                    _("Current assigned key: %s") % self._format_key_display(assigned_str)
                 )
+                self._refresh_action_choice(action_sel)
+                try:
+                    import ui
+                    ui.message(_("Assigned %s to %s") % (self._format_key_display(assigned_str), action_name))
+                except Exception:
+                    pass
 
     def onSuggestionDoubleClicked(self, evt: Any) -> None:
-        self.onSuggestionSelected(evt)
+        self._do_assign_current_suggestion()
 
     def onAssignSelectedSuggestion(self, evt: Any) -> None:
-        self.onSuggestionSelected(evt)
-        try:
-            import ui
-            action_sel = self.actionChoice.GetSelection()
-            if 0 <= action_sel < len(ACTION_DISPLAY_NAMES):
-                action_name = ACTION_DISPLAY_NAMES[action_sel][1]
-                action_id = ACTION_DISPLAY_NAMES[action_sel][0]
-                key_id = self.current_keymap.get(action_id, "")
-                ui.message(_("Assigned %s to %s") % (self._format_key_display(key_id), action_name))
-        except Exception:
-            pass
+        self._do_assign_current_suggestion()
 
     def onCaptureKeyDirectly(self, evt: Any) -> None:
         dlg = KeyCaptureDialog(self)
@@ -546,11 +590,34 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
                 self.currentKeyStatus.SetLabel(
                     _("Current assigned key: %s") % self._format_key_display(self.current_keymap.get(action_id, ""))
                 )
+                self._refresh_action_choice(action_sel)
                 self.searchCtrl.SetValue(captured)
+                try:
+                    import ui
+                    ui.message(_("Assigned %s to %s") % (self._format_key_display(self.current_keymap.get(action_id, "")), ACTION_DISPLAY_NAMES[action_sel][1]))
+                except Exception:
+                    pass
         dlg.Destroy()
+
+    def onDeleteShortcut(self, evt: Any) -> None:
+        """Deletes/unassigns the shortcut for the selected player action."""
+        action_sel = self.actionChoice.GetSelection()
+        if 0 <= action_sel < len(ACTION_DISPLAY_NAMES):
+            action_id, action_name = ACTION_DISPLAY_NAMES[action_sel]
+            self.current_keymap[action_id] = ""
+            self.currentKeyStatus.SetLabel(
+                _("Current assigned key: %s") % self._format_key_display("")
+            )
+            self._refresh_action_choice(action_sel)
+            try:
+                import ui
+                ui.message(_("Shortcut deleted for %s") % action_name)
+            except Exception:
+                pass
 
     def onResetDefaults(self, evt: Any) -> None:
         self.current_keymap = dict(DEFAULT_KEYMAP)
+        self._refresh_action_choice(0)
         self.onActionChanged(None)
         if gui and hasattr(gui, "messageBox"):
             gui.messageBox(
@@ -565,8 +632,11 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
         try:
             from .controller import get_controller
             ctrl = get_controller()
-            if ctrl and hasattr(ctrl, "on_config_updated"):
-                ctrl.on_config_updated(getConfig())
+            if ctrl:
+                if hasattr(ctrl, "on_config_updated"):
+                    ctrl.on_config_updated(getConfig())
+                if hasattr(ctrl, "input_layer") and ctrl.input_layer:
+                    ctrl.input_layer.invalidate_keymap_cache()
         except Exception:
             pass
         self.EndModal(wx.ID_OK)
@@ -643,6 +713,11 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
             wx.CheckBox(self, label=_("Announce &chapter markers and names"))
         )
         self.announceChapterChk.SetValue(bool(cfg.get("announceChapter", True)))
+
+        self.announcePlaylistTotalDurationChk = speechGroup.addItem(
+            wx.CheckBox(self, label=_("Announce playlist &total duration when loaded"))
+        )
+        self.announcePlaylistTotalDurationChk.SetValue(bool(cfg.get("announcePlaylistTotalDuration", False)))
 
         helper.addItem(speechGroup.sizer)
 
@@ -746,12 +821,6 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
             wx.CheckBox(self, label=_("Remember and &resume playback position for media"))
         )
         self.resumePositionChk.SetValue(bool(cfg.get("resumePosition", True)))
-
-        # Audio Cues / Modal Tones Checkbox
-        self.playModalTonesChk = playbackGroup.addItem(
-            wx.CheckBox(self, label=_("Play audio &earcons when entering/exiting Player Mode"))
-        )
-        self.playModalTonesChk.SetValue(bool(cfg.get("playModalTones", False)))
 
         # Auto Enter Player Mode on Open
         self.autoEnterPlayerModeChk = playbackGroup.addItem(
@@ -1011,8 +1080,15 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
     def _onUpdateFinished(self, updated: bool, message: str) -> None:
         if not wx:
             return
-        self.checkUpdatesBtn.Enable()
-        self.checkUpdatesBtn.SetLabel(_("Check for &Updates of the streaming engine now..."))
+        if not self or not hasattr(self, "checkUpdatesBtn") or not self.checkUpdatesBtn:
+            return
+        try:
+            if not getattr(self.checkUpdatesBtn, "thisown", True):
+                return
+            self.checkUpdatesBtn.Enable()
+            self.checkUpdatesBtn.SetLabel(_("Check for &Updates of the streaming engine now..."))
+        except Exception:
+            return
 
         if updated:
             new_ver = message.split(":", 1)[1] if ":" in message else ""
@@ -1086,8 +1162,15 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
     def _onAddonUpdateCheckFinished(self, available: bool, info: Optional[dict], status: str) -> None:
         if not wx:
             return
-        self.checkAddonUpdatesBtn.Enable()
-        self.checkAddonUpdatesBtn.SetLabel(_("Check for &Add-on Updates on GitHub..."))
+        if not self or not hasattr(self, "checkAddonUpdatesBtn") or not self.checkAddonUpdatesBtn:
+            return
+        try:
+            if not getattr(self.checkAddonUpdatesBtn, "thisown", True):
+                return
+            self.checkAddonUpdatesBtn.Enable()
+            self.checkAddonUpdatesBtn.SetLabel(_("Check for &Add-on Updates on GitHub..."))
+        except Exception:
+            return
 
         if available and info:
             from .addon_updater import AddonUpdateDialog
@@ -1142,50 +1225,89 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
             setConfigValue("announceLoop", bool(self.announceLoopChk.GetValue()))
         if hasattr(self, "announceChapterChk"):
             setConfigValue("announceChapter", bool(self.announceChapterChk.GetValue()))
+        if hasattr(self, "announcePlaylistTotalDurationChk"):
+            setConfigValue("announcePlaylistTotalDuration", bool(self.announcePlaylistTotalDurationChk.GetValue()))
 
         # Update seek step sizes
         if hasattr(self, "seekStepNormalCtrl"):
-            setConfigValue("seekStepNormal", int(self.seekStepNormalCtrl.GetValue()))
+            try:
+                setConfigValue("seekStepNormal", int(self.seekStepNormalCtrl.GetValue()))
+            except Exception:
+                pass
         if hasattr(self, "seekStepSlowCtrl"):
-            setConfigValue("seekStepSlow", int(self.seekStepSlowCtrl.GetValue()))
+            try:
+                setConfigValue("seekStepSlow", int(self.seekStepSlowCtrl.GetValue()))
+            except Exception:
+                pass
         if hasattr(self, "seekStepFastCtrl"):
-            setConfigValue("seekStepFast", int(self.seekStepFastCtrl.GetValue()))
+            try:
+                setConfigValue("seekStepFast", int(self.seekStepFastCtrl.GetValue()))
+            except Exception:
+                pass
         if hasattr(self, "seekStepUltrafastCtrl"):
-            setConfigValue("seekStepUltrafast", int(self.seekStepUltrafastCtrl.GetValue()))
+            try:
+                setConfigValue("seekStepUltrafast", int(self.seekStepUltrafastCtrl.GetValue()))
+            except Exception:
+                pass
 
         # Update default speed
         if hasattr(self, "defaultSpeedChoice"):
-            speedSel = self.defaultSpeedChoice.GetSelection()
-            if 0 <= speedSel < len(SPEED_CHOICES):
-                setConfigValue("defaultSpeed", float(SPEED_CHOICES[speedSel][0]))
+            try:
+                speedSel = self.defaultSpeedChoice.GetSelection()
+                if 0 <= speedSel < len(SPEED_CHOICES):
+                    setConfigValue("defaultSpeed", float(SPEED_CHOICES[speedSel][0]))
+            except Exception:
+                pass
 
         # Update default repeat mode
         if hasattr(self, "defaultRepeatChoice"):
-            repeatSel = self.defaultRepeatChoice.GetSelection()
-            if 0 <= repeatSel < len(REPEAT_CHOICES):
-                setConfigValue("defaultRepeatMode", REPEAT_CHOICES[repeatSel][0])
+            try:
+                repeatSel = self.defaultRepeatChoice.GetSelection()
+                if 0 <= repeatSel < len(REPEAT_CHOICES):
+                    setConfigValue("defaultRepeatMode", REPEAT_CHOICES[repeatSel][0])
+            except Exception:
+                pass
 
         # Update playback behavior options
         if hasattr(self, "autoNextChk"):
-            setConfigValue("defaultAutoNext", bool(self.autoNextChk.GetValue()))
+            try:
+                setConfigValue("defaultAutoNext", bool(self.autoNextChk.GetValue()))
+            except Exception:
+                pass
         if hasattr(self, "resumePositionChk"):
-            setConfigValue("resumePosition", bool(self.resumePositionChk.GetValue()))
-        if hasattr(self, "playModalTonesChk"):
-            setConfigValue("playModalTones", bool(self.playModalTonesChk.GetValue()))
+            try:
+                setConfigValue("resumePosition", bool(self.resumePositionChk.GetValue()))
+            except Exception:
+                pass
         if hasattr(self, "autoEnterPlayerModeChk"):
-            setConfigValue("autoEnterPlayerMode", bool(self.autoEnterPlayerModeChk.GetValue()))
+            try:
+                setConfigValue("autoEnterPlayerMode", bool(self.autoEnterPlayerModeChk.GetValue()))
+            except Exception:
+                pass
 
         # Update YouTube & online streaming options
         if hasattr(self, "searchResultsCountCtrl"):
-            setConfigValue("searchResultsCount", int(self.searchResultsCountCtrl.GetValue()))
+            try:
+                setConfigValue("searchResultsCount", int(self.searchResultsCountCtrl.GetValue()))
+            except Exception:
+                pass
         if hasattr(self, "maxStreamItemsCtrl"):
-            setConfigValue("maxStreamPlaylistItems", int(self.maxStreamItemsCtrl.GetValue()))
+            try:
+                setConfigValue("maxStreamPlaylistItems", int(self.maxStreamItemsCtrl.GetValue()))
+            except Exception:
+                pass
         if hasattr(self, "cookiesBrowserChoice"):
-            browserSel = self.cookiesBrowserChoice.GetSelection()
-            if 0 <= browserSel < len(self.cookiesBrowserChoices):
-                setConfigValue("ytdlpCookiesBrowser", self.cookiesBrowserChoices[browserSel][0])
+            try:
+                browserSel = self.cookiesBrowserChoice.GetSelection()
+                if 0 <= browserSel < len(self.cookiesBrowserChoices):
+                    setConfigValue("ytdlpCookiesBrowser", self.cookiesBrowserChoices[browserSel][0])
+            except Exception:
+                pass
         if hasattr(self, "cookiesFileCtrl"):
-            setConfigValue("ytdlpCookiesFile", self.cookiesFileCtrl.GetValue().strip().strip('"'))
+            try:
+                setConfigValue("ytdlpCookiesFile", self.cookiesFileCtrl.GetValue().strip().strip('"'))
+            except Exception:
+                pass
 
         # Update SponsorBlock options
         if hasattr(self, "sponsorBlockEnabledChk"):

@@ -11,7 +11,7 @@ A completely headless, privacy-oriented media player add-on for the [NVDA screen
 
 # Headless Media Player — Quick Overview & User Guide
 
-**Version:** 1.2.2  
+**Version:** 1.2.3  
 **Author:** Mahmoud Abo El Fotouh <mahmoudaboelfotouh.20@gmail.com>  
 **Repository:** [https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer](https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer)  
 **NVDA Compatibility:** NVDA 2022.1 to 2026.1+
@@ -87,6 +87,8 @@ In modern Google Chrome and Microsoft Edge on Windows (Chrome 120+), Google enfo
 - **Video (Headless):** `.mp4`, `.mkv`, `.avi`, `.webm`, `.mov`, `.wmv`, `.flv`, `.ts`, `.m2ts`, `.vob`, `.ogv`, `.3gp`, `.mpg`
 - **Playlists:** `.m3u`, `.m3u8`, `.pls`, `.cue`
 - **Online:** YouTube (Videos, Playlists, Channels, Shorts, Live), Twitch, SoundCloud, HTTP/HTTPS audio, HLS (`.m3u8`) radio.
+
+---
 
 ## 7. Third-Party Components & Licenses
 

@@ -40,6 +40,7 @@ except (ImportError, ValueError):
         _ = lambda text: text
 
 from .tones_helper import tone_manager, ToneCueManager
+from .utils import log_debug, log_exception, log_info, log_error
 
 try:
     from .config_spec import getConfig
@@ -111,6 +112,16 @@ VK_TAB = 0x09
 # OEM Bracket keys (English [ and ] / Arabic ج and د)
 VK_OEM_4 = 0xDB  # 219 - English '[' / Arabic 'ج'
 VK_OEM_6 = 0xDD  # 221 - English ']' / Arabic 'د'
+
+# Arabic Keyboard to Canonical English Key Map for layout invariance
+ARABIC_TO_ENGLISH_KEY_MAP: Dict[str, str] = {
+    "ض": "q", "ص": "w", "ث": "e", "ق": "r", "ف": "t", "غ": "y", "ع": "u",
+    "ه": "i", "خ": "o", "ح": "p", "ج": "[", "د": "]", "ش": "a", "س": "s",
+    "ي": "d", "ب": "f", "ل": "g", "ا": "h", "أ": "h", "إ": "h", "آ": "h",
+    "ت": "j", "ن": "k", "م": "l", "ك": ";", "ط": "'", "ئ": "z", "ء": "x",
+    "ؤ": "c", "ر": "v", "ى": "n", "ة": "m", "و": ",", "ز": ".", "ظ": "/",
+    "لا": "b", "لأ": "b", "لإ": "b", "لآ": "b",
+}
 
 # Key name alias sets for layout invariance
 POINT_A_KEYS: Set[str] = {
@@ -194,6 +205,26 @@ class ModalInputLayer:
 
         # State callback listeners
         self._mode_change_callbacks: List[Callable[[bool], None]] = []
+        # In-memory cached keymap dictionary to eliminate SQLite lookups on input thread
+        self._cached_keymap: Optional[Dict[str, str]] = None
+
+    def invalidate_keymap_cache(self) -> None:
+        """Invalidates in-memory keymap cache so next keystroke reloads active config."""
+        self._cached_keymap = None
+
+    def _get_active_keymap(self) -> Dict[str, str]:
+        """Returns the in-memory active keymap, populating from DB if needed."""
+        if self._cached_keymap is None:
+            try:
+                from .config_spec import getKeymap
+                self._cached_keymap = getKeymap()
+            except Exception:
+                try:
+                    from config_spec import getKeymap
+                    self._cached_keymap = getKeymap()
+                except Exception:
+                    self._cached_keymap = {}
+        return self._cached_keymap
 
     @property
     def seek_normal(self) -> float:
@@ -297,6 +328,7 @@ class ModalInputLayer:
             return
 
         self._is_active = active
+        log_debug("INPUT", "set_player_mode: active=%s, announce=%s", active, announce)
 
         if active:
             self.tone_manager.play_mode_enter()
@@ -413,10 +445,14 @@ class ModalInputLayer:
             method = getattr(self.controller, name, None)
             if callable(method):
                 try:
-                    return method(*args, **kwargs)
+                    log_info("INPUT", "Calling controller.%s(*args=%s)", name, args)
+                    res = method(*args, **kwargs)
+                    log_info("INPUT", "controller.%s returned: %s", name, res)
+                    return res
                 except Exception as e:
-                    logger.error("Error invoking controller.%s: %s", name, e)
+                    log_exception("INPUT", f"Error invoking controller.{name}", e)
                     return None
+        log_error("INPUT", "No callable controller method found for %s", method_name)
         return None
 
     def on_decide_execute_gesture(self, gesture: Any) -> bool:
@@ -460,19 +496,23 @@ class ModalInputLayer:
                         self.controller.speech.cancel_speech()
                     except Exception:
                         pass
-                return False
+                return True
 
         # Check for toggle gesture to exit Player Mode
         if self._is_toggle_gesture(gesture):
+            log_info("INPUT", "Toggle gesture detected -> exiting Player Mode")
             self.set_player_mode(False)
             return False
 
         # Dispatch player command
+        log_info("INPUT", "Intercepted gesture: key='%s', vk=0x%02X, mods=%s", main_key, vk, sorted(list(mods)))
         handled = self.dispatch_gesture(gesture)
         if handled:
+            log_info("INPUT", "Gesture handled successfully: key='%s'", main_key)
             return False  # Handled and consumed
 
         # Unmapped key: swallow completely and play subtle feedback click
+        log_info("INPUT", "Unmapped key pressed: key='%s', vk=0x%02X", main_key, vk)
         self.tone_manager.play_unmapped_key()
         return False
 
@@ -503,23 +543,37 @@ class ModalInputLayer:
 
     def _matches_action(self, gesture: Any, action_name: str, default_cond: bool) -> bool:
         """
-        Checks if gesture matches the custom configured key for action_name,
-        falling back to default_cond if no custom key is configured.
+        Checks if gesture matches the custom configured key for action_name.
+        Uses in-memory cached keymap for ultra-low-latency matching.
+        If action is explicitly mapped to empty string (unassigned), returns False.
+        Falls back to default_cond only when action is completely omitted from keymap.
         """
         try:
-            from .config_spec import getKeymap, parseKeymapKeys
-            keymap = getKeymap()
-            custom_keys = parseKeymapKeys(keymap.get(action_name, ""))
+            from .config_spec import parseKeymapKeys
+            keymap = self._get_active_keymap()
+            if action_name in keymap:
+                val = keymap[action_name]
+                if not val or not val.strip():
+                    return False
+                custom_keys = parseKeymapKeys(val)
+                has_custom_mapping = True
+            else:
+                custom_keys = []
+                has_custom_mapping = False
         except Exception:
             return default_cond
 
-        if not custom_keys:
+        if not has_custom_mapping or not custom_keys:
             return default_cond
 
         raw_mods = getattr(gesture, "modifierNames", None) or getattr(gesture, "modifiers", None) or []
         mods = sorted(list({str(m).lower().replace("ctrl", "control") for m in raw_mods}))
         main_key = (getattr(gesture, "mainKeyName", "") or "").lower()
         vk = getattr(gesture, "vkCode", 0)
+
+        # Translate Arabic keyboard characters to canonical English keys
+        if main_key in ARABIC_TO_ENGLISH_KEY_MAP:
+            main_key = ARABIC_TO_ENGLISH_KEY_MAP[main_key]
 
         # Normalize key aliases
         if main_key in ("leftarrow", "left"):
@@ -551,10 +605,9 @@ class ModalInputLayer:
                 return True
 
             # Layout-invariant matching via vkCode:
-            # Parse custom_key into target_mods and target_base_key
             parts = custom_key.split("+")
             target_base = parts[-1].lower()
-            target_mods = sorted(parts[:-1])
+            target_mods = sorted([m.replace("ctrl", "control") for m in parts[:-1]])
 
             if mods == target_mods:
                 # Single letter key A-Z
@@ -596,7 +649,7 @@ class ModalInputLayer:
             if custom_key in ("control", "ctrl") and (main_key in ("control", "ctrl") or vk in (0x11, 0xA2, 0xA3)):
                 return True
 
-        return default_cond
+        return False
 
     def dispatch_gesture(self, gesture: Any) -> bool:
         """
@@ -607,9 +660,12 @@ class ModalInputLayer:
             True if key was recognized and dispatched, False if unmapped.
         """
         main_key = (getattr(gesture, "mainKeyName", "") or "").lower()
+        if main_key in ARABIC_TO_ENGLISH_KEY_MAP:
+            main_key = ARABIC_TO_ENGLISH_KEY_MAP[main_key]
         vk = getattr(gesture, "vkCode", 0)
         raw_mods = getattr(gesture, "modifierNames", None) or getattr(gesture, "modifiers", None) or []
         mods = {str(m).lower() for m in raw_mods}
+        log_debug("INPUT", "dispatch_gesture: key='%s', vk=0x%02X, mods=%s", main_key, vk, sorted(list(mods)))
 
         has_ctrl = "control" in mods or "ctrl" in mods
         has_shift = "shift" in mods
