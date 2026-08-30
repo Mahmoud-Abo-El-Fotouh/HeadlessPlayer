@@ -54,9 +54,9 @@ def get_category_display_name(category: str) -> str:
     return mapping.get(category.lower(), _("sponsor segment"))
 
 
-# Regex patterns to extract standard YouTube 11-char video IDs from any URL format
+# Regex patterns to extract standard YouTube 11-char video IDs from YouTube URLs or raw ID string
 YOUTUBE_ID_PATTERNS = [
-    re.compile(r'(?:v=|\/|youtu\.be\/|embed\/|shorts\/)([0-9A-Za-z_-]{11})'),
+    re.compile(r'(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|v\/)|youtu\.be\/)([0-9A-Za-z_-]{11})', re.IGNORECASE),
     re.compile(r'^([0-9A-Za-z_-]{11})$'),
 ]
 
@@ -146,12 +146,28 @@ def fetch_sponsor_segments(
         logger.debug("SponsorBlock API request failed for %s: %s", vid, e)
         return []
 
-    # Sort segments chronologically
+    # Sort segments chronologically and merge overlapping intervals
     segments.sort(key=lambda x: x[0])
+    merged_segments: List[Tuple[float, float, str]] = []
+    for seg in segments:
+        if not merged_segments:
+            merged_segments.append(seg)
+        else:
+            prev_start, prev_end, prev_cat = merged_segments[-1]
+            if seg[0] <= prev_end:
+                # Overlap: extend previous segment end
+                merged_segments[-1] = (prev_start, max(prev_end, seg[1]), prev_cat)
+            else:
+                merged_segments.append(seg)
+    segments = merged_segments
 
-    # Cache results
+    # Cache results with maximum size bound (100 items)
     with _CACHE_LOCK:
         _SEGMENT_CACHE[vid] = (now, segments)
+        if len(_SEGMENT_CACHE) > 100:
+            oldest = sorted(_SEGMENT_CACHE.items(), key=lambda kv: kv[1][0])
+            for k, _ in oldest[: len(_SEGMENT_CACHE) - 100]:
+                _SEGMENT_CACHE.pop(k, None)
 
     if segments:
         logger.info("SponsorBlock: Loaded %d segments for YouTube video %s", len(segments), vid)

@@ -20,6 +20,7 @@ import urllib.parse
 import urllib.request
 import zipfile
 from typing import Any, Callable, Dict, List, Optional, Tuple
+from .utils import log_debug, log_exception
 
 logger = logging.getLogger("HeadlessPlayer.StreamEngine")
 
@@ -70,6 +71,14 @@ def _get_ytdlp() -> Any:
             _ytdlp_import_error = str(e)
             logger.error("Failed to import bundled yt-dlp: %s", e)
             raise RuntimeError(_ytdlp_import_error)
+
+
+def reset_ytdlp_state() -> None:
+    """Clears cached import errors to allow retry after updates or environment fixes."""
+    global _ytdlp_module, _ytdlp_import_error
+    with _ytdlp_import_lock:
+        _ytdlp_module = None
+        _ytdlp_import_error = None
 
 
 def is_available() -> bool:
@@ -124,19 +133,20 @@ class _SilentLogger:
 # URL classification helpers
 # ---------------------------------------------------------------------------
 
-_URL_RE = re.compile(r"^(https?://|www\.)", re.IGNORECASE)
+_URL_RE = re.compile(
+    r"^(?:https?://|ftp://|rtmps?://|rtsp://|mms(?:h|t)?://|srt://|www\.)",
+    re.IGNORECASE
+)
+
+_EXTRACT_URL_RE = re.compile(
+    r"(?:https?://|ftp://|rtmps?://|rtsp://|mms(?:h|t)?://|srt://|www\.)[^\s<>'\"`]+",
+    re.IGNORECASE
+)
 
 _YOUTUBE_HOST_RE = re.compile(
     r"^(https?://)?(www\.|m\.|music\.)?(youtube\.com|youtu\.be|youtube-nocookie\.com)(/|$)",
     re.IGNORECASE,
 )
-
-
-def is_url(text: str) -> bool:
-    """True if the given text looks like a web URL rather than a search query."""
-    if not text or not isinstance(text, str):
-        return False
-    return bool(_URL_RE.match(text.strip()))
 
 
 def normalize_url(text: str) -> str:
@@ -147,26 +157,64 @@ def normalize_url(text: str) -> str:
     return t
 
 
+def extract_url(text: str) -> Optional[str]:
+    """
+    Intelligently extracts the first valid web/media URL embedded inside any surrounding
+    text, message, chat snippet, or formatted string.
+    
+    Examples:
+        - "Check this out https://youtu.be/abc123xyz it is great!" -> "https://youtu.be/abc123xyz"
+        - "اسمع ده www.youtube.com/watch?v=123 روعة" -> "https://www.youtube.com/watch?v=123"
+        - "https://soundcloud.com/artist/track" -> "https://soundcloud.com/artist/track"
+    """
+    if not text or not isinstance(text, str):
+        return None
+    m = _EXTRACT_URL_RE.search(text.strip())
+    if m:
+        raw_url = m.group(0).rstrip(".,;:!?)>]}'\"\u060C\u061F\u061B\u066B\u066C«»“”’‘")
+        return normalize_url(raw_url)
+    return None
+
+
+def is_url(text: str) -> bool:
+    """True if the given text is a direct URL or contains an embedded media URL."""
+    if not text or not isinstance(text, str):
+        return False
+    return bool(extract_url(text))
+
+
 def is_youtube_url(url: str) -> bool:
     return bool(_YOUTUBE_HOST_RE.match(url.strip()))
 
 
 ITEM_VIDEO = "video"
+ITEM_SHORTS = "shorts"
 ITEM_PLAYLIST = "playlist"
 ITEM_CHANNEL = "channel"
-ITEM_LISTING = "listing"  # synthetic channel sub-listing (Videos / Playlists / Live)
+ITEM_LISTING = "listing"  # synthetic channel sub-listing (Videos / Shorts / Playlists / Live)
 
 
 def classify_flat_entry(entry: Dict[str, Any]) -> str:
-    """Classifies a flat-extracted yt-dlp entry as video, playlist, or channel."""
+    """Classifies a flat-extracted yt-dlp entry as video, shorts, playlist, or channel."""
     url = str(entry.get("url") or entry.get("webpage_url") or "")
     ie_key = str(entry.get("ie_key") or "")
     etype = str(entry.get("_type") or "")
+    dur = entry.get("duration")
+    title = str(entry.get("title") or entry.get("headline") or entry.get("fulltitle") or "")
 
     low = url.lower()
-    if "playlist?list=" in low or ie_key in ("YoutubePlaylist",):
+    title_low = title.lower()
+    if "/shorts/" in low or "#short" in title_low or "#shorts" in title_low:
+        return ITEM_SHORTS
+    if dur is not None:
+        try:
+            if 0 < float(dur) <= 60 and ("youtube" in low or ie_key.lower().startswith("youtube")):
+                return ITEM_SHORTS
+        except (TypeError, ValueError):
+            pass
+    if "playlist?list=" in low or ie_key in ("YoutubePlaylist", "SoundcloudSet"):
         return ITEM_PLAYLIST
-    if ie_key == "YoutubeTab" or etype in ("playlist", "multi_video"):
+    if ie_key in ("YoutubeTab", "TikTokUser", "SoundcloudUser") or etype in ("playlist", "multi_video"):
         if "/@" in low or "/channel/" in low or "/c/" in low or "/user/" in low:
             return ITEM_CHANNEL
         return ITEM_PLAYLIST
@@ -196,7 +244,7 @@ class StreamItem:
 
     @classmethod
     def from_flat_entry(cls, entry: Dict[str, Any]) -> Optional["StreamItem"]:
-        url = entry.get("url") or entry.get("webpage_url")
+        url = entry.get("url") or entry.get("webpage_url") or entry.get("id")
         if not url:
             return None
         kind = classify_flat_entry(entry)
@@ -206,12 +254,49 @@ class StreamItem:
         except (TypeError, ValueError):
             dur = None
         live_status = entry.get("live_status")
+
+        # Multi-tiered title resolution across various YouTube/site flat representations
+        raw_title = (
+            entry.get("title")
+            or entry.get("fulltitle")
+            or entry.get("headline")
+            or entry.get("alt_title")
+            or entry.get("description")
+            or entry.get("track")
+            or ""
+        )
+        if isinstance(raw_title, list):
+            raw_title = " ".join(str(t) for t in raw_title if t)
+        title_str = str(raw_title).strip()
+
+        uploader_str = str(
+            entry.get("channel")
+            or entry.get("uploader")
+            or entry.get("channel_name")
+            or entry.get("artist")
+            or ""
+        ).strip()
+
+        # Clean fallback if title is absent or is an unformatted URL
+        if not title_str or title_str.startswith("http://") or title_str.startswith("https://") or title_str == str(url):
+            vid_id = str(entry.get("id") or "").strip()
+            if uploader_str:
+                title_str = f"{uploader_str} - Short ({vid_id})" if kind == ITEM_SHORTS else f"{uploader_str} ({vid_id})"
+            elif vid_id:
+                title_str = f"Short ({vid_id})" if kind == ITEM_SHORTS else f"Video ({vid_id})"
+            else:
+                title_str = str(url)
+
+        url_str = str(url or "").strip()
+        if len(url_str) == 11 and "/" not in url_str and not url_str.startswith("http"):
+            url_str = f"https://www.youtube.com/watch?v={url_str}"
+
         return cls(
             kind=kind,
-            url=str(url),
-            title=str(entry.get("title") or ""),
+            url=url_str,
+            title=title_str,
             duration=dur,
-            uploader=str(entry.get("channel") or entry.get("uploader") or ""),
+            uploader=uploader_str,
             is_live=(live_status == "is_live" or bool(entry.get("is_live"))),
         )
 
@@ -269,6 +354,12 @@ def get_account_sections() -> List["StreamItem"]:
         ),
         StreamItem(
             ITEM_LISTING,
+            "https://www.youtube.com/feed/subscriptions/shorts",
+            _("Shorts from your subscriptions"),
+            requires_login=True,
+        ),
+        StreamItem(
+            ITEM_LISTING,
             "https://www.youtube.com/feed/recommended",
             _("Recommended for you (home feed)"),
             requires_login=True,
@@ -314,19 +405,10 @@ def _get_config() -> Dict[str, Any]:
 
 
 def _get_js_runtimes() -> Dict[str, Dict[str, Any]]:
-    """
-    Enables every JavaScript runtime yt-dlp can use for YouTube's JS
-    challenges (required for logged-in cookies and many formats):
-    Deno / Node / Bun when installed on the system, plus the tiny QuickJS
-    binary bundled with the add-on as a guaranteed fallback.
-    """
-    runtimes: Dict[str, Dict[str, Any]] = {"deno": {}, "node": {}, "bun": {}}
     bundled_qjs = os.path.join(LIB_DIR, "bin", "qjs.exe")
     if os.path.isfile(bundled_qjs):
-        runtimes["quickjs"] = {"path": bundled_qjs}
-    else:
-        runtimes["quickjs"] = {}
-    return runtimes
+        return {"quickjs": {"path": bundled_qjs}}
+    return {}
 
 
 def _base_ydl_opts(use_cookies: bool = True) -> Dict[str, Any]:
@@ -336,11 +418,17 @@ def _base_ydl_opts(use_cookies: bool = True) -> Dict[str, Any]:
         "noprogress": True,
         "logger": _SilentLogger(),
         "skip_download": True,
-        "socket_timeout": 20,
+        "socket_timeout": 15,
         "retries": 2,
         "ignoreerrors": True,
         "no_color": True,
         "js_runtimes": _get_js_runtimes(),
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["android", "web"],
+                "player_skip": ["webpage", "configs"],
+            }
+        },
     }
     if not use_cookies:
         return opts
@@ -362,29 +450,47 @@ def _base_ydl_opts(use_cookies: bool = True) -> Dict[str, Any]:
 # Extraction API (all functions are blocking; call from worker threads)
 # ---------------------------------------------------------------------------
 
-def search_youtube(query: str, limit: int = 20) -> List[StreamItem]:
+def search_youtube(
+    query: str,
+    limit: Optional[int] = None,
+    start_index: int = 1
+) -> List[StreamItem]:
     """
-    Searches YouTube and returns mixed results (videos, playlists, channels).
+    Searches YouTube and returns mixed results (videos, playlists, channels)
+    supporting incremental offset pagination.
     """
     ytdlp = _get_ytdlp()
 
-    limit = max(1, min(50, int(limit)))
+    cfg = _get_config()
+    if limit is None:
+        try:
+            limit = int(cfg.get("searchResultsCount", 20))
+        except (ValueError, TypeError):
+            limit = 20
+    limit = max(1, int(limit))
+    start_index = max(1, int(start_index))
+    end_index = start_index + limit - 1
+
+    log_debug("YTDLP", "search_youtube start: query='%s', limit=%d, start_index=%d, end_index=%d", query, limit, start_index, end_index)
+    t0 = time.time()
+
     opts = _base_ydl_opts()
     opts.update({
         "extract_flat": True,
-        "playlist_items": f"1-{limit}",
+        "playlist_items": f"{start_index}-{end_index}",
     })
-    url = "https://www.youtube.com/results?search_query=" + urllib.parse.quote(query)
+    url = f"ytsearch{end_index}:{query}"
     try:
         with ytdlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=False)
     except Exception as e:
+        log_exception("YTDLP", f"search_youtube failed for {url}", e)
         if login_cookies_enabled():
             logger.warning("Search with cookies failed (%s); retrying without cookies", e)
             opts_no_cookies = _base_ydl_opts(use_cookies=False)
             opts_no_cookies.update({
                 "extract_flat": True,
-                "playlist_items": f"1-{limit}",
+                "playlist_items": f"{start_index}-{end_index}",
             })
             with ytdlp.YoutubeDL(opts_no_cookies) as ydl:
                 info = ydl.extract_info(url, download=False)
@@ -398,6 +504,8 @@ def search_youtube(query: str, limit: int = 20) -> List[StreamItem]:
         item = StreamItem.from_flat_entry(entry)
         if item:
             items.append(item)
+    t1 = time.time()
+    log_debug("YTDLP", "search_youtube completed in %.2fs: returned %d items", t1 - t0, len(items))
     return items
 
 
@@ -437,22 +545,79 @@ def _prepare_listing_url(url: str) -> str:
     return f"https://www.youtube.com/watch?v={video_id}&list={list_id}"
 
 
-def fetch_listing(url: str, limit: int = 300) -> Tuple[str, List[StreamItem]]:
+def fetch_listing(
+    url: str,
+    limit: Optional[int] = None,
+    start_index: int = 1
+) -> Tuple[str, List[StreamItem]]:
     """
     Expands a playlist / channel / channel-tab / multi-video page into its entries
-    using fast flat extraction.
+    using fast flat extraction with pagination support.
 
     Returns:
         (listing_title, items)
     """
+    cfg = _get_config()
+    if limit is None:
+        try:
+            limit = int(cfg.get("maxStreamPlaylistItems", 50))
+        except (ValueError, TypeError):
+            limit = 50
+    limit = max(1, int(limit))
+    start_index = max(1, int(start_index))
+    end_index = start_index + limit - 1
+
+    # Special handling for subscriptions shorts
+    if url.rstrip("/") == "https://www.youtube.com/feed/subscriptions/shorts":
+        scan_limit = max(start_index + limit + 100, limit * 3)
+        _t, sub_items = fetch_listing("https://www.youtube.com/feed/subscriptions", limit=scan_limit, start_index=1)
+        shorts = [
+            it for it in sub_items
+            if it.kind == ITEM_SHORTS
+            or "/shorts/" in str(it.url).lower()
+            or (it.duration is not None and 0 < it.duration <= 60)
+            or "#short" in str(it.title).lower()
+            or "#shorts" in str(it.title).lower()
+        ]
+        # If flat subscription feed has few shorts, aggregate latest shorts from top subscribed channels in parallel
+        if len(shorts) < (start_index + limit):
+            try:
+                _ch_title, channels = fetch_listing("https://www.youtube.com/feed/channels", limit=20, start_index=1)
+                seen_urls = {s.url for s in shorts}
+                top_channels = channels[:8]
+                from concurrent.futures import ThreadPoolExecutor, as_completed
+
+                def _fetch_single_channel_shorts(ch_item):
+                    try:
+                        ch_shorts_url = ch_item.url.rstrip("/") + "/shorts"
+                        return fetch_listing(ch_shorts_url, limit=10, start_index=1)
+                    except Exception:
+                        return "", []
+
+                with ThreadPoolExecutor(max_workers=4) as executor:
+                    futures = [executor.submit(_fetch_single_channel_shorts, ch) for ch in top_channels]
+                    for fut in as_completed(futures, timeout=5.0):
+                        try:
+                            _sub_t, ch_items = fut.result()
+                            for item in ch_items:
+                                if item.url not in seen_urls:
+                                    seen_urls.add(item.url)
+                                    shorts.append(item)
+                        except Exception:
+                            pass
+            except Exception as ex:
+                logger.debug("Failed to aggregate channel shorts: %s", ex)
+
+        sliced_shorts = shorts[start_index - 1 : end_index]
+        return _("Shorts from your subscriptions"), sliced_shorts
+
     ytdlp = _get_ytdlp()
 
     url = _prepare_listing_url(url)
-    limit = max(1, int(limit))
     opts = _base_ydl_opts()
     opts.update({
         "extract_flat": True,
-        "playlist_items": f"1-{limit}",
+        "playlist_items": f"{start_index}-{end_index}",
     })
     try:
         with ytdlp.YoutubeDL(opts) as ydl:
@@ -464,7 +629,7 @@ def fetch_listing(url: str, limit: int = 300) -> Tuple[str, List[StreamItem]]:
             opts_no_cookies = _base_ydl_opts(use_cookies=False)
             opts_no_cookies.update({
                 "extract_flat": True,
-                "playlist_items": f"1-{limit}",
+                "playlist_items": f"{start_index}-{end_index}",
             })
             with ytdlp.YoutubeDL(opts_no_cookies) as ydl:
                 info = ydl.extract_info(url, download=False)
@@ -478,7 +643,6 @@ def fetch_listing(url: str, limit: int = 300) -> Tuple[str, List[StreamItem]]:
     entries = info.get("entries")
     items: List[StreamItem] = []
     if entries is None:
-        # Single item page
         item = StreamItem.from_flat_entry(info)
         if item:
             items.append(item)
@@ -537,17 +701,31 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
     """
     ytdlp = _get_ytdlp()
 
+    cache_key = f"{url}::audio={prefer_audio}"
     now = time.time()
     with _resolve_cache_lock:
-        cached = _resolve_cache.get(url)
+        cached = _resolve_cache.get(cache_key)
         if cached and (now - cached[0]) < _RESOLVE_CACHE_TTL:
             return dict(cached[1])
 
     def _extract(use_cookies: bool):
         opts = _base_ydl_opts(use_cookies=use_cookies)
+        format_selector = (
+            "bestaudio/"
+            "best[height<=480][acodec!=none]/"
+            "best[height<=720][acodec!=none]/"
+            "best[acodec!=none]/"
+            "best"
+        )
         opts.update({
             "noplaylist": True,
-            "format": "bestaudio/best" if prefer_audio else "best",
+            "format": format_selector if prefer_audio else "best",
+            "extractor_args": {
+                "youtube": {
+                    "player_client": ["android", "web"],
+                    "player_skip": ["webpage", "configs"],
+                }
+            }
         })
         with ytdlp.YoutubeDL(opts) as ydl:
             return ydl.extract_info(url, download=False)
@@ -635,6 +813,14 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
                         "end_time": None,
                     })
 
+    if parsed_chapters:
+        parsed_chapters.sort(key=lambda c: c.get("start_time", 0.0))
+        for idx in range(len(parsed_chapters)):
+            if idx + 1 < len(parsed_chapters):
+                parsed_chapters[idx]["end_time"] = parsed_chapters[idx + 1]["start_time"]
+            elif dur > 0:
+                parsed_chapters[idx]["end_time"] = dur
+
     # Extract all distinct multi-language audio tracks (e.g. YouTube multi-language audio)
     available_audio_tracks = []
     seen_langs = {}
@@ -656,9 +842,18 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
                     "http_headers": dict(f.get("http_headers") or info.get("http_headers") or {}),
                 })
 
+    headers = dict(info.get("http_headers") or {})
+    low_url = url.lower()
+    low_stream = str(stream_url).lower()
+    if "tiktok.com" in low_url or "byteoversea" in low_stream or "ibyteimg" in low_stream or "tiktokcdn" in low_stream:
+        if "Referer" not in headers:
+            headers["Referer"] = "https://www.tiktok.com/"
+        if "User-Agent" not in headers:
+            headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
+
     result = {
         "stream_url": str(stream_url),
-        "http_headers": dict(info.get("http_headers") or {}),
+        "http_headers": headers,
         "title": str(info.get("title") or ""),
         "duration": dur,
         "is_live": bool(info.get("is_live")),
