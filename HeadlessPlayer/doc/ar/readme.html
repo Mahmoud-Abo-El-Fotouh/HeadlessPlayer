@@ -257,5 +257,45 @@
         <li><strong>قوائم التشغيل المحلية:</strong> <code>.m3u</code>, <code>.m3u8</code>, <code>.pls</code>, <code>.cue</code></li>
         <li><strong>البث عبر الإنترنت:</strong> YouTube (فيديوهات، قوائم تشغيل، قنوات، شورتس، بث مباشر)، Twitch، SoundCloud، ومحطات الراديو عبر الإنترنت HLS (<code>.m3u8</code>).</li>
     </ul>
+
+    <h2>8. المكونات البرمجية مفتوحة المصدر وتراخيصها (Third-Party Components & Licenses)</h2>
+    <p>تتضمن إضافة Headless Media Player المكونات والبرمجيات مفتوحة المصدر التالية:</p>
+    <ol>
+        <li><strong>محرك QuickJS (<code>qjs.exe</code>):</strong>
+            <ul>
+                <li><strong>المسار:</strong> <code>globalPlugins/HeadlessPlayer/lib/bin/qjs.exe</code></li>
+                <li><strong>المشروع:</strong> <a href="https://bellard.org/quickjs/">QuickJS Javascript Engine</a> / <a href="https://github.com/quickjs-ng/quickjs">quickjs-ng</a> للمطورين Fabrice Bellard و Charlie Gordon.</li>
+                <li><strong>الترخيص:</strong> <a href="https://opensource.org/licenses/MIT">ترخيص MIT (MIT License)</a>.</li>
+                <li><strong>الوظيفة:</strong> مفسر جافا سكريبت مدمج فائق الخفة والسرعة، تستخدمه مكتبة <code>yt-dlp</code> لفك تشفير وتخطي تحديثات مشغل يوتيوب (Signature Deciphering / Challenge Solvers) في الخلفية بنظام ويندوز دون الحاجة لتثبيت أي برامج خارجية مثل Node.js.</li>
+            </ul>
+        </li>
+        <li><strong>مشغل mpv (<code>mpv.exe</code>):</strong>
+            <ul>
+                <li><strong>المسار:</strong> <code>resources/bin/x64/mpv.exe</code></li>
+                <li><strong>المشروع:</strong> <a href="https://mpv.io/">mpv Media Player</a> / <a href="https://github.com/mpv-player/mpv">mpv GitHub</a>.</li>
+                <li><strong>الترخيص:</strong> <a href="https://www.gnu.org/licenses/old-licenses/gpl-2.0.html">GNU General Public License v2.0+ (GPLv2+)</a> / LGPLv2.1+.</li>
+                <li><strong>الوظيفة:</strong> محرك التشغيل الأساسي الخفيف الذي يعمل بدون أي واجهة في الخلفية ويتواصل عبر قنوات ويندوز المسماة (Windows Named Pipe JSON IPC).</li>
+            </ul>
+        </li>
+        <li><strong>مكتبة yt-dlp (<code>lib/yt_dlp/</code>):</strong>
+            <ul>
+                <li><strong>المسار:</strong> <code>globalPlugins/HeadlessPlayer/lib/yt_dlp/</code></li>
+                <li><strong>المشروع:</strong> <a href="https://github.com/yt-dlp/yt-dlp">yt-dlp</a>.</li>
+                <li><strong>الترخيص:</strong> <a href="https://unlicense.org/">ترخيص The Unlicense (ملكية عامة - Public Domain)</a>.</li>
+                <li><strong>الوظيفة:</strong> استخراج روابط وتفاصيل البث من يوتيوب وساوند كلاود وتويتش ومحطات الراديو.</li>
+            </ul>
+        </li>
+        <li><strong>مكتبة yt-dlp-ejs (<code>lib/yt_dlp_ejs/</code>):</strong>
+            <ul>
+                <li><strong>المسار:</strong> <code>globalPlugins/HeadlessPlayer/lib/yt_dlp_ejs/</code></li>
+                <li><strong>الترخيص:</strong> <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0 / MIT</a>.</li>
+                <li><strong>الوظيفة:</strong> جسر الربط بين yt-dlp ومحرك QuickJS.</li>
+            </ul>
+        </li>
+    </ol>
+
+    <h2>الترخيص (License)</h2>
+    <p>إضافة Headless Media Player منشورة تحت ترخيص <a href="https://www.gnu.org/licenses/old-licenses/gpl-2.0.html">GNU General Public License v2.0 (GPLv2)</a>.</p>
 </body>
 </html>
+

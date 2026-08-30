@@ -249,5 +249,46 @@
         <li><strong>Playlists:</strong> <code>.m3u</code>, <code>.m3u8</code>, <code>.pls</code>, <code>.cue</code></li>
         <li><strong>Online:</strong> YouTube (Videos, Playlists, Channels, Shorts, Live), Twitch, SoundCloud, HTTP/HTTPS audio, HLS (<code>.m3u8</code>) radio.</li>
     </ul>
+
+    <h2>8. Third-Party Components & Licenses</h2>
+    <p>Headless Media Player bundles or utilizes the following open-source third-party software components:</p>
+    <ol>
+        <li><strong>QuickJS (<code>qjs.exe</code>):</strong>
+            <ul>
+                <li><strong>Path:</strong> <code>globalPlugins/HeadlessPlayer/lib/bin/qjs.exe</code></li>
+                <li><strong>Project:</strong> <a href="https://bellard.org/quickjs/">QuickJS Javascript Engine</a> / <a href="https://github.com/quickjs-ng/quickjs">quickjs-ng</a> by Fabrice Bellard and Charlie Gordon.</li>
+                <li><strong>License:</strong> <a href="https://opensource.org/licenses/MIT">MIT License</a></li>
+                <li><strong>Purpose:</strong> A small and fast embedded JavaScript interpreter used by <code>yt-dlp</code> to execute YouTube signature deciphering algorithms and challenge solvers headlessly on Windows without requiring Node.js or external system dependencies.</li>
+            </ul>
+        </li>
+        <li><strong>mpv Media Player (<code>mpv.exe</code>):</strong>
+            <ul>
+                <li><strong>Path:</strong> <code>resources/bin/x64/mpv.exe</code></li>
+                <li><strong>Project:</strong> <a href="https://mpv.io/">mpv Media Player</a> / <a href="https://github.com/mpv-player/mpv">mpv GitHub</a></li>
+                <li><strong>License:</strong> <a href="https://www.gnu.org/licenses/old-licenses/gpl-2.0.html">GNU General Public License v2.0 or later (GPLv2+)</a> / LGPLv2.1+</li>
+                <li><strong>Purpose:</strong> The core lightweight, headless media playback engine communicating via Windows Named Pipe JSON IPC (<code>\\.\pipe\nvda_headless_player</code>).</li>
+            </ul>
+        </li>
+        <li><strong>yt-dlp (<code>lib/yt_dlp/</code>):</strong>
+            <ul>
+                <li><strong>Path:</strong> <code>globalPlugins/HeadlessPlayer/lib/yt_dlp/</code></li>
+                <li><strong>Project:</strong> <a href="https://github.com/yt-dlp/yt-dlp">yt-dlp</a></li>
+                <li><strong>License:</strong> <a href="https://unlicense.org/">The Unlicense (Public Domain)</a></li>
+                <li><strong>Purpose:</strong> Stream extraction backend and listing metadata parser for YouTube, SoundCloud, Twitch, and web streams.</li>
+            </ul>
+        </li>
+        <li><strong>yt-dlp-ejs (<code>lib/yt_dlp_ejs/</code>):</strong>
+            <ul>
+                <li><strong>Path:</strong> <code>globalPlugins/HeadlessPlayer/lib/yt_dlp_ejs/</code></li>
+                <li><strong>Project:</strong> <a href="https://github.com/yt-dlp/yt-dlp">yt-dlp External JS Solvers</a></li>
+                <li><strong>License:</strong> <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a> / MIT License</li>
+                <li><strong>Purpose:</strong> JavaScript execution bridge connecting yt-dlp to QuickJS.</li>
+            </ul>
+        </li>
+    </ol>
+
+    <h2>License</h2>
+    <p>Headless Media Player is released under the <a href="https://www.gnu.org/licenses/old-licenses/gpl-2.0.html">GNU General Public License v2.0 (GPLv2)</a>.</p>
 </body>
 </html>
+
