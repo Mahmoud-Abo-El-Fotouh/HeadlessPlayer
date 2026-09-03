@@ -237,10 +237,14 @@ class SpeechFeedback:
         self,
         remaining_sec: Optional[float] = None,
         duration: Optional[float] = None,
-        is_loaded: bool = True
+        is_loaded: bool = True,
+        speed: float = 1.0,
+        is_raw: bool = False
     ) -> None:
         """
         Query 'Ctrl+i': Speaks remaining playback duration.
+        Accounts for current playback speed (e.g. at 2.0x, remaining time is halved).
+        If is_raw is True (e.g. double press), speaks unscaled track remaining time.
         Format: 'Remaining time: HH:MM:SS'
         """
         if not is_loaded:
@@ -248,9 +252,22 @@ class SpeechFeedback:
             return
 
         rem_val = max(0.0, float(remaining_sec)) if remaining_sec is not None else 0.0
-        rem_str = format_time(rem_val)
-        msg = _("Remaining time: %s") % rem_str
+        cfg = getConfig()
+        account_for_speed = cfg.get("remainingTimeAccountsForSpeed", True)
+
+        if not is_raw and account_for_speed and speed and speed > 0 and abs(speed - 1.0) >= 0.01:
+            effective_rem = rem_val / speed
+            rem_str = format_time(effective_rem)
+            msg = _("Remaining time: %s") % rem_str
+        elif is_raw and abs(speed - 1.0) >= 0.01:
+            rem_str = format_time(rem_val)
+            msg = _("Original remaining time: %s") % rem_str
+        else:
+            rem_str = format_time(rem_val)
+            msg = _("Remaining time: %s") % rem_str
+
         self.speak(msg)
+
 
     def announce_playback_restarted(self) -> None:
         """Announces that the current track is restarting from the beginning."""

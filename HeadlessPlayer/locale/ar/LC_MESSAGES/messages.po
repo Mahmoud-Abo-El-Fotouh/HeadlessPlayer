@@ -109,7 +109,11 @@ msgstr "المسار الصوتي %d"
 msgid "Loaded %d files into playlist"
 msgstr "تم تحميل %d ملف في قائمة التشغيل"
 
+msgid "Loaded %d files into playlist, total duration: %s"
+msgstr "تم تحميل %d ملف في قائمة التشغيل، المدة الإجمالية: %s"
+
 msgid "Playlist empty"
+
 msgstr "قائمة التشغيل فارغة"
 
 msgid "Track %d of %d: %s"
@@ -1353,3 +1357,39 @@ msgstr "تم تحميل %d عناصر إضافية: %s"
 
 msgid "Loading more items, please wait..."
 msgstr "جاري تحميل المزيد من العناصر، يرجى الانتظار..."
+
+msgid "&Category:"
+msgstr "&الفئة:"
+
+msgid "General & Playback"
+msgstr "الخيارات العامة والتشغيل"
+
+msgid "Online Streaming & SponsorBlock"
+msgstr "البث عبر الإنترنت وتجاوز الإعلانات"
+
+msgid "Shortcuts, Updates & About"
+msgstr "اختصارات المفاتيح والتحديثات والمعلومات"
+
+msgid "Calculate remaining &time based on current playback speed"
+msgstr "حساب الوقت المتبقي وفق سرعة التشغيل الحالية"
+
+msgid "Original remaining time: %s"
+msgstr "الوقت المتبقي الأصلي للمسار: %s"
+
+msgid "Skip &sponsors and paid advertisements"
+msgstr "تخطي &الرعاة والإعلانات المدفوعة"
+
+msgid "Skip &intro animations and intermission breaks"
+msgstr "تخطي شارات &البداية والمقدمات"
+
+msgid "Skip &outro credits and end cards"
+msgstr "تخطي شارات &النهاية والخاتمة"
+
+msgid "Skip self-&promotions and unpaid merchandise"
+msgstr "تخطي الترويج &الذاتي والمنتجات"
+
+msgid "Skip subscribe and like inter&action reminders"
+msgstr "تخطي تذكيرات &التفاعل والاشتراك"
+
+msgid "Skip non-&music sections in music videos"
+msgstr "تخطي المقاطع غير &الموسيقية في الأغاني"

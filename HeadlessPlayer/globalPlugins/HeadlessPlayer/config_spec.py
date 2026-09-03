@@ -18,7 +18,9 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "announceLoop": True,
     "announceChapter": True,
     "announcePlaylistTotalDuration": False,
+    "remainingTimeAccountsForSpeed": True,
     "seekStepNormal": 5,
+
     "seekStepSlow": 1,
     "seekStepFast": 30,
     "seekStepUltrafast": 300,

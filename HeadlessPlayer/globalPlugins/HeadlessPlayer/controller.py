@@ -89,7 +89,11 @@ class PlayerController:
         # Suppress resume announcement when cycling audio tracks
         self._silence_resume_announcement: bool = False
 
+        # Double-press tracking for remaining time queries
+        self._last_remaining_time_press: float = 0.0
+
         # Bind engine event callbacks
+
         self._bind_engine_callbacks()
 
         # Connect controller to input_layer if provided
@@ -792,12 +796,28 @@ class PlayerController:
             )
 
     def speak_remaining_time(self) -> None:
-        """Speaks remaining playback time in formatted string."""
+        """
+        Speaks remaining playback time in formatted string.
+        Accounts for active playback speed (e.g. at 2.0x, remaining time is halved).
+        Double-pressing in quick succession announces unscaled track remaining time.
+        """
         with self._lock:
+            now = time.time()
+            is_double = (now - getattr(self, "_last_remaining_time_press", 0.0)) < 0.6
+            self._last_remaining_time_press = now
+
             rem = self.engine.get_remaining_time()
             dur = self.engine.get_duration()
+            speed = getattr(self.engine, "speed", 1.0)
             is_loaded = bool(self.engine.is_loaded or dur > 0)
-            self.speech.speak_remaining_time(rem, duration=dur, is_loaded=is_loaded)
+            self.speech.speak_remaining_time(
+                rem,
+                duration=dur,
+                is_loaded=is_loaded,
+                speed=speed,
+                is_raw=is_double
+            )
+
 
     def speak_elapsed_time(self) -> None:
         """Speaks elapsed playback time in formatted string."""
@@ -1289,8 +1309,9 @@ class PlayerController:
             return False
 
         if len(tracks) > 1:
-            self.speech.announce_loaded_files(len(tracks))
+            self.speech.announce_loaded_files(len(tracks), total_duration=self.playlist.total_duration)
         res = self.play_track(first)
+
         self._check_auto_enter_player_mode()
         return res
 
@@ -1555,6 +1576,12 @@ class PlayerController:
     def _on_engine_file_loaded(self) -> None:
         """Fired when mpv finishes parsing a newly loaded media file."""
         with self._lock:
+            cur = self.playlist.get_current_track()
+            if cur and (not cur.duration or cur.duration <= 0):
+                dur = getattr(self.engine, "duration", None)
+                if dur and dur > 0:
+                    cur.duration = dur
+
             if self._pending_resume_pos is not None and self._pending_resume_pos >= 0.5:
                 target = self._pending_resume_pos
                 self._pending_resume_pos = None
@@ -1562,6 +1589,7 @@ class PlayerController:
                 if not getattr(self, "_silence_resume_announcement", False):
                     self.speech.announce_resume_position(target)
                 self._silence_resume_announcement = False
+
 
     def _on_engine_track_end(self, reason: str) -> None:
         """Fired when playback of current media item finishes."""

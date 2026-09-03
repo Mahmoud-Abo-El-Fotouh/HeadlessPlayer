@@ -53,6 +53,7 @@ except Exception:
     _NVDA_GUI_AVAILABLE = False
 
 # 3. Import HeadlessPlayer Subsystems
+from . import log_manager
 from .config_spec import initializeConfig, getConfig, setConfigValue
 from .engine import HeadlessEngine, ALL_SUPPORTED_EXTENSIONS, SPEED_PRESETS, is_supported_media_file
 from .ipc_client import WinNamedPipeClient

@@ -306,16 +306,22 @@ class HeadlessEngine:
                     if self.sponsor_block_enabled and self.sponsor_segments:
                         for seg_start, seg_end, seg_cat in self.sponsor_segments:
                             if seg_start <= self.time_pos < seg_end:
-                                if self._last_skipped_segment != (seg_start, seg_end):
-                                    self._last_skipped_segment = (seg_start, seg_end)
+                                target_end = seg_end
+                                for s_st, s_en, _ in self.sponsor_segments:
+                                    if s_st <= target_end < s_en:
+                                        target_end = s_en
+
+                                if self._last_skipped_segment != (seg_start, target_end):
+                                    self._last_skipped_segment = (seg_start, target_end)
                                     logger.info(
                                         "SponsorBlock: skipping %s segment [%.2f -> %.2f] at pos %.2f",
-                                        seg_cat, seg_start, seg_end, self.time_pos
+                                        seg_cat, seg_start, target_end, self.time_pos
                                     )
-                                    self.seek_absolute(seg_end)
+                                    self.seek_absolute(target_end)
                                     if self.on_sponsor_skipped:
-                                        cb_to_call = (self.on_sponsor_skipped, seg_cat, seg_start, seg_end)
+                                        cb_to_call = (self.on_sponsor_skipped, seg_cat, seg_start, target_end)
                                     break
+
                 except (ValueError, TypeError):
                     pass
             elif name == "duration" and data is not None:
@@ -874,12 +880,19 @@ class HeadlessEngine:
     # Time & State Queries
     # -------------------------------------------------------------------------
 
-    def get_remaining_time(self) -> float:
-        """Return remaining time in seconds."""
+    def get_remaining_time(self, account_for_speed: bool = False) -> float:
+        """
+        Return remaining time in seconds.
+        If account_for_speed is True, scales the remaining duration by the active playback speed.
+        """
         with self._lock:
             if self.duration > 0:
-                return max(0.0, self.duration - self.time_pos)
+                raw_rem = max(0.0, self.duration - self.time_pos)
+                if account_for_speed and self.speed > 0:
+                    return max(0.0, raw_rem / self.speed)
+                return raw_rem
             return 0.0
+
 
     def get_elapsed_time(self) -> float:
         """Return elapsed playback time in seconds."""
@@ -929,11 +942,16 @@ class HeadlessEngine:
             }
 
     def set_sponsor_segments(self, segments: List[Tuple[float, float, str]]) -> None:
-        """Sets active SponsorBlock segments for the current media."""
+        """Sets active SponsorBlock segments for the current media, merging overlapping intervals."""
         with self._lock:
-            self.sponsor_segments = list(segments)
+            try:
+                from .sponsorblock import merge_overlapping_segments
+                self.sponsor_segments = merge_overlapping_segments(segments)
+            except Exception:
+                self.sponsor_segments = list(segments)
             self._last_skipped_segment = None
-            logger.debug("Engine: set %d sponsor segments", len(self.sponsor_segments))
+            logger.debug("Engine: set %d merged sponsor segments", len(self.sponsor_segments))
+
 
     def clear_sponsor_segments(self) -> None:
         """Clears all active SponsorBlock segments."""

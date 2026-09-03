@@ -109,7 +109,11 @@ msgstr "Audio track %d"
 msgid "Loaded %d files into playlist"
 msgstr "Loaded %d files into playlist"
 
+msgid "Loaded %d files into playlist, total duration: %s"
+msgstr "Loaded %d files into playlist, total duration: %s"
+
 msgid "Playlist empty"
+
 msgstr "Playlist empty"
 
 msgid "Track %d of %d: %s"
@@ -743,3 +747,39 @@ msgstr "%d more items loaded: %s"
 
 msgid "Loading more items, please wait..."
 msgstr "Loading more items, please wait..."
+
+msgid "&Category:"
+msgstr "&Category:"
+
+msgid "General & Playback"
+msgstr "General & Playback"
+
+msgid "Online Streaming & SponsorBlock"
+msgstr "Online Streaming & SponsorBlock"
+
+msgid "Shortcuts, Updates & About"
+msgstr "Shortcuts, Updates & About"
+
+msgid "Calculate remaining &time based on current playback speed"
+msgstr "Calculate remaining &time based on current playback speed"
+
+msgid "Original remaining time: %s"
+msgstr "Original remaining time: %s"
+
+msgid "Skip &sponsors and paid advertisements"
+msgstr "Skip &sponsors and paid advertisements"
+
+msgid "Skip &intro animations and intermission breaks"
+msgstr "Skip &intro animations and intermission breaks"
+
+msgid "Skip &outro credits and end cards"
+msgstr "Skip &outro credits and end cards"
+
+msgid "Skip self-&promotions and unpaid merchandise"
+msgstr "Skip self-&promotions and unpaid merchandise"
+
+msgid "Skip subscribe and like inter&action reminders"
+msgstr "Skip subscribe and like inter&action reminders"
+
+msgid "Skip non-&music sections in music videos"
+msgstr "Skip non-&music sections in music videos"

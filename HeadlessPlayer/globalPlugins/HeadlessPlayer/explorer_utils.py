@@ -379,3 +379,82 @@ def get_active_explorer_or_focus_paths(
         return expand_folder_paths(filtered, recursive=recursive)
 
     return filtered
+
+
+def extract_local_media_durations(paths: Sequence[str]) -> Dict[str, float]:
+    """
+    Extracts audio/video durations (in seconds) for local media file paths
+    using the native Windows Shell Property Store COM interface.
+    
+    Args:
+        paths: Sequence of local file paths.
+        
+    Returns:
+        Dict mapping absolute file paths to duration in seconds.
+    """
+    if not paths:
+        return {}
+
+    by_dir: Dict[str, List[str]] = {}
+    for p in paths:
+        if not p:
+            continue
+        try:
+            abs_p = os.path.abspath(p)
+            d = os.path.dirname(abs_p)
+            by_dir.setdefault(d, []).append(abs_p)
+        except Exception:
+            continue
+
+    results: Dict[str, float] = {}
+    co_inited = False
+    try:
+        import comtypes
+        import comtypes.client
+        try:
+            comtypes.CoInitialize()
+            co_inited = True
+        except Exception:
+            pass
+
+        from .utils import parse_time
+        shell = comtypes.client.CreateObject("Shell.Application")
+        for dir_path, file_paths in by_dir.items():
+            try:
+                ns = shell.NameSpace(dir_path)
+                if not ns:
+                    continue
+                # Column 27 is the canonical Length/Duration property in Windows Shell
+                col_len = 27
+                for col in (27, 28, 26, 29, 30):
+                    header = ns.GetDetailsOf(None, col)
+                    if header and any(k in str(header).lower() for k in ("length", "duration", "المدة", "طول")):
+                        col_len = col
+                        break
+
+                for fp in file_paths:
+                    try:
+                        fn = os.path.basename(fp)
+                        item = ns.ParseName(fn)
+                        if item:
+                            dur_str = ns.GetDetailsOf(item, col_len)
+                            if dur_str:
+                                sec = parse_time(str(dur_str))
+                                if sec > 0:
+                                    results[fp] = sec
+                    except Exception:
+                        continue
+            except Exception:
+                continue
+    except Exception as e:
+        logger.debug("Error extracting local media durations: %s", e)
+    finally:
+        if co_inited:
+            try:
+                import comtypes
+                comtypes.CoUninitialize()
+            except Exception:
+                pass
+
+    return results
+

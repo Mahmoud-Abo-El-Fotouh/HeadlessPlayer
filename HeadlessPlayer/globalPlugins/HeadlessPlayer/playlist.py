@@ -165,7 +165,21 @@ class Track:
         return hash(self._normalize_track_key(self.path))
 
 
+def _extract_durations_safe(paths: Sequence[str]) -> Dict[str, float]:
+    """Safely extracts durations for local media files using explorer_utils without crashing."""
+    try:
+        from .explorer_utils import extract_local_media_durations
+        return extract_local_media_durations(paths)
+    except Exception:
+        try:
+            from explorer_utils import extract_local_media_durations
+            return extract_local_media_durations(paths)
+        except Exception:
+            return {}
+
+
 class Playlist:
+
     """
     Thread-safe playlist manager supporting natural sorting, non-destructive
     shuffle/unshuffle, repeat modes, and auto-next coordination.
@@ -566,10 +580,11 @@ class Playlist:
             self._current_index = 0
 
     # -------------------------------------------------------------------------
-    # Loading Media API
+    # Core Track Loading Methods
     # -------------------------------------------------------------------------
 
     def load_file(self, file_path: str, append: bool = False) -> Optional[Track]:
+
         """
         Loads a single media file into the playlist.
         
@@ -583,7 +598,9 @@ class Playlist:
         if not file_path or not is_supported_media_file(file_path):
             return None
 
-        track = Track.from_path(file_path)
+        abs_path = os.path.abspath(file_path)
+        durations = _extract_durations_safe([abs_path])
+        track = Track(path=abs_path, duration=durations.get(abs_path))
         with self._lock:
             if not append:
                 self.clear()
@@ -614,7 +631,8 @@ class Playlist:
         if not sibling_files:
             return self.load_file(abs_target, append=append)
 
-        tracks = [Track.from_path(p) for p in sibling_files]
+        durations = _extract_durations_safe(sibling_files)
+        tracks = [Track(path=p, duration=durations.get(os.path.abspath(p))) for p in sibling_files]
         norm_target = os.path.normcase(abs_target)
 
         with self._lock:
@@ -662,7 +680,8 @@ class Playlist:
         if not found_paths:
             return 0
 
-        tracks = [Track.from_path(p) for p in found_paths]
+        durations = _extract_durations_safe(found_paths)
+        tracks = [Track(path=p, duration=durations.get(os.path.abspath(p))) for p in found_paths]
         with self._lock:
             if not append:
                 self.clear()
@@ -720,8 +739,10 @@ class Playlist:
         if not unique_files:
             return 0
 
-        tracks = [Track.from_path(p) for p in unique_files]
+        durations = _extract_durations_safe(unique_files)
+        tracks = [Track(path=p, duration=durations.get(os.path.abspath(p))) for p in unique_files]
         with self._lock:
+
             if not append:
                 self.clear()
 
@@ -788,8 +809,11 @@ class Playlist:
         if isinstance(track_or_path, str):
             if not is_supported_media_file(track_or_path):
                 return None
-            track = Track.from_path(track_or_path)
+            abs_p = os.path.abspath(track_or_path)
+            durations = _extract_durations_safe([abs_p])
+            track = Track(path=abs_p, duration=durations.get(abs_p))
         elif isinstance(track_or_path, Track):
+
             track = track_or_path
         else:
             return None

@@ -675,59 +675,105 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         cfg = getConfig()
 
         # -------------------------------------------------------------
-        # Section 1: Speech Feedback & Announcements Verbosity
+        # Category Selector at the top
         # -------------------------------------------------------------
-        speechGroupLabel = _("Speech Feedback & Announcements")
-        speechBox = wx.StaticBox(self, label=speechGroupLabel)
-        speechGroup = guiHelper.BoxSizerHelper(
-            self,
-            sizer=wx.StaticBoxSizer(speechBox, wx.VERTICAL)
+        categoryChoices = [
+            _("General & Playback"),
+            _("Speech & Announcements"),
+            _("Online Streaming & SponsorBlock"),
+            _("Shortcuts, Updates & About"),
+        ]
+        self.categoryChoice = helper.addLabeledControl(
+            _("&Category:"),
+            wx.Choice,
+            choices=categoryChoices
+        )
+        self.categoryChoice.SetSelection(0)
+        if hasattr(wx, "EVT_CHOICE"):
+            self.categoryChoice.Bind(wx.EVT_CHOICE, self.onCategoryChanged)
+
+        # Create category container panels
+        self.panelGeneral = wx.Panel(self)
+        self.panelSpeech = wx.Panel(self)
+        self.panelStreaming = wx.Panel(self)
+        self.panelShortcuts = wx.Panel(self)
+
+        self.categoryPanels = [
+            self.panelGeneral,
+            self.panelSpeech,
+            self.panelStreaming,
+            self.panelShortcuts,
+        ]
+
+        # =============================================================
+        # Category 1: General & Playback
+        # =============================================================
+        sizerGeneral = wx.BoxSizer(wx.VERTICAL)
+        generalHelper = guiHelper.BoxSizerHelper(self.panelGeneral, sizer=sizerGeneral)
+
+        # Section 1.1: Playback Defaults & Options
+        playbackGroupLabel = _("Playback Defaults & Options")
+        playbackBox = wx.StaticBox(self.panelGeneral, label=playbackGroupLabel)
+        playbackGroup = guiHelper.BoxSizerHelper(
+            self.panelGeneral,
+            sizer=wx.StaticBoxSizer(playbackBox, wx.VERTICAL)
         )
 
-        self.announceVolumeChk = speechGroup.addItem(
-            wx.CheckBox(self, label=_("Announce &volume changes"))
+        speedLabels = [label for val_opt, label in SPEED_CHOICES]
+        self.defaultSpeedChoice = playbackGroup.addLabeledControl(
+            _("Default playback s&peed:"),
+            wx.Choice,
+            choices=speedLabels
         )
-        self.announceVolumeChk.SetValue(bool(cfg.get("announceVolume", True)))
+        curSpeedStr = str(cfg.get("defaultSpeed", "1.0"))
+        try:
+            curSpeedVal = float(curSpeedStr)
+        except (ValueError, TypeError):
+            curSpeedVal = 1.0
 
-        self.announceSeekChk = speechGroup.addItem(
-            wx.CheckBox(self, label=_("Announce &seek position and jump offsets"))
+        speedIdx = 2  # Default to "1.0"
+        for i, (val, label) in enumerate(SPEED_CHOICES):
+            if abs(float(val) - curSpeedVal) < 0.01:
+                speedIdx = i
+                break
+        self.defaultSpeedChoice.SetSelection(speedIdx)
+
+        repeatLabels = [label for rep_opt, label in REPEAT_CHOICES]
+        self.defaultRepeatChoice = playbackGroup.addLabeledControl(
+            _("Default &repeat mode:"),
+            wx.Choice,
+            choices=repeatLabels
         )
-        self.announceSeekChk.SetValue(bool(cfg.get("announceSeek", True)))
+        curRepeat = str(cfg.get("defaultRepeatMode", "off")).lower()
+        repeatIdx = 0
+        for i, (val, label) in enumerate(REPEAT_CHOICES):
+            if val.lower() == curRepeat:
+                repeatIdx = i
+                break
+        self.defaultRepeatChoice.SetSelection(repeatIdx)
 
-        self.announceSpeedChk = speechGroup.addItem(
-            wx.CheckBox(self, label=_("Announce playback s&peed adjustments"))
+        self.autoNextChk = playbackGroup.addItem(
+            wx.CheckBox(self.panelGeneral, label=_("Auto-advance to &next track when media finishes"))
         )
-        self.announceSpeedChk.SetValue(bool(cfg.get("announceSpeed", True)))
+        self.autoNextChk.SetValue(bool(cfg.get("defaultAutoNext", True)))
 
-        self.announceTrackChk = speechGroup.addItem(
-            wx.CheckBox(self, label=_("Announce &track titles and playlist navigation"))
+        self.resumePositionChk = playbackGroup.addItem(
+            wx.CheckBox(self.panelGeneral, label=_("Remember and &resume playback position for media"))
         )
-        self.announceTrackChk.SetValue(bool(cfg.get("announceTrack", True)))
+        self.resumePositionChk.SetValue(bool(cfg.get("resumePosition", True)))
 
-        self.announceLoopChk = speechGroup.addItem(
-            wx.CheckBox(self, label=_("Announce A-B &loop and segment markers"))
+        self.autoEnterPlayerModeChk = playbackGroup.addItem(
+            wx.CheckBox(self.panelGeneral, label=_("Automatically enter &Player Mode when loading new media"))
         )
-        self.announceLoopChk.SetValue(bool(cfg.get("announceLoop", True)))
+        self.autoEnterPlayerModeChk.SetValue(bool(cfg.get("autoEnterPlayerMode", True)))
 
-        self.announceChapterChk = speechGroup.addItem(
-            wx.CheckBox(self, label=_("Announce &chapter markers and names"))
-        )
-        self.announceChapterChk.SetValue(bool(cfg.get("announceChapter", True)))
+        generalHelper.addItem(playbackGroup.sizer)
 
-        self.announcePlaylistTotalDurationChk = speechGroup.addItem(
-            wx.CheckBox(self, label=_("Announce playlist &total duration when loaded"))
-        )
-        self.announcePlaylistTotalDurationChk.SetValue(bool(cfg.get("announcePlaylistTotalDuration", False)))
-
-        helper.addItem(speechGroup.sizer)
-
-        # -------------------------------------------------------------
-        # Section 2: Seek Jump Step Sizes (Seconds)
-        # -------------------------------------------------------------
+        # Section 1.2: Seek Jump Step Sizes (Seconds)
         seekGroupLabel = _("Seek Jump Step Sizes (Seconds)")
-        seekBox = wx.StaticBox(self, label=seekGroupLabel)
+        seekBox = wx.StaticBox(self.panelGeneral, label=seekGroupLabel)
         seekGroup = guiHelper.BoxSizerHelper(
-            self,
+            self.panelGeneral,
             sizer=wx.StaticBoxSizer(seekBox, wx.VERTICAL)
         )
 
@@ -763,89 +809,93 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
             initial=int(cfg.get("seekStepUltrafast", 300))
         )
 
-        helper.addItem(seekGroup.sizer)
+        generalHelper.addItem(seekGroup.sizer)
+        self.panelGeneral.SetSizer(sizerGeneral)
+        helper.addItem(self.panelGeneral)
 
-        # -------------------------------------------------------------
-        # Section 3: Playback Defaults & Options
-        # -------------------------------------------------------------
-        playbackGroupLabel = _("Playback Defaults & Options")
-        playbackBox = wx.StaticBox(self, label=playbackGroupLabel)
-        playbackGroup = guiHelper.BoxSizerHelper(
-            self,
-            sizer=wx.StaticBoxSizer(playbackBox, wx.VERTICAL)
+        # =============================================================
+        # Category 2: Speech & Announcements
+        # =============================================================
+        sizerSpeech = wx.BoxSizer(wx.VERTICAL)
+        speechHelper = guiHelper.BoxSizerHelper(self.panelSpeech, sizer=sizerSpeech)
+
+        speechGroupLabel = _("Speech Feedback & Announcements")
+        speechBox = wx.StaticBox(self.panelSpeech, label=speechGroupLabel)
+        speechGroup = guiHelper.BoxSizerHelper(
+            self.panelSpeech,
+            sizer=wx.StaticBoxSizer(speechBox, wx.VERTICAL)
         )
 
-        # Default Playback Speed Choice
-        speedLabels = [label for val_opt, label in SPEED_CHOICES]
-        self.defaultSpeedChoice = playbackGroup.addLabeledControl(
-            _("Default playback s&peed:"),
-            wx.Choice,
-            choices=speedLabels
+        self.announceVolumeChk = speechGroup.addItem(
+            wx.CheckBox(self.panelSpeech, label=_("Announce &volume changes"))
         )
-        curSpeedStr = str(cfg.get("defaultSpeed", "1.0"))
-        try:
-            curSpeedVal = float(curSpeedStr)
-        except (ValueError, TypeError):
-            curSpeedVal = 1.0
+        self.announceVolumeChk.SetValue(bool(cfg.get("announceVolume", True)))
 
-        speedIdx = 2  # Default to "1.0"
-        for i, (val, label) in enumerate(SPEED_CHOICES):
-            if abs(float(val) - curSpeedVal) < 0.01:
-                speedIdx = i
-                break
-        self.defaultSpeedChoice.SetSelection(speedIdx)
-
-        # Default Repeat Mode Choice
-        repeatLabels = [label for rep_opt, label in REPEAT_CHOICES]
-        self.defaultRepeatChoice = playbackGroup.addLabeledControl(
-            _("Default &repeat mode:"),
-            wx.Choice,
-            choices=repeatLabels
+        self.announceSeekChk = speechGroup.addItem(
+            wx.CheckBox(self.panelSpeech, label=_("Announce &seek position and jump offsets"))
         )
-        curRepeat = str(cfg.get("defaultRepeatMode", "off")).lower()
-        repeatIdx = 0
-        for i, (val, label) in enumerate(REPEAT_CHOICES):
-            if val.lower() == curRepeat:
-                repeatIdx = i
-                break
-        self.defaultRepeatChoice.SetSelection(repeatIdx)
+        self.announceSeekChk.SetValue(bool(cfg.get("announceSeek", True)))
 
-        # Auto-Next Checkbox
-        self.autoNextChk = playbackGroup.addItem(
-            wx.CheckBox(self, label=_("Auto-advance to &next track when media finishes"))
+        self.announceSpeedChk = speechGroup.addItem(
+            wx.CheckBox(self.panelSpeech, label=_("Announce playback s&peed adjustments"))
         )
-        self.autoNextChk.SetValue(bool(cfg.get("defaultAutoNext", True)))
+        self.announceSpeedChk.SetValue(bool(cfg.get("announceSpeed", True)))
 
-        # Resume Playback Position Checkbox
-        self.resumePositionChk = playbackGroup.addItem(
-            wx.CheckBox(self, label=_("Remember and &resume playback position for media"))
+        self.announceTrackChk = speechGroup.addItem(
+            wx.CheckBox(self.panelSpeech, label=_("Announce &track titles and playlist navigation"))
         )
-        self.resumePositionChk.SetValue(bool(cfg.get("resumePosition", True)))
+        self.announceTrackChk.SetValue(bool(cfg.get("announceTrack", True)))
 
-        # Auto Enter Player Mode on Open
-        self.autoEnterPlayerModeChk = playbackGroup.addItem(
-            wx.CheckBox(self, label=_("Automatically enter &Player Mode when loading new media"))
+        self.announceLoopChk = speechGroup.addItem(
+            wx.CheckBox(self.panelSpeech, label=_("Announce A-B &loop and segment markers"))
         )
-        self.autoEnterPlayerModeChk.SetValue(bool(cfg.get("autoEnterPlayerMode", True)))
+        self.announceLoopChk.SetValue(bool(cfg.get("announceLoop", True)))
 
-        helper.addItem(playbackGroup.sizer)
+        self.announceChapterChk = speechGroup.addItem(
+            wx.CheckBox(self.panelSpeech, label=_("Announce &chapter markers and names"))
+        )
+        self.announceChapterChk.SetValue(bool(cfg.get("announceChapter", True)))
 
-        # -------------------------------------------------------------
-        # Section 4: YouTube & Online Streaming (yt-dlp)
-        # -------------------------------------------------------------
+        self.announcePlaylistTotalDurationChk = speechGroup.addItem(
+            wx.CheckBox(self.panelSpeech, label=_("Announce playlist &total duration when loaded"))
+        )
+        self.announcePlaylistTotalDurationChk.SetValue(bool(cfg.get("announcePlaylistTotalDuration", False)))
+
+        self.remainingTimeAccountsForSpeedChk = speechGroup.addItem(
+            wx.CheckBox(self.panelSpeech, label=_("Calculate remaining &time based on current playback speed"))
+        )
+        self.remainingTimeAccountsForSpeedChk.SetValue(bool(cfg.get("remainingTimeAccountsForSpeed", True)))
+
+        speechHelper.addItem(speechGroup.sizer)
+
+        self.panelSpeech.SetSizer(sizerSpeech)
+        helper.addItem(self.panelSpeech)
+
+        # =============================================================
+        # Category 3: Online Streaming & SponsorBlock
+        # =============================================================
+        sizerStreaming = wx.BoxSizer(wx.VERTICAL)
+        streamingHelper = guiHelper.BoxSizerHelper(self.panelStreaming, sizer=sizerStreaming)
+
         from . import stream_engine
 
         streamGroupLabel = _("YouTube & Online Streaming (yt-dlp)")
-        streamBox = wx.StaticBox(self, label=streamGroupLabel)
+        streamBox = wx.StaticBox(self.panelStreaming, label=streamGroupLabel)
         streamGroup = guiHelper.BoxSizerHelper(
-            self,
+            self.panelStreaming,
             sizer=wx.StaticBoxSizer(streamBox, wx.VERTICAL)
         )
 
         ver = stream_engine.get_bundled_version() or _("not installed")
         self.ytdlpVersionText = streamGroup.addItem(
-            wx.StaticText(self, label=_("Streaming engine (yt-dlp) version: %s") % ver)
+            wx.StaticText(self.panelStreaming, label=_("Streaming engine (yt-dlp) version: %s") % ver)
         )
+
+        self.checkUpdatesBtn = streamGroup.addItem(
+            wx.Button(self.panelStreaming, label=_("Check for &Updates of the streaming engine now..."))
+        )
+        if hasattr(wx, "EVT_BUTTON"):
+            self.checkUpdatesBtn.Bind(wx.EVT_BUTTON, self.onCheckYtdlpUpdates)
 
         self.searchResultsCountCtrl = streamGroup.addLabeledControl(
             _("Number of YouTube search &results:"),
@@ -885,8 +935,6 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
                 break
         self.cookiesBrowserChoice.SetSelection(browserIdx)
 
-        # Manual cookies file: reliable sign-in even when the browser blocks
-        # automatic cookie extraction (e.g. Chrome's app-bound encryption).
         self.cookiesFileCtrl = streamGroup.addLabeledControl(
             _("Manual sign-in cookies &file (cookies.txt in Netscape format):"),
             wx.TextCtrl
@@ -894,13 +942,13 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         self.cookiesFileCtrl.SetValue(str(cfg.get("ytdlpCookiesFile", "") or ""))
 
         self.browseCookiesBtn = streamGroup.addItem(
-            wx.Button(self, label=_("&Browse for cookies file..."))
+            wx.Button(self.panelStreaming, label=_("&Browse for cookies file..."))
         )
         if hasattr(wx, "EVT_BUTTON"):
             self.browseCookiesBtn.Bind(wx.EVT_BUTTON, self.onBrowseCookiesFile)
 
         cookiesHint = wx.StaticText(
-            self,
+            self.panelStreaming,
             label=_(
                 "Tip: export cookies.txt while signed in to YouTube using a browser "
                 "extension such as 'Get cookies.txt LOCALLY' (Chrome/Edge) or "
@@ -912,28 +960,20 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         cookiesHint.Wrap(560)
         streamGroup.addItem(cookiesHint)
 
-        self.checkUpdatesBtn = streamGroup.addItem(
-            wx.Button(self, label=_("Check for &Updates of the streaming engine now..."))
-        )
-        if hasattr(wx, "EVT_BUTTON"):
-            self.checkUpdatesBtn.Bind(wx.EVT_BUTTON, self.onCheckYtdlpUpdates)
+        streamingHelper.addItem(streamGroup.sizer)
 
-        helper.addItem(streamGroup.sizer)
-
-        # -------------------------------------------------------------
-        # Section 5: SponsorBlock (YouTube Ad & Sponsor Skipping)
-        # -------------------------------------------------------------
+        # Section 3.2: SponsorBlock
         if hasattr(wx, "CheckBox") and hasattr(wx, "StaticBox"):
             sbGroupLabel = _("SponsorBlock (Auto-Skip YouTube Ads & Sponsors)")
-            sbBox = wx.StaticBox(self, label=sbGroupLabel)
+            sbBox = wx.StaticBox(self.panelStreaming, label=sbGroupLabel)
             sbGroup = guiHelper.BoxSizerHelper(
-                self,
+                self.panelStreaming,
                 sizer=wx.StaticBoxSizer(sbBox, wx.VERTICAL)
             )
 
             self.sponsorBlockEnabledChk = sbGroup.addItem(
                 wx.CheckBox(
-                    self,
+                    self.panelStreaming,
                     label=_("Enable &SponsorBlock (Auto-skip YouTube sponsors, promos & intros)")
                 )
             )
@@ -941,76 +981,144 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
 
             self.announceSponsorSkipChk = sbGroup.addItem(
                 wx.CheckBox(
-                    self,
+                    self.panelStreaming,
                     label=_("&Announce when a sponsor or promo segment is skipped")
                 )
             )
             self.announceSponsorSkipChk.SetValue(bool(cfg.get("announceSponsorSkip", True)))
 
-            helper.addItem(sbGroup.sizer)
+            # Customizable categories to skip
+            active_cats = set(
+                c.strip().lower()
+                for c in str(cfg.get("sponsorBlockCategories", "sponsor,selfpromo,interaction,intro,outro")).split(",")
+                if c.strip()
+            )
 
-        # -------------------------------------------------------------
-        # Section 6: Customizable Shortcuts Dialog
-        # -------------------------------------------------------------
+            self.sbCatSponsorChk = sbGroup.addItem(
+                wx.CheckBox(self.panelStreaming, label=_("Skip &sponsors and paid advertisements"))
+            )
+            self.sbCatSponsorChk.SetValue("sponsor" in active_cats)
+
+            self.sbCatIntroChk = sbGroup.addItem(
+                wx.CheckBox(self.panelStreaming, label=_("Skip &intro animations and intermission breaks"))
+            )
+            self.sbCatIntroChk.SetValue("intro" in active_cats)
+
+            self.sbCatOutroChk = sbGroup.addItem(
+                wx.CheckBox(self.panelStreaming, label=_("Skip &outro credits and end cards"))
+            )
+            self.sbCatOutroChk.SetValue("outro" in active_cats)
+
+            self.sbCatSelfpromoChk = sbGroup.addItem(
+                wx.CheckBox(self.panelStreaming, label=_("Skip self-&promotions and unpaid merchandise"))
+            )
+            self.sbCatSelfpromoChk.SetValue("selfpromo" in active_cats)
+
+            self.sbCatInteractionChk = sbGroup.addItem(
+                wx.CheckBox(self.panelStreaming, label=_("Skip subscribe and like inter&action reminders"))
+            )
+            self.sbCatInteractionChk.SetValue("interaction" in active_cats)
+
+            self.sbCatMusicOfftopicChk = sbGroup.addItem(
+                wx.CheckBox(self.panelStreaming, label=_("Skip non-&music sections in music videos"))
+            )
+            self.sbCatMusicOfftopicChk.SetValue("music_offtopic" in active_cats)
+
+            streamingHelper.addItem(sbGroup.sizer)
+
+
+        self.panelStreaming.SetSizer(sizerStreaming)
+        helper.addItem(self.panelStreaming)
+
+        # =============================================================
+        # Category 4: Shortcuts, Updates & About
+        # =============================================================
+        sizerShortcuts = wx.BoxSizer(wx.VERTICAL)
+        shortcutsHelper = guiHelper.BoxSizerHelper(self.panelShortcuts, sizer=sizerShortcuts)
+
+        # Section 4.1: Player Mode Keyboard Shortcuts
         if hasattr(wx, "Button") and hasattr(wx, "StaticBox"):
             shortcutsGroupLabel = _("Player Mode Keyboard Shortcuts")
-            shortcutsBox = wx.StaticBox(self, label=shortcutsGroupLabel)
+            shortcutsBox = wx.StaticBox(self.panelShortcuts, label=shortcutsGroupLabel)
             shortcutsGroup = guiHelper.BoxSizerHelper(
-                self,
+                self.panelShortcuts,
                 sizer=wx.StaticBoxSizer(shortcutsBox, wx.VERTICAL)
             )
 
             self.customizeShortcutsBtn = shortcutsGroup.addItem(
-                wx.Button(self, label=_("Customize Player Mode &Shortcuts..."))
+                wx.Button(self.panelShortcuts, label=_("Customize Player Mode &Shortcuts..."))
             )
             if hasattr(wx, "EVT_BUTTON"):
                 self.customizeShortcutsBtn.Bind(wx.EVT_BUTTON, self.onCustomizeShortcuts)
 
-            helper.addItem(shortcutsGroup.sizer)
+            shortcutsHelper.addItem(shortcutsGroup.sizer)
 
-        # -------------------------------------------------------------
-        # Section 6: Add-on Self-Updater
-        # -------------------------------------------------------------
+        # Section 4.2: Add-on Self-Updater
         if hasattr(wx, "Button") and hasattr(wx, "StaticBox"):
             addonUpdatesGroupLabel = _("Headless Media Player Add-on Updates")
-            addonUpdatesBox = wx.StaticBox(self, label=addonUpdatesGroupLabel)
+            addonUpdatesBox = wx.StaticBox(self.panelShortcuts, label=addonUpdatesGroupLabel)
             addonUpdatesGroup = guiHelper.BoxSizerHelper(
-                self,
+                self.panelShortcuts,
                 sizer=wx.StaticBoxSizer(addonUpdatesBox, wx.VERTICAL)
             )
 
             from . import addon_updater
             cur_ver_str = addon_updater.get_current_addon_version()
             self.addonVersionText = addonUpdatesGroup.addItem(
-                wx.StaticText(self, label=_("Installed add-on version: %s") % cur_ver_str)
+                wx.StaticText(self.panelShortcuts, label=_("Installed add-on version: %s") % cur_ver_str)
             )
 
             self.checkAddonUpdatesBtn = addonUpdatesGroup.addItem(
-                wx.Button(self, label=_("Check for &Add-on Updates on GitHub..."))
+                wx.Button(self.panelShortcuts, label=_("Check for &Add-on Updates on GitHub..."))
             )
             if hasattr(wx, "EVT_BUTTON"):
                 self.checkAddonUpdatesBtn.Bind(wx.EVT_BUTTON, self.onCheckAddonUpdates)
 
-            helper.addItem(addonUpdatesGroup.sizer)
+            shortcutsHelper.addItem(addonUpdatesGroup.sizer)
 
-        # -------------------------------------------------------------
-        # Section 8: About & Developer
-        # -------------------------------------------------------------
+        # Section 4.3: About & Developer
         if hasattr(wx, "Button") and hasattr(wx, "StaticBox"):
             aboutGroupLabel = _("About & Developer")
-            aboutBox = wx.StaticBox(self, label=aboutGroupLabel)
+            aboutBox = wx.StaticBox(self.panelShortcuts, label=aboutGroupLabel)
             aboutGroup = guiHelper.BoxSizerHelper(
-                self,
+                self.panelShortcuts,
                 sizer=wx.StaticBoxSizer(aboutBox, wx.VERTICAL)
             )
 
             self.followDevBtn = aboutGroup.addItem(
-                wx.Button(self, label=_("&Follow Developer on Telegram (Mahmoud Abo El Fotouh)..."))
+                wx.Button(self.panelShortcuts, label=_("&Follow Developer on Telegram (Mahmoud Abo El Fotouh)..."))
             )
             if hasattr(wx, "EVT_BUTTON"):
                 self.followDevBtn.Bind(wx.EVT_BUTTON, self.onFollowDeveloper)
 
-            helper.addItem(aboutGroup.sizer)
+            shortcutsHelper.addItem(aboutGroup.sizer)
+
+        self.panelShortcuts.SetSizer(sizerShortcuts)
+        helper.addItem(self.panelShortcuts)
+
+        # Initially show only the first category (General & Playback)
+        self.panelGeneral.Show()
+        self.panelSpeech.Hide()
+        self.panelStreaming.Hide()
+        self.panelShortcuts.Hide()
+
+    def onCategoryChanged(self, evt: Any) -> None:
+        """Switches active settings category panel when user changes the dropdown."""
+        if not hasattr(self, "categoryChoice") or not hasattr(self, "categoryPanels"):
+            return
+        sel = self.categoryChoice.GetSelection()
+        for idx, p in enumerate(self.categoryPanels):
+            if idx == sel:
+                p.Show()
+            else:
+                p.Hide()
+        self.Layout()
+        if evt:
+            try:
+                evt.Skip()
+            except Exception:
+                pass
+
 
     def onFollowDeveloper(self, evt: Any) -> None:
         """Opens developer's Telegram link in the default browser."""
@@ -1227,8 +1335,11 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
             setConfigValue("announceChapter", bool(self.announceChapterChk.GetValue()))
         if hasattr(self, "announcePlaylistTotalDurationChk"):
             setConfigValue("announcePlaylistTotalDuration", bool(self.announcePlaylistTotalDurationChk.GetValue()))
+        if hasattr(self, "remainingTimeAccountsForSpeedChk"):
+            setConfigValue("remainingTimeAccountsForSpeed", bool(self.remainingTimeAccountsForSpeedChk.GetValue()))
 
         # Update seek step sizes
+
         if hasattr(self, "seekStepNormalCtrl"):
             try:
                 setConfigValue("seekStepNormal", int(self.seekStepNormalCtrl.GetValue()))
@@ -1314,8 +1425,24 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
             setConfigValue("sponsorBlockEnabled", bool(self.sponsorBlockEnabledChk.GetValue()))
         if hasattr(self, "announceSponsorSkipChk"):
             setConfigValue("announceSponsorSkip", bool(self.announceSponsorSkipChk.GetValue()))
+        if hasattr(self, "sbCatSponsorChk"):
+            cats = []
+            if self.sbCatSponsorChk.GetValue():
+                cats.append("sponsor")
+            if hasattr(self, "sbCatIntroChk") and self.sbCatIntroChk.GetValue():
+                cats.append("intro")
+            if hasattr(self, "sbCatOutroChk") and self.sbCatOutroChk.GetValue():
+                cats.append("outro")
+            if hasattr(self, "sbCatSelfpromoChk") and self.sbCatSelfpromoChk.GetValue():
+                cats.append("selfpromo")
+            if hasattr(self, "sbCatInteractionChk") and self.sbCatInteractionChk.GetValue():
+                cats.append("interaction")
+            if hasattr(self, "sbCatMusicOfftopicChk") and self.sbCatMusicOfftopicChk.GetValue():
+                cats.append("music_offtopic")
+            setConfigValue("sponsorBlockCategories", ",".join(cats))
 
         # Save to SQLite store
+
         saveConfig()
 
         # Notify active player controller or engine of configuration update
