@@ -411,6 +411,16 @@ def _get_js_runtimes() -> Dict[str, Dict[str, Any]]:
     return {}
 
 
+_STANDARD_HTTP_HEADERS: Dict[str, str] = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Sec-Ch-Ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+    "Sec-Ch-Ua-Mobile": "?0",
+    "Sec-Ch-Ua-Platform": '"Windows"',
+}
+
+
 def _base_ydl_opts(use_cookies: bool = True) -> Dict[str, Any]:
     opts: Dict[str, Any] = {
         "quiet": True,
@@ -422,6 +432,7 @@ def _base_ydl_opts(use_cookies: bool = True) -> Dict[str, Any]:
         "retries": 2,
         "ignoreerrors": True,
         "no_color": True,
+        "http_headers": _STANDARD_HTTP_HEADERS,
         "js_runtimes": _get_js_runtimes(),
         "extractor_args": {
             "youtube": {
@@ -430,6 +441,7 @@ def _base_ydl_opts(use_cookies: bool = True) -> Dict[str, Any]:
             }
         },
     }
+
     if not use_cookies:
         return opts
     # Sign-in cookies: a manual cookies.txt file takes priority (works even

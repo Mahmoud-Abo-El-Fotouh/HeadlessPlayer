@@ -1085,7 +1085,7 @@ class PlayerController:
 
         copied = False
         import time
-        for _ in range(3):
+        for _attempt in range(3):
             try:
                 import api
                 copied = api.copyToClip(cur.path)
