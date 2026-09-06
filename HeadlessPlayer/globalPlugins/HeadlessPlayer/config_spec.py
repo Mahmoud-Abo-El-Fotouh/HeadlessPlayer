@@ -17,6 +17,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "announceTrack": True,
     "announceLoop": True,
     "announceChapter": True,
+    "announceChapterAuto": True,
     "announcePlaylistTotalDuration": False,
     "remainingTimeAccountsForSpeed": True,
     "seekStepNormal": 5,
@@ -28,6 +29,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "defaultRepeatMode": "off",
     "defaultAutoNext": True,
     "resumePosition": True,
+    "rememberPlaybackState": False,
     "autoEnterPlayerMode": True,
     "mpvExecutablePath": "",
     "namedPipeName": r"\\.\pipe\nvda_headless_player",
@@ -42,6 +44,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "sponsorBlockCategories": "sponsor,selfpromo,interaction,intro,outro",
     "bassGain": 0.0,
     "streamAudioFormat": "best",
+    "streamAudioQuality": "high",
 }
 
 DEFAULT_KEYMAP: Dict[str, str] = {

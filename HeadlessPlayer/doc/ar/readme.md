@@ -4,7 +4,7 @@
 **المطور:** محمود أبو الفتوح <mahmoudaboelfotouh.20@gmail.com>  
 **المستودع:** [https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer](https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer)  
 **تيليجرام المطور:** [https://t.me/mahmoud_EG_1](https://t.me/mahmoud_EG_1)  
-**التوافق:** NVDA 2022.1 إلى 2026.1 وأحدث
+**التوافق:** NVDA 2024.1 إلى 2026.1 وأحدث
 
 ---
 

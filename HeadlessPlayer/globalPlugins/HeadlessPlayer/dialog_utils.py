@@ -434,6 +434,32 @@ def generate_help_text(custom_toggle_gesture: Optional[str] = None) -> str:
         except Exception:
             keymap = {}
 
+    try:
+        from .config_spec import getConfig
+        cfg = getConfig()
+    except Exception:
+        try:
+            from config_spec import getConfig
+            cfg = getConfig()
+        except Exception:
+            cfg = {}
+
+    s_norm = int(cfg.get("seekStepNormal", 5))
+    s_slow = int(cfg.get("seekStepSlow", 1))
+    s_fast = int(cfg.get("seekStepFast", 30))
+    s_ultra = int(cfg.get("seekStepUltrafast", 300))
+
+    def _fmt_seconds(sec: int) -> str:
+        if sec >= 60 and sec % 60 == 0:
+            m = sec // 60
+            return _("%d minutes") % m if m > 1 else _("1 minute")
+        return _("%d seconds") % sec if sec != 1 else _("1 second")
+
+    str_norm = _fmt_seconds(s_norm)
+    str_slow = _fmt_seconds(s_slow)
+    str_fast = _fmt_seconds(s_fast)
+    str_ultra = _fmt_seconds(s_ultra)
+
     k_play = keymap.get("play_pause", "Space").capitalize()
     k_stop = keymap.get("stop", "s")
     k_mute = keymap.get("mute", "m")
@@ -449,6 +475,28 @@ def generate_help_text(custom_toggle_gesture: Optional[str] = None) -> str:
     k_shuffle = keymap.get("toggle_shuffle", "z")
     k_help = keymap.get("show_help", "h")
     k_exit = keymap.get("exit_mode", "Escape").capitalize()
+
+    k_seek_f = keymap.get("seek_forward", "Right Arrow")
+    k_seek_b = keymap.get("seek_backward", "Left Arrow")
+    k_seek_sf = keymap.get("seek_slow_forward", "Alt + Right")
+    k_seek_sb = keymap.get("seek_slow_backward", "Alt + Left")
+    k_seek_ff = keymap.get("seek_fast_forward", "Ctrl + Right")
+    k_seek_fb = keymap.get("seek_fast_backward", "Ctrl + Left")
+    k_seek_uf = keymap.get("seek_ultrafast_forward", "Shift + Right")
+    k_seek_ub = keymap.get("seek_ultrafast_backward", "Shift + Left")
+
+    k_pt_a = keymap.get("point_a", "[")
+    k_pt_b = keymap.get("point_b", "]")
+    k_rep = keymap.get("toggle_repeat", "r")
+    k_clr = keymap.get("clear_loop", "c")
+
+    k_info = keymap.get("media_info", "i")
+    k_rem = keymap.get("remaining_time", "Ctrl + i")
+    if k_rem.lower() == "control+i":
+        k_rem = "Ctrl + i"
+    k_elapsed = keymap.get("elapsed_time", "Shift + i")
+    if k_elapsed.lower() == "shift+i":
+        k_elapsed = "Shift + i"
 
     lines = [
         "=" * 60,
@@ -469,23 +517,23 @@ def generate_help_text(custom_toggle_gesture: Optional[str] = None) -> str:
         f"  • {keymap.get('bass_up', 'b')} / {keymap.get('bass_down', 'shift+b')} : " + _("Raise / lower bass (+/- 3 dB)."),
         "",
         _("SEEKING & JUMPS:"),
-        "  • Left / Right Arrow : " + _("Normal seek (+/- 5 seconds)."),
-        "  • Alt + Left / Right Arrow : " + _("Slow & precise seek (+/- 1 second)."),
-        "  • Ctrl + Left / Right Arrow : " + _("Fast seek (+/- 30 seconds)."),
-        "  • Shift + Left / Right Arrow : " + _("Ultrafast seek (+/- 5 minutes)."),
+        f"  • {k_seek_b} / {k_seek_f} : " + _("Normal seek (+/- %s).") % str_norm,
+        f"  • {k_seek_sb} / {k_seek_sf} : " + _("Slow & precise seek (+/- %s).") % str_slow,
+        f"  • {k_seek_fb} / {k_seek_ff} : " + _("Fast seek (+/- %s).") % str_fast,
+        f"  • {k_seek_ub} / {k_seek_uf} : " + _("Ultrafast seek (+/- %s).") % str_ultra,
         f"  • {keymap.get('track_start', 'Home')} : " + _("Jump to start of current playing track."),
         f"  • {keymap.get('track_end', 'End')} : " + _("Jump to end of current playing track."),
         "  • Number keys 1 to 9 (Top Row) : " + _("Jump directly to 10% through 90% of file duration."),
         "",
         _("PITCH-PRESERVED SPEED CONTROLS:"),
-        "  • Ctrl + Up / Down Arrow : " + _("Fine speed adjustment (+/- 0.1x)."),
-        "  • Shift + Up / Down Arrow : " + _("Cycle preset speeds (1.0x, 1.5x, 1.75x, 2.0x, 2.5x, 3.0x)."),
+        f"  • {keymap.get('speed_down', 'Ctrl + Down')} / {keymap.get('speed_up', 'Ctrl + Up')} : " + _("Fine speed adjustment (+/- 0.1x)."),
+        f"  • {keymap.get('speed_preset_down', 'Shift + Down')} / {keymap.get('speed_preset_up', 'Shift + Up')} : " + _("Cycle preset speeds (1.0x, 1.5x, 1.75x, 2.0x, 2.5x, 3.0x)."),
         "",
         _("A-B SEGMENT LOOP & REPEAT MODES:"),
-        "  • [ or ج : " + _("Mark start of loop (Point A)."),
-        "  • ] or د : " + _("Mark end of loop (Point B)."),
-        "  • r : " + _("Toggle repeat: A-B loop (if marked) or cycle Single Track / Playlist / Off."),
-        "  • c : " + _("Clear marked A-B loop points."),
+        f"  • {k_pt_a} : " + _("Mark start of loop (Point A)."),
+        f"  • {k_pt_b} : " + _("Mark end of loop (Point B)."),
+        f"  • {k_rep} : " + _("Toggle repeat: A-B loop (if marked) or cycle Single Track / Playlist / Off."),
+        f"  • {k_clr} : " + _("Clear marked A-B loop points."),
         "",
         _("PLAYLIST, FOLDERS & WINDOWS EXPLORER:"),
         "  • NVDA + Ctrl + Windows + e : " + _("Directly load and play focused/selected media from Explorer/Desktop without entering Player Mode."),
@@ -506,13 +554,14 @@ def generate_help_text(custom_toggle_gesture: Optional[str] = None) -> str:
         "  • " + _("Online playlists behave exactly like local playlists (Next/Previous track, shuffle, repeat, resume)."),
         "",
         _("CHAPTERS & VIDEO AUDIO TRACKS:"),
-        "  • Ctrl + Shift + Right / Left Arrow : " + _("Jump to Next / Previous chapter."),
-        "  • a : " + _("Cycle audio tracks / languages in video files."),
+        f"  • {keymap.get('prev_chapter', 'Ctrl+Shift+Left')} / {keymap.get('next_chapter', 'Ctrl+Shift+Right')} : " + _("Jump to Previous / Next chapter."),
+        f"  • {keymap.get('cycle_audio_track', 'a')} : " + _("Cycle audio tracks / languages in video files."),
         "",
         _("SPEECH QUERIES:"),
-        "  • i : " + _("Speak full media information (title, duration, playlist index)."),
-        "  • Ctrl + i : " + _("Speak remaining playback time."),
-        "  • Shift + i : " + _("Speak elapsed playback time."),
+        f"  • {k_info} : " + _("Speak full media information (title, duration, playlist index)."),
+        f"  • {k_rem} : " + _("Speak remaining playback time (accounts for playback speed)."),
+        f"  • {k_rem} (%s) : " % _("pressed twice") + _("Speak original remaining playback time (unscaled by speed)."),
+        f"  • {k_elapsed} : " + _("Speak elapsed playback time."),
         "=" * 60,
     ]
     return "\n".join(lines)

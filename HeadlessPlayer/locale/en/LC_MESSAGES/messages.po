@@ -94,6 +94,12 @@ msgstr "Repeat disabled"
 msgid "Chapter %d: %s"
 msgstr "Chapter %d: %s"
 
+msgid "Chapter %d: %s, at %s"
+msgstr "Chapter %d: %s, at %s"
+
+msgid "Chapter %d, at %s"
+msgstr "Chapter %d, at %s"
+
 msgid "Chapter %d"
 msgstr "Chapter %d"
 
@@ -160,6 +166,9 @@ msgstr "Announce A-B &loop and segment markers"
 
 msgid "Announce &chapter markers and names"
 msgstr "Announce &chapter markers and names"
+
+msgid "Announce chapter transitions &automatically during playback"
+msgstr "Announce chapter transitions &automatically during playback"
 
 msgid "Seek Jump Step Sizes (Seconds)"
 msgstr "Seek Jump Step Sizes (Seconds)"
@@ -776,6 +785,201 @@ msgid "Skip &outro credits and end cards"
 msgstr "Skip &outro credits and end cards"
 
 msgid "Skip self-&promotions and unpaid merchandise"
+msgid "Tab (تاب)"
+msgstr "Tab (تاب)"
+
+msgid "Escape (هروب)"
+msgstr "Escape (هروب)"
+
+msgid "Enter / Return (إدخال)"
+msgstr "Enter / Return (إدخال)"
+
+msgid "Backspace (مسافة للخلف)"
+msgstr "Backspace (مسافة للخلف)"
+
+msgid "Page Down (صفحة لأسفل)"
+msgstr "Page Down (صفحة لأسفل)"
+
+msgid "Page Up (صفحة لأعلى)"
+msgstr "Page Up (صفحة لأعلى)"
+
+msgid "Home (بداية السطر)"
+msgstr "Home (بداية السطر)"
+
+msgid "End (نهاية السطر)"
+msgstr "End (نهاية السطر)"
+
+msgid "Insert (إدراج)"
+msgstr "Insert (إدراج)"
+
+msgid "Delete (حذف)"
+msgstr "Delete (حذف)"
+
+msgid "Left Arrow (سهم لليسار)"
+msgstr "Left Arrow (سهم لليسار)"
+
+msgid "Right Arrow (سهم لليمين)"
+msgstr "Right Arrow (سهم لليمين)"
+
+msgid "Up Arrow (سهم لأعلى)"
+msgstr "Up Arrow (سهم لأعلى)"
+
+msgid "Down Arrow (سهم لأسفل)"
+msgstr "Down Arrow (سهم لأسفل)"
+
+msgid "Alt + Left Arrow (Alt + سهم لليسار)"
+msgstr "Alt + Left Arrow (Alt + سهم لليسار)"
+
+msgid "Alt + Right Arrow (Alt + سهم لليمين)"
+msgstr "Alt + Right Arrow (Alt + سهم لليمين)"
+
+msgid "Alt + Up Arrow (Alt + سهم لأعلى)"
+msgstr "Alt + Up Arrow (Alt + سهم لأعلى)"
+
+msgid "Alt + Down Arrow (Alt + سهم لأسفل)"
+msgstr "Alt + Down Arrow (Alt + سهم لأسفل)"
+
+msgid "Control + Left Arrow (Ctrl + سهم لليسار)"
+msgstr "Control + Left Arrow (Ctrl + سهم لليسار)"
+
+msgid "Control + Right Arrow (Ctrl + سهم لليمين)"
+msgstr "Control + Right Arrow (Ctrl + سهم لليمين)"
+
+msgid "Control + Up Arrow (Ctrl + سهم لأعلى)"
+msgstr "Control + Up Arrow (Ctrl + سهم لأعلى)"
+
+msgid "Control + Down Arrow (Ctrl + سهم لأسفل)"
+msgstr "Control + Down Arrow (Ctrl + سهم لأسفل)"
+
+msgid "Shift + Left Arrow (Shift + سهم لليسار)"
+msgstr "Shift + Left Arrow (Shift + سهم لليسار)"
+
+msgid "Shift + Right Arrow (Shift + سهم لليمين)"
+msgstr "Shift + Right Arrow (Shift + سهم لليمين)"
+
+msgid "Shift + Up Arrow (Shift + سهم لأعلى)"
+msgstr "Shift + Up Arrow (Shift + سهم لأعلى)"
+
+msgid "Shift + Down Arrow (Shift + سهم لأسفل)"
+msgstr "Shift + Down Arrow (Shift + سهم لأسفل)"
+
+msgid "Control + Shift + Left Arrow (Ctrl+Shift+سهم لليسار)"
+msgstr "Control + Shift + Left Arrow (Ctrl+Shift+سهم لليسار)"
+
+msgid "Control + Shift + Right Arrow (Ctrl+Shift+سهم لليمين)"
+msgstr "Control + Shift + Right Arrow (Ctrl+Shift+سهم لليمين)"
+
+msgid "Control + I (Ctrl + i)"
+msgstr "Control + I (Ctrl + i)"
+
+msgid "Shift + I (Shift + i)"
+msgstr "Shift + I (Shift + i)"
+
+msgid "Control + A (Ctrl + a)"
+msgstr "Control + A (Ctrl + a)"
+
+msgid "Control + S (Ctrl + s)"
+msgstr "Control + S (Ctrl + s)"
+
+msgid "Control + Space (Ctrl + مسافة)"
+msgstr "Control + Space (Ctrl + مسافة)"
+
+msgid "Shift + Space (Shift + مسافة)"
+msgstr "Shift + Space (Shift + مسافة)"
+
+msgid "Alt + Space (Alt + مسافة)"
+msgstr "Alt + Space (Alt + مسافة)"
+
+msgid "[ Bracket (قوس فتح / ج)"
+msgstr "[ Bracket (قوس فتح / ج)"
+
+msgid "] Bracket (قوس إغلاق / د)"
+msgstr "] Bracket (قوس إغلاق / د)"
+
+msgid "; Semicolon (فاصلة منقوطة / ك)"
+msgstr "; Semicolon (فاصلة منقوطة / ك)"
+
+msgid "' Quote (علامة تنصيص / ط)"
+msgstr "' Quote (علامة تنصيص / ط)"
+
+msgid ", Comma (فاصلة / و)"
+msgstr ", Comma (فاصلة / و)"
+
+msgid ". Period (نقطة / ز)"
+msgstr ". Period (نقطة / ز)"
+
+msgid "/ Slash (شرطة مائلة / ظ)"
+msgstr "/ Slash (شرطة مائلة / ظ)"
+
+msgid "- Minus (ناقص)"
+msgstr "- Minus (ناقص)"
+
+msgid "= Equals (يساوي)"
+msgstr "= Equals (يساوي)"
+
+
+
+
+
+
+msgid "Trending Shorts (popular in your region)"
+msgstr "Trending Shorts (popular in your region)"
+
+msgid "Trending videos (popular in your region)"
+msgstr "Trending videos (popular in your region)"
+
+msgid "New music releases & charts"
+msgstr "New music releases & charts"
+
+msgid "Load more items..."
+msgstr "Load more items..."
+
+msgid "— [Load more items...] —"
+msgstr "— [Load more items...] —"
+
+msgid "Loading more items..."
+msgstr "Loading more items..."
+
+msgid "%d more items loaded"
+msgstr "%d more items loaded"
+
+msgid "No more items found."
+msgstr "No more items found."
+
+msgid "%d more items loaded: %s"
+msgstr "%d more items loaded: %s"
+
+msgid "Loading more items, please wait..."
+msgstr "Loading more items, please wait..."
+
+msgid "&Category:"
+msgstr "&Category:"
+
+msgid "General & Playback"
+msgstr "General & Playback"
+
+msgid "Online Streaming & SponsorBlock"
+msgstr "Online Streaming & SponsorBlock"
+
+msgid "Shortcuts, Updates & About"
+msgstr "Shortcuts, Updates & About"
+
+msgid "Calculate remaining &time based on current playback speed"
+msgstr "Calculate remaining &time based on current playback speed"
+
+msgid "Original remaining time: %s"
+msgstr "Original remaining time: %s"
+
+msgid "Skip &sponsors and paid advertisements"
+msgstr "Skip &sponsors and paid advertisements"
+
+msgid "Skip &intro animations and intermission breaks"
+msgstr "Skip &intro animations and intermission breaks"
+
+msgid "Skip &outro credits and end cards"
+msgstr "Skip &outro credits and end cards"
+
+msgid "Skip self-&promotions and unpaid merchandise"
 msgstr "Skip self-&promotions and unpaid merchandise"
 
 msgid "Skip subscribe and like inter&action reminders"
@@ -783,3 +987,124 @@ msgstr "Skip subscribe and like inter&action reminders"
 
 msgid "Skip non-&music sections in music videos"
 msgstr "Skip non-&music sections in music videos"
+
+msgid "Remember and &restore last playback session on reopening"
+msgstr "Remember and &restore last playback session on reopening"
+
+msgid "Streaming audio &quality:"
+msgstr "Streaming audio &quality:"
+
+msgid "High (Opus ~160 kbps - Best fidelity)"
+msgstr "High (Opus ~160 kbps - Best fidelity)"
+
+msgid "Medium (AAC ~128 kbps - Standard)"
+msgstr "Medium (AAC ~128 kbps - Standard)"
+
+msgid "Low (~64 kbps - Data saver)"
+msgstr "Low (~64 kbps - Data saver)"
+
+msgid "All Actions"
+msgstr "All Actions"
+
+msgid "Playback & Core Controls"
+msgstr "Playback & Core Controls"
+
+msgid "Navigation & Chapters"
+msgstr "Navigation & Chapters"
+
+msgid "Audio, Volume & Speed"
+msgstr "Audio, Volume & Speed"
+
+msgid "Files, Streaming & Information"
+msgstr "Files, Streaming & Information"
+
+msgid "&Filter Actions by Category:"
+msgstr "&Filter Actions by Category:"
+
+msgid "The shortcut '%s' is already assigned to '%s'.\n\nDo you want to reassign it to '%s' and remove it from '%s'?"
+msgstr "The shortcut '%s' is already assigned to '%s'.\n\nDo you want to reassign it to '%s' and remove it from '%s'?"
+
+msgid "Shortcut Conflict"
+msgstr "Shortcut Conflict"
+
+msgid "&Export Shortcuts (JSON)..."
+msgstr "&Export Shortcuts (JSON)..."
+
+msgid "&Import Shortcuts (JSON)..."
+msgstr "&Import Shortcuts (JSON)..."
+
+msgid "Export Shortcuts to JSON File"
+msgstr "Export Shortcuts to JSON File"
+
+msgid "Import Shortcuts from JSON File"
+msgstr "Import Shortcuts from JSON File"
+
+msgid "JSON Files (*.json)|*.json|All Files (*.*)|*.*"
+msgstr "JSON Files (*.json)|*.json|All Files (*.*)|*.*"
+
+msgid "Shortcuts successfully exported to:\n%s"
+msgstr "Shortcuts successfully exported to:\n%s"
+
+msgid "Export Successful"
+msgstr "Export Successful"
+
+msgid "Failed to export shortcuts:\n%s"
+msgstr "Failed to export shortcuts:\n%s"
+
+msgid "Export Error"
+msgstr "Export Error"
+
+msgid "Successfully imported %d shortcuts from:\n%s"
+msgstr "Successfully imported %d shortcuts from:\n%s"
+
+msgid "Import Successful"
+msgstr "Import Successful"
+
+msgid "Failed to import shortcuts:\n%s"
+msgstr "Failed to import shortcuts:\n%s"
+
+msgid "Import Error"
+msgstr "Import Error"
+
+msgid "Invalid shortcuts format: expected a JSON object."
+msgstr "Invalid shortcuts format: expected a JSON object."
+
+msgid "This is a 32-bit system; the bundled media player requires a 64-bit version of Windows."
+msgstr "This is a 32-bit system; the bundled media player requires a 64-bit version of Windows."
+
+msgid "pressed twice"
+msgstr "pressed twice"
+
+msgid "Speak remaining playback time (accounts for playback speed)."
+msgstr "Speak remaining playback time (accounts for playback speed)."
+
+msgid "Speak original remaining playback time (unscaled by speed)."
+msgstr "Speak original remaining playback time (unscaled by speed)."
+
+msgid "Loading stream, please wait..."
+msgstr "Loading stream, please wait..."
+
+msgid "Reconnecting..."
+msgstr "Reconnecting..."
+
+msgid "Still loading, please wait..."
+msgstr "Still loading, please wait..."
+
+msgid "YouTube requires sign-in verification for this content. Please configure valid sign-in cookies in HeadlessPlayer settings."
+msgstr "YouTube requires sign-in verification for this content. Please configure valid sign-in cookies in HeadlessPlayer settings."
+
+msgid "No items found. Your YouTube cookies appear to be missing login credentials. Please export cookies from a standard browser window, not Incognito mode."
+msgstr "No items found. Your YouTube cookies appear to be missing login credentials. Please export cookies from a standard browser window, not Incognito mode."
+
+msgid "No items found. Sign-in cookies may be invalid or expired. Please verify your cookies in settings."
+msgstr "No items found. Sign-in cookies may be invalid or expired. Please verify your cookies in settings."
+
+msgid "Tip: export cookies.txt while signed in to YouTube in a standard (non-incognito) browser window using an extension such as 'Get cookies.txt LOCALLY' (Chrome/Edge) or 'cookies.txt' (Firefox). Do not export from Incognito mode as private windows omit login session credentials. The manual file takes priority over the browser choice above."
+msgstr "Tip: export cookies.txt while signed in to YouTube in a standard (non-incognito) browser window using an extension such as 'Get cookies.txt LOCALLY' (Chrome/Edge) or 'cookies.txt' (Firefox). Do not export from Incognito mode as private windows omit login session credentials. The manual file takes priority over the browser choice above."
+
+msgid "Notice: The selected cookies file does not appear to contain YouTube authentication tokens.\n\nFor YouTube account feeds (Recommendations, Subscriptions, History) to work reliably, please export cookies while signed in to your YouTube account in your browser."
+msgstr "Notice: The selected cookies file does not appear to contain YouTube authentication tokens.\n\nFor YouTube account feeds (Recommendations, Subscriptions, History) to work reliably, please export cookies while signed in to your YouTube account in your browser."
+
+msgid "Cookies Verification"
+msgstr "Cookies Verification"
+

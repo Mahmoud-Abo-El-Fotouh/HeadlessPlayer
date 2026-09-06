@@ -54,6 +54,130 @@ def _ui_message(text: str) -> None:
 # URL / Search text entry
 # ---------------------------------------------------------------------------
 
+try:
+    import wx as _wx_mod
+    _DialogBase = _wx_mod.Dialog
+except Exception:
+    _wx_mod = None
+    _DialogBase = object
+
+
+class _UrlInputDialog(_DialogBase):
+    """
+    Accessible input dialog for entering a URL or YouTube search query.
+    Automatically selects pre-filled clipboard URLs and clears the pre-filled URL
+    instantly upon typing any character, pressing Backspace/Delete, or pasting,
+    ensuring user-entered search queries are never contaminated with residual URLs.
+    """
+    def __init__(
+        self,
+        parent: Any,
+        title: str,
+        message: str,
+        default_val: str = "",
+    ) -> None:
+        import wx
+        super().__init__(
+            parent,
+            title=title or _("Play URL or Search YouTube"),
+            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+        )
+        self.value: str = ""
+        self._is_prefilled: bool = bool(default_val)
+        self._prefilled_text: str = default_val
+
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+
+        # 1. Prompt label
+        lbl = wx.StaticText(self, label=message)
+        mainSizer.Add(lbl, 0, wx.ALL | wx.EXPAND, 10)
+
+        # 2. Text input control
+        self.textCtrl = wx.TextCtrl(
+            self,
+            value=default_val,
+            style=wx.TE_PROCESS_ENTER,
+            size=(500, -1),
+        )
+        mainSizer.Add(self.textCtrl, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, 10)
+
+        # 3. Standard OK and Cancel buttons
+        btnSizer = self.CreateButtonSizer(wx.OK | wx.CANCEL)
+        if btnSizer:
+            mainSizer.Add(btnSizer, 0, wx.ALIGN_RIGHT | wx.ALL, 10)
+
+        self.SetSizer(mainSizer)
+        mainSizer.Fit(self)
+        self.CenterOnScreen()
+
+        # Pre-select all text so screen reader announces it and it is ready to replace
+        if self._is_prefilled:
+            self.textCtrl.SetSelection(-1, -1)
+            wx.CallAfter(self.textCtrl.SelectAll)
+
+        # Event bindings
+        self.textCtrl.Bind(wx.EVT_TEXT_ENTER, self.onOk)
+        self.textCtrl.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
+        self.Bind(wx.EVT_BUTTON, self.onOk, id=wx.ID_OK)
+
+    def onKeyDown(self, evt: Any) -> None:
+        import wx
+        kc = evt.GetKeyCode()
+        uc = evt.GetUnicodeKey()
+        mods = evt.GetModifiers()
+
+        if kc in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
+            self.onOk(evt)
+            return
+
+        if self._is_prefilled:
+            # If Backspace or Delete: clear entire prefilled URL at once
+            if kc in (wx.WXK_BACK, wx.WXK_DELETE):
+                self._is_prefilled = False
+                self.textCtrl.SetValue("")
+                return
+
+            # Navigation / modifier keys: allow normal navigation without clearing
+            nav_keys = (
+                wx.WXK_LEFT, wx.WXK_RIGHT, wx.WXK_UP, wx.WXK_DOWN,
+                wx.WXK_HOME, wx.WXK_END, wx.WXK_TAB, wx.WXK_ESCAPE,
+                wx.WXK_SHIFT, wx.WXK_CONTROL, wx.WXK_ALT,
+            )
+            if kc in nav_keys:
+                if kc in (wx.WXK_LEFT, wx.WXK_RIGHT, wx.WXK_UP, wx.WXK_DOWN, wx.WXK_HOME, wx.WXK_END):
+                    # User deliberately moved cursor into text to edit it
+                    self._is_prefilled = False
+                evt.Skip()
+                return
+
+            # If Ctrl+V (paste): clear prefill so pasted text replaces it completely
+            if (mods & wx.MOD_CONTROL) and kc in (ord("V"), ord("v")):
+                self._is_prefilled = False
+                self.textCtrl.SetValue("")
+                evt.Skip()
+                return
+
+            # Printable characters (letters, numbers, space, punctuation, Arabic text):
+            # Clear the pre-filled URL completely so the typed character starts fresh!
+            is_printable = False
+            if uc != 0 and uc >= 32:
+                is_printable = True
+            elif 32 <= kc <= 126 or kc >= 128:
+                is_printable = True
+
+            if is_printable and not (mods & (wx.MOD_CONTROL | wx.MOD_ALT)):
+                self._is_prefilled = False
+                self.textCtrl.SetValue("")
+                evt.Skip()
+                return
+
+        evt.Skip()
+
+    def onOk(self, evt: Any) -> None:
+        self.value = self.textCtrl.GetValue().strip()
+        self.EndModal(wx.ID_OK)
+
+
 def prompt_url_input(
     on_submit: Callable[[str], None],
     on_cancelled: Optional[Callable[[], None]] = None,
@@ -102,18 +226,19 @@ def prompt_url_input(
         text: Optional[str] = None
         submitted = False
         try:
-            dlg = wx.TextEntryDialog(
+            dlg = _UrlInputDialog(
                 getattr(gui, "mainFrame", None),
-                _("Enter a URL (YouTube or any website) to play, or text to search YouTube:"),
                 _("Play URL or Search YouTube"),
-                value=default_val,
+                _("Enter a URL (YouTube or any website) to play, or text to search YouTube:"),
+                default_val=default_val,
             )
             with dlg:
                 if dlg.ShowModal() == wx.ID_OK:
                     submitted = True
-                    text = dlg.GetValue().strip()
+                    text = dlg.value
         except Exception as e:
             logger.error("Error showing URL input dialog: %s", e)
+
         finally:
             if hasattr(gui, "mainFrame") and hasattr(gui.mainFrame, "postPopup"):
                 try:
@@ -649,6 +774,8 @@ class _ResultsDialog(_DialogBase):
         item = self._current_item()
         log_debug("DIALOG", "onActivate clicked on item: %s", getattr(item, 'title', None))
         if not item or self._busy:
+            if self._busy:
+                _ui_message(_("Still loading, please wait..."))
             return
         if item.kind == LOAD_MORE_KIND:
             self._trigger_load_more(manual=True)
@@ -758,7 +885,13 @@ class _ResultsDialog(_DialogBase):
         if not self or not hasattr(self, "listCtrl") or not self.listCtrl:
             return
         self._busy = False
-        if stream_engine.is_cookie_error(error_text):
+        low = str(error_text).lower()
+        if "sign in to confirm" in low or "bot" in low:
+            _ui_message(_(
+                "YouTube requires sign-in verification for this content. "
+                "Please configure valid sign-in cookies in HeadlessPlayer settings."
+            ))
+        elif stream_engine.is_cookie_error(error_text):
             _ui_message(_(
                 "Could not read sign-in cookies from your browser. "
                 "Set a manual cookies.txt file in HeadlessPlayer settings instead."

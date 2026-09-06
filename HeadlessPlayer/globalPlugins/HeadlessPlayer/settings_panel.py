@@ -101,6 +101,66 @@ ACTION_DISPLAY_NAMES: List[Tuple[str, str]] = [
     ("exit_mode", _("Exit Player Mode")),
 ]
 
+ACTION_CATEGORIES: List[Tuple[str, str]] = [
+    ("all", _("All Actions")),
+    ("playback", _("Playback & Core Controls")),
+    ("navigation", _("Navigation & Chapters")),
+    ("audio", _("Audio, Volume & Speed")),
+    ("streaming", _("Files, Streaming & Information")),
+]
+
+ACTION_CATEGORY_MAP: Dict[str, str] = {
+    "play_pause": "playback",
+    "stop": "playback",
+    "point_a": "playback",
+    "point_b": "playback",
+    "toggle_repeat": "playback",
+    "clear_loop": "playback",
+    "toggle_auto_next": "playback",
+    "toggle_shuffle": "playback",
+    "close_player": "playback",
+    "exit_mode": "playback",
+    "show_help": "playback",
+
+    "seek_forward": "navigation",
+    "seek_backward": "navigation",
+    "seek_slow_forward": "navigation",
+    "seek_slow_backward": "navigation",
+    "seek_fast_forward": "navigation",
+    "seek_fast_backward": "navigation",
+    "seek_ultrafast_forward": "navigation",
+    "seek_ultrafast_backward": "navigation",
+    "next_track": "navigation",
+    "prev_track": "navigation",
+    "track_start": "navigation",
+    "track_end": "navigation",
+    "first_track": "navigation",
+    "last_track": "navigation",
+    "next_chapter": "navigation",
+    "prev_chapter": "navigation",
+
+    "mute": "audio",
+    "vol_up": "audio",
+    "vol_down": "audio",
+    "bass_up": "audio",
+    "bass_down": "audio",
+    "speed_up": "audio",
+    "speed_down": "audio",
+    "speed_preset_up": "audio",
+    "speed_preset_down": "audio",
+    "cycle_audio_track": "audio",
+
+    "open_file": "streaming",
+    "open_folder": "streaming",
+    "open_url": "streaming",
+    "copy_url": "streaming",
+    "account_feed": "streaming",
+    "load_explorer": "streaming",
+    "media_info": "streaming",
+    "remaining_time": "streaming",
+    "elapsed_time": "streaming",
+}
+
 
 def get_all_key_suggestions() -> List[Tuple[str, str]]:
     """
@@ -367,6 +427,7 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
         self.current_keymap = getKeymap()
         self.all_suggestions = get_all_key_suggestions()
         self.filtered_suggestions = list(self.all_suggestions)
+        self.visible_actions: List[Tuple[str, str]] = list(ACTION_DISPLAY_NAMES)
         self.InitUI()
         self.CenterOnParent()
 
@@ -383,6 +444,16 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
         )
         helper.addItem(introText)
 
+        # 0. Action Category Filter
+        catChoices = [label for _val, label in ACTION_CATEGORIES]
+        self.actionCategoryChoice = helper.addLabeledControl(
+            _("&Filter Actions by Category:"),
+            wx.Choice,
+            choices=catChoices
+        )
+        self.actionCategoryChoice.SetSelection(0)
+        self.actionCategoryChoice.Bind(wx.EVT_CHOICE, self.onCategoryChanged)
+
         # 1. Action Choice (displays Action Name + currently assigned shortcut for instant screen reader feedback)
         actionLabels = self._get_action_choice_labels()
         self.actionChoice = helper.addLabeledControl(
@@ -394,7 +465,7 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
         self.actionChoice.Bind(wx.EVT_CHOICE, self.onActionChanged)
 
         # 2. Current assigned key indicator
-        initial_action = ACTION_DISPLAY_NAMES[0][0]
+        initial_action = self.visible_actions[0][0] if self.visible_actions else ACTION_DISPLAY_NAMES[0][0]
         initial_key = self.current_keymap.get(initial_action, "")
         self.currentKeyStatus = wx.StaticText(
             self,
@@ -452,6 +523,14 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
             self.resetBtn.Bind(wx.EVT_BUTTON, self.onResetDefaults)
             btnSizer.Add(self.resetBtn, 0, wx.ALL, 5)
 
+            self.exportBtn = wx.Button(self, label=_("&Export Shortcuts (JSON)..."))
+            self.exportBtn.Bind(wx.EVT_BUTTON, self.onExportShortcuts)
+            btnSizer.Add(self.exportBtn, 0, wx.ALL, 5)
+
+            self.importBtn = wx.Button(self, label=_("&Import Shortcuts (JSON)..."))
+            self.importBtn.Bind(wx.EVT_BUTTON, self.onImportShortcuts)
+            btnSizer.Add(self.importBtn, 0, wx.ALL, 5)
+
             btnSizer.AddStretchSpacer()
 
             self.okBtn = wx.Button(self, wx.ID_OK, label=_("OK"))
@@ -467,7 +546,7 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
 
     def _get_action_choice_labels(self) -> List[str]:
         labels = []
-        for action_id, action_name in ACTION_DISPLAY_NAMES:
+        for action_id, action_name in self.visible_actions:
             key_str = self.current_keymap.get(action_id, "")
             key_disp = self._format_key_display(key_str)
             labels.append(f"{action_name}: {key_disp}")
@@ -477,8 +556,23 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
         sel = preserve_index if preserve_index is not None else self.actionChoice.GetSelection()
         choices = self._get_action_choice_labels()
         self.actionChoice.Set(choices)
-        if 0 <= sel < len(choices):
-            self.actionChoice.SetSelection(sel)
+        if choices:
+            idx = min(max(0, sel), len(choices) - 1)
+            self.actionChoice.SetSelection(idx)
+
+    def onCategoryChanged(self, evt: Any) -> None:
+        cat_sel = self.actionCategoryChoice.GetSelection()
+        if 0 <= cat_sel < len(ACTION_CATEGORIES):
+            cat_id = ACTION_CATEGORIES[cat_sel][0]
+            if cat_id == "all":
+                self.visible_actions = list(ACTION_DISPLAY_NAMES)
+            else:
+                self.visible_actions = [
+                    (a_id, a_name) for a_id, a_name in ACTION_DISPLAY_NAMES
+                    if ACTION_CATEGORY_MAP.get(a_id) == cat_id
+                ]
+            self._refresh_action_choice(0)
+            self.onActionChanged(None)
 
     def _format_single_key_display(self, key_id: str) -> str:
         for k_id, label in self.all_suggestions:
@@ -522,10 +616,12 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
 
     def onActionChanged(self, evt: Any) -> None:
         sel = self.actionChoice.GetSelection()
-        if 0 <= sel < len(ACTION_DISPLAY_NAMES):
-            action_id = ACTION_DISPLAY_NAMES[sel][0]
+        if 0 <= sel < len(self.visible_actions):
+            action_id = self.visible_actions[sel][0]
             val = self.current_keymap.get(action_id, "")
             self.currentKeyStatus.SetLabel(_("Current assigned key: %s") % self._format_key_display(val))
+        else:
+            self.currentKeyStatus.SetLabel(_("Current assigned key: %s") % self._format_key_display(""))
 
     def onSearchFilter(self, evt: Any) -> None:
         query = self.searchCtrl.GetValue().strip().lower()
@@ -541,6 +637,52 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
         self.suggestionsList.Set(choices)
         if choices:
             self.suggestionsList.SetSelection(0)
+
+    def _check_and_resolve_conflict(self, key_id: str, action_id: str, action_name: str) -> bool:
+        target_norm = key_id.strip().lower()
+        conflicts = []
+        for act_id, k_val in self.current_keymap.items():
+            if act_id != action_id:
+                keys = [k.strip().lower() for k in k_val.split(",") if k.strip()]
+                if target_norm in keys:
+                    act_name = act_id
+                    for a_id, a_name in ACTION_DISPLAY_NAMES:
+                        if a_id == act_id:
+                            act_name = a_name
+                            break
+                    conflicts.append((act_id, act_name))
+
+        if not conflicts:
+            return True
+
+        conf_names = ", ".join(name for _, name in conflicts)
+        key_label = self._format_single_key_display(target_norm)
+        msg = _(
+            "The shortcut '%s' is already assigned to '%s'.\n\n"
+            "Do you want to reassign it to '%s' and remove it from '%s'?"
+        ) % (key_label, conf_names, action_name, conf_names)
+        title = _("Shortcut Conflict")
+
+        confirmed = False
+        if gui and hasattr(gui, "messageBox"):
+            res = gui.messageBox(msg, title, wx.YES_NO | wx.ICON_QUESTION)
+            confirmed = (res == wx.YES)
+        elif hasattr(wx, "MessageBox"):
+            res = wx.MessageBox(msg, title, wx.YES_NO | wx.ICON_QUESTION, self)
+            confirmed = (res == wx.YES)
+        else:
+            confirmed = True
+
+        if not confirmed:
+            return False
+
+        # Remove key from conflicting actions
+        for act_id, _ in conflicts:
+            existing = [k.strip() for k in self.current_keymap.get(act_id, "").split(",") if k.strip()]
+            remaining = [k for k in existing if k.lower() != target_norm]
+            self.current_keymap[act_id] = ",".join(remaining)
+
+        return True
 
     def _do_assign_current_suggestion(self) -> None:
         sel = self.suggestionsList.GetSelection()
@@ -559,8 +701,10 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
         if 0 <= sel < len(self.filtered_suggestions):
             key_id = self.filtered_suggestions[sel][0]
             action_sel = self.actionChoice.GetSelection()
-            if 0 <= action_sel < len(ACTION_DISPLAY_NAMES):
-                action_id, action_name = ACTION_DISPLAY_NAMES[action_sel]
+            if 0 <= action_sel < len(self.visible_actions):
+                action_id, action_name = self.visible_actions[action_sel]
+                if not self._check_and_resolve_conflict(key_id, action_id, action_name):
+                    return
                 self._assign_key(action_id, key_id)
                 assigned_str = self.current_keymap.get(action_id, "")
                 self.currentKeyStatus.SetLabel(
@@ -584,8 +728,11 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
         if dlg.ShowModal() == wx.ID_OK and dlg.captured_key:
             captured = dlg.captured_key
             action_sel = self.actionChoice.GetSelection()
-            if 0 <= action_sel < len(ACTION_DISPLAY_NAMES):
-                action_id = ACTION_DISPLAY_NAMES[action_sel][0]
+            if 0 <= action_sel < len(self.visible_actions):
+                action_id, action_name = self.visible_actions[action_sel]
+                if not self._check_and_resolve_conflict(captured, action_id, action_name):
+                    dlg.Destroy()
+                    return
                 self._assign_key(action_id, captured)
                 self.currentKeyStatus.SetLabel(
                     _("Current assigned key: %s") % self._format_key_display(self.current_keymap.get(action_id, ""))
@@ -594,7 +741,7 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
                 self.searchCtrl.SetValue(captured)
                 try:
                     import ui
-                    ui.message(_("Assigned %s to %s") % (self._format_key_display(self.current_keymap.get(action_id, "")), ACTION_DISPLAY_NAMES[action_sel][1]))
+                    ui.message(_("Assigned %s to %s") % (self._format_key_display(self.current_keymap.get(action_id, "")), action_name))
                 except Exception:
                     pass
         dlg.Destroy()
@@ -602,8 +749,8 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
     def onDeleteShortcut(self, evt: Any) -> None:
         """Deletes/unassigns the shortcut for the selected player action."""
         action_sel = self.actionChoice.GetSelection()
-        if 0 <= action_sel < len(ACTION_DISPLAY_NAMES):
-            action_id, action_name = ACTION_DISPLAY_NAMES[action_sel]
+        if 0 <= action_sel < len(self.visible_actions):
+            action_id, action_name = self.visible_actions[action_sel]
             self.current_keymap[action_id] = ""
             self.currentKeyStatus.SetLabel(
                 _("Current assigned key: %s") % self._format_key_display("")
@@ -625,6 +772,73 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
                 _("Shortcuts Reset"),
                 wx.OK | wx.ICON_INFORMATION
             )
+
+    def onExportShortcuts(self, evt: Any) -> None:
+        with wx.FileDialog(
+            self,
+            message=_("Export Shortcuts to JSON File"),
+            defaultFile="HeadlessPlayer_Shortcuts.json",
+            wildcard=_("JSON Files (*.json)|*.json|All Files (*.*)|*.*"),
+            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT
+        ) as dlg:
+            if dlg.ShowModal() == wx.ID_OK:
+                path = dlg.GetPath()
+                try:
+                    import json
+                    with open(path, "w", encoding="utf-8") as f:
+                        json.dump(self.current_keymap, f, indent=2, ensure_ascii=False)
+                    msg = _("Shortcuts successfully exported to:\n%s") % path
+                    title = _("Export Successful")
+                    if gui and hasattr(gui, "messageBox"):
+                        gui.messageBox(msg, title, wx.OK | wx.ICON_INFORMATION)
+                    elif hasattr(wx, "MessageBox"):
+                        wx.MessageBox(msg, title, wx.OK | wx.ICON_INFORMATION, self)
+                except Exception as e:
+                    logger.error("Failed to export shortcuts: %s", e)
+                    err_msg = _("Failed to export shortcuts:\n%s") % str(e)
+                    err_title = _("Export Error")
+                    if gui and hasattr(gui, "messageBox"):
+                        gui.messageBox(err_msg, err_title, wx.OK | wx.ICON_ERROR)
+                    elif hasattr(wx, "MessageBox"):
+                        wx.MessageBox(err_msg, err_title, wx.OK | wx.ICON_ERROR, self)
+
+    def onImportShortcuts(self, evt: Any) -> None:
+        with wx.FileDialog(
+            self,
+            message=_("Import Shortcuts from JSON File"),
+            wildcard=_("JSON Files (*.json)|*.json|All Files (*.*)|*.*"),
+            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST
+        ) as dlg:
+            if dlg.ShowModal() == wx.ID_OK:
+                path = dlg.GetPath()
+                try:
+                    import json
+                    with open(path, "r", encoding="utf-8") as f:
+                        imported = json.load(f)
+                    if not isinstance(imported, dict):
+                        raise ValueError(_("Invalid shortcuts format: expected a JSON object."))
+                    valid_action_ids = set(a_id for a_id, _ in ACTION_DISPLAY_NAMES)
+                    count = 0
+                    for k, v in imported.items():
+                        if k in valid_action_ids and isinstance(v, str):
+                            self.current_keymap[k] = v.strip().lower()
+                            count += 1
+                    self._refresh_action_choice()
+                    self.onActionChanged(None)
+                    msg = _("Successfully imported %d shortcuts from:\n%s") % (count, path)
+                    title = _("Import Successful")
+                    if gui and hasattr(gui, "messageBox"):
+                        gui.messageBox(msg, title, wx.OK | wx.ICON_INFORMATION)
+                    elif hasattr(wx, "MessageBox"):
+                        wx.MessageBox(msg, title, wx.OK | wx.ICON_INFORMATION, self)
+                except Exception as e:
+                    logger.error("Failed to import shortcuts: %s", e)
+                    err_msg = _("Failed to import shortcuts:\n%s") % str(e)
+                    err_title = _("Import Error")
+                    if gui and hasattr(gui, "messageBox"):
+                        gui.messageBox(err_msg, err_title, wx.OK | wx.ICON_ERROR)
+                    elif hasattr(wx, "MessageBox"):
+                        wx.MessageBox(err_msg, err_title, wx.OK | wx.ICON_ERROR, self)
 
     def onSaveAndClose(self, evt: Any) -> None:
         setKeymap(self.current_keymap)
@@ -658,6 +872,12 @@ REPEAT_CHOICES: List[Tuple[str, str]] = [
     ("off", _("Off")),
     ("track", _("Repeat Current Track")),
     ("playlist", _("Repeat Entire Playlist")),
+]
+
+STREAM_QUALITY_CHOICES: List[Tuple[str, str]] = [
+    ("high", _("High (Opus ~160 kbps - Best fidelity)")),
+    ("medium", _("Medium (AAC ~128 kbps - Standard)")),
+    ("low", _("Low (~64 kbps - Data saver)")),
 ]
 
 
@@ -762,6 +982,11 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         )
         self.resumePositionChk.SetValue(bool(cfg.get("resumePosition", True)))
 
+        self.rememberPlaybackStateChk = playbackGroup.addItem(
+            wx.CheckBox(self.panelGeneral, label=_("Remember and &restore last playback session on reopening"))
+        )
+        self.rememberPlaybackStateChk.SetValue(bool(cfg.get("rememberPlaybackState", False)))
+
         self.autoEnterPlayerModeChk = playbackGroup.addItem(
             wx.CheckBox(self.panelGeneral, label=_("Automatically enter &Player Mode when loading new media"))
         )
@@ -856,6 +1081,11 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         )
         self.announceChapterChk.SetValue(bool(cfg.get("announceChapter", True)))
 
+        self.announceChapterAutoChk = speechGroup.addItem(
+            wx.CheckBox(self.panelSpeech, label=_("Announce chapter transitions &automatically during playback"))
+        )
+        self.announceChapterAutoChk.SetValue(bool(cfg.get("announceChapterAuto", True)))
+
         self.announcePlaylistTotalDurationChk = speechGroup.addItem(
             wx.CheckBox(self.panelSpeech, label=_("Announce playlist &total duration when loaded"))
         )
@@ -896,6 +1126,20 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         )
         if hasattr(wx, "EVT_BUTTON"):
             self.checkUpdatesBtn.Bind(wx.EVT_BUTTON, self.onCheckYtdlpUpdates)
+
+        qualityLabels = [label for _val, label in STREAM_QUALITY_CHOICES]
+        self.streamAudioQualityChoice = streamGroup.addLabeledControl(
+            _("Streaming audio &quality:"),
+            wx.Choice,
+            choices=qualityLabels
+        )
+        curQuality = str(cfg.get("streamAudioQuality", "high")).lower()
+        qualityIdx = 0
+        for i, (val, label) in enumerate(STREAM_QUALITY_CHOICES):
+            if val.lower() == curQuality:
+                qualityIdx = i
+                break
+        self.streamAudioQualityChoice.SetSelection(qualityIdx)
 
         self.searchResultsCountCtrl = streamGroup.addLabeledControl(
             _("Number of YouTube search &results:"),
@@ -950,11 +1194,10 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         cookiesHint = wx.StaticText(
             self.panelStreaming,
             label=_(
-                "Tip: export cookies.txt while signed in to YouTube using a browser "
-                "extension such as 'Get cookies.txt LOCALLY' (Chrome/Edge) or "
-                "'cookies.txt' (Firefox). The manual file takes priority over the "
-                "browser choice above, and works even when Chrome blocks automatic "
-                "cookie extraction."
+                "Tip: export cookies.txt while signed in to YouTube in a standard (non-incognito) browser "
+                "window using an extension such as 'Get cookies.txt LOCALLY' (Chrome/Edge) or "
+                "'cookies.txt' (Firefox). Do not export from Incognito mode as private windows omit "
+                "login session credentials. The manual file takes priority over the browser choice above."
             )
         )
         cookiesHint.Wrap(560)
@@ -1144,7 +1387,22 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         )
         with dlg:
             if dlg.ShowModal() == wx.ID_OK:
-                self.cookiesFileCtrl.SetValue(dlg.GetPath())
+                path = dlg.GetPath()
+                self.cookiesFileCtrl.SetValue(path)
+                try:
+                    from . import stream_engine
+                    valid, reason = stream_engine.check_youtube_cookies_validity(path)
+                    if not valid and reason == "missing_auth_tokens":
+                        import gui
+                        gui.messageBox(
+                            _("Notice: The selected cookies file does not appear to contain YouTube authentication tokens.\n\n"
+                              "For YouTube account feeds (Recommendations, Subscriptions, History) to work reliably, "
+                              "please export cookies while signed in to your YouTube account in your browser."),
+                            _("Cookies Verification"),
+                            wx.OK | wx.ICON_WARNING
+                        )
+                except Exception:
+                    pass
 
     def onCheckYtdlpUpdates(self, evt: Any) -> None:
         """
@@ -1297,6 +1555,20 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
                     ui.message(text)
                 except Exception:
                     pass
+        elif status == "error:rate_limit_exceeded":
+            text = _(
+                "GitHub API rate limit exceeded (maximum 60 requests per hour).\n"
+                "Please wait a few minutes and try again."
+            )
+            caption = _("Rate Limit Exceeded")
+            if gui and hasattr(gui, "messageBox"):
+                gui.messageBox(text, caption, wx.OK | wx.ICON_WARNING)
+            else:
+                try:
+                    import ui
+                    ui.message(text)
+                except Exception:
+                    pass
         else:
             text = _(
                 "Could not check for add-on updates.\n"
@@ -1333,6 +1605,8 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
             setConfigValue("announceLoop", bool(self.announceLoopChk.GetValue()))
         if hasattr(self, "announceChapterChk"):
             setConfigValue("announceChapter", bool(self.announceChapterChk.GetValue()))
+        if hasattr(self, "announceChapterAutoChk"):
+            setConfigValue("announceChapterAuto", bool(self.announceChapterAutoChk.GetValue()))
         if hasattr(self, "announcePlaylistTotalDurationChk"):
             setConfigValue("announcePlaylistTotalDuration", bool(self.announcePlaylistTotalDurationChk.GetValue()))
         if hasattr(self, "remainingTimeAccountsForSpeedChk"):
@@ -1390,6 +1664,15 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
                 setConfigValue("resumePosition", bool(self.resumePositionChk.GetValue()))
             except Exception:
                 pass
+        if hasattr(self, "rememberPlaybackStateChk"):
+            try:
+                val = bool(self.rememberPlaybackStateChk.GetValue())
+                setConfigValue("rememberPlaybackState", val)
+                if not val:
+                    from .state_store import get_state_store
+                    get_state_store().clear_last_session()
+            except Exception:
+                pass
         if hasattr(self, "autoEnterPlayerModeChk"):
             try:
                 setConfigValue("autoEnterPlayerMode", bool(self.autoEnterPlayerModeChk.GetValue()))
@@ -1397,6 +1680,18 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
                 pass
 
         # Update YouTube & online streaming options
+        if hasattr(self, "streamAudioQualityChoice"):
+            try:
+                qualSel = self.streamAudioQualityChoice.GetSelection()
+                if 0 <= qualSel < len(STREAM_QUALITY_CHOICES):
+                    new_qual = STREAM_QUALITY_CHOICES[qualSel][0]
+                    old_qual = getConfigValue("streamAudioQuality", "high")
+                    setConfigValue("streamAudioQuality", new_qual)
+                    if new_qual != old_qual:
+                        from . import stream_engine
+                        stream_engine.clear_resolve_cache()
+            except Exception:
+                pass
         if hasattr(self, "searchResultsCountCtrl"):
             try:
                 setConfigValue("searchResultsCount", int(self.searchResultsCountCtrl.GetValue()))

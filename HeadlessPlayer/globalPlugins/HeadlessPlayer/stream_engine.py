@@ -327,10 +327,67 @@ def login_cookies_enabled() -> bool:
 def is_cookie_error(error_text: str) -> bool:
     """
     Detects browser-cookie extraction failures (e.g. Chrome's app-bound
-    encryption blocking DPAPI decryption) so the user gets accurate advice.
+    encryption blocking DPAPI decryption) or invalid/bot cookies so the user gets accurate advice.
     """
     low = str(error_text).lower()
-    return "cookie" in low or "dpapi" in low or "decrypt" in low
+    return (
+        "cookie" in low
+        or "dpapi" in low
+        or "decrypt" in low
+        or "sign in to confirm" in low
+        or "confirm you're not a bot" in low
+        or "confirm you?re not a bot" in low
+    )
+
+
+def check_youtube_cookies_validity(cookie_path: Optional[str] = None) -> Tuple[bool, str]:
+    """
+    Validates whether the configured or specified cookies.txt file contains
+    the essential YouTube authentication tokens (specifically LOGIN_INFO).
+    Returns (is_valid, reason_str).
+    Possible reasons:
+        'ok': Cookies appear complete and valid.
+        'not_configured': No cookies file configured.
+        'file_not_found': File path does not exist.
+        'missing_login_info': Missing LOGIN_INFO (frequent in Incognito exports).
+        'missing_auth_tokens': Missing SID/SAPISID/3PSID tokens.
+        'empty': File is empty or has no YouTube cookies.
+    """
+    if cookie_path is None:
+        cookie_path = get_manual_cookies_file()
+    if not cookie_path:
+        return False, "not_configured"
+    if not os.path.isfile(cookie_path):
+        return False, "file_not_found"
+
+    has_yt = False
+    has_login_info = False
+    has_sid_or_sapisid = False
+
+    try:
+        with open(cookie_path, "r", encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                parts = line.split("\t")
+                if len(parts) >= 7:
+                    domain = parts[0].lower()
+                    name = parts[5].strip()
+                    if "youtube.com" in domain or "google.com" in domain:
+                        has_yt = True
+                        if name == "LOGIN_INFO":
+                            has_login_info = True
+                        if name in ("SAPISID", "__Secure-3PAPISID", "__Secure-1PAPISID", "SID", "__Secure-3PSID"):
+                            has_sid_or_sapisid = True
+    except Exception as e:
+        return False, f"read_error: {e}"
+
+    if not has_yt:
+        return False, "empty"
+    if not has_login_info and not has_sid_or_sapisid:
+        return False, "missing_auth_tokens"
+    return True, "ok"
 
 
 def get_account_sections() -> List["StreamItem"]:
@@ -421,7 +478,25 @@ _STANDARD_HTTP_HEADERS: Dict[str, str] = {
 }
 
 
-def _base_ydl_opts(use_cookies: bool = True) -> Dict[str, Any]:
+def _is_youtube_target(url: Optional[str]) -> bool:
+    """
+    Returns True if target URL/query is for YouTube.
+    YouTube requests should never be overridden with generic browser headers
+    because InnerTube clients require their own specialized headers and clashing
+    User-Agents trigger cookie invalidation and bot challenges.
+    """
+    if not url:
+        return True
+    u = str(url).lower().strip()
+    return (
+        "youtube.com" in u
+        or "youtu.be" in u
+        or u.startswith("ytsearch")
+        or "youtubei" in u
+    )
+
+
+def _base_ydl_opts(use_cookies: bool = True, target_url: Optional[str] = None) -> Dict[str, Any]:
     opts: Dict[str, Any] = {
         "quiet": True,
         "no_warnings": True,
@@ -432,7 +507,6 @@ def _base_ydl_opts(use_cookies: bool = True) -> Dict[str, Any]:
         "retries": 2,
         "ignoreerrors": True,
         "no_color": True,
-        "http_headers": _STANDARD_HTTP_HEADERS,
         "js_runtimes": _get_js_runtimes(),
         "extractor_args": {
             "youtube": {
@@ -441,6 +515,11 @@ def _base_ydl_opts(use_cookies: bool = True) -> Dict[str, Any]:
             }
         },
     }
+
+    # Only apply standard browser headers to non-YouTube domains (such as TikTok, SoundCloud, or generic WAF sites).
+    # Overriding http_headers for YouTube overrides InnerTube clients and clashes with account cookies.
+    if target_url and not _is_youtube_target(target_url):
+        opts["http_headers"] = _STANDARD_HTTP_HEADERS
 
     if not use_cookies:
         return opts
@@ -486,12 +565,12 @@ def search_youtube(
     log_debug("YTDLP", "search_youtube start: query='%s', limit=%d, start_index=%d, end_index=%d", query, limit, start_index, end_index)
     t0 = time.time()
 
-    opts = _base_ydl_opts()
+    url = f"ytsearch{end_index}:{query}"
+    opts = _base_ydl_opts(target_url=url)
     opts.update({
         "extract_flat": True,
         "playlist_items": f"{start_index}-{end_index}",
     })
-    url = f"ytsearch{end_index}:{query}"
     try:
         with ytdlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=False)
@@ -499,7 +578,7 @@ def search_youtube(
         log_exception("YTDLP", f"search_youtube failed for {url}", e)
         if login_cookies_enabled():
             logger.warning("Search with cookies failed (%s); retrying without cookies", e)
-            opts_no_cookies = _base_ydl_opts(use_cookies=False)
+            opts_no_cookies = _base_ydl_opts(use_cookies=False, target_url=url)
             opts_no_cookies.update({
                 "extract_flat": True,
                 "playlist_items": f"{start_index}-{end_index}",
@@ -626,7 +705,7 @@ def fetch_listing(
     ytdlp = _get_ytdlp()
 
     url = _prepare_listing_url(url)
-    opts = _base_ydl_opts()
+    opts = _base_ydl_opts(target_url=url)
     opts.update({
         "extract_flat": True,
         "playlist_items": f"{start_index}-{end_index}",
@@ -635,10 +714,18 @@ def fetch_listing(
         with ytdlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=False)
     except Exception as e:
-        is_private = any(p in url for p in ["/feed/subscriptions", "/feed/channels", "playlist?list=WL", "playlist?list=LL", "/feed/history"])
+        is_private = any(p in url for p in [
+            "/feed/subscriptions",
+            "/feed/channels",
+            "/feed/recommended",
+            "/feed/history",
+            "/feed/library",
+            "playlist?list=WL",
+            "playlist?list=LL",
+        ])
         if not is_private and login_cookies_enabled():
             logger.warning("Listing fetch with cookies failed (%s); retrying without cookies", e)
-            opts_no_cookies = _base_ydl_opts(use_cookies=False)
+            opts_no_cookies = _base_ydl_opts(use_cookies=False, target_url=url)
             opts_no_cookies.update({
                 "extract_flat": True,
                 "playlist_items": f"{start_index}-{end_index}",
@@ -713,7 +800,14 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
     """
     ytdlp = _get_ytdlp()
 
-    cache_key = f"{url}::audio={prefer_audio}"
+    try:
+        from .config_spec import getConfig
+        cfg = getConfig()
+        quality = str(cfg.get("streamAudioQuality", "high")).lower()
+    except Exception:
+        quality = "high"
+
+    cache_key = f"{url}::audio={prefer_audio}::quality={quality}"
     now = time.time()
     with _resolve_cache_lock:
         cached = _resolve_cache.get(cache_key)
@@ -721,14 +815,39 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
             return dict(cached[1])
 
     def _extract(use_cookies: bool):
-        opts = _base_ydl_opts(use_cookies=use_cookies)
-        format_selector = (
-            "bestaudio/"
-            "best[height<=480][acodec!=none]/"
-            "best[height<=720][acodec!=none]/"
-            "best[acodec!=none]/"
-            "best"
-        )
+        opts = _base_ydl_opts(use_cookies=use_cookies, target_url=url)
+        if quality == "low":
+            # Low: 64k data saver (prioritizes low bitrate ~64 kbps Opus/AAC streams)
+            format_selector = (
+                "bestaudio[abr<=70]/"
+                "bestaudio[ext=webm][abr<=70]/"
+                "bestaudio[abr<=96]/"
+                "bestaudio/"
+                "best[height<=360][acodec!=none]/"
+                "best[acodec!=none]/"
+                "best"
+            )
+        elif quality == "medium":
+            # Medium: AAC 128k (standard fidelity, format 140 m4a / 128 kbps)
+            format_selector = (
+                "bestaudio[acodec^=mp4a][abr<=140]/"
+                "bestaudio[ext=m4a]/"
+                "bestaudio[abr<=140]/"
+                "bestaudio/"
+                "best[height<=480][acodec!=none]/"
+                "best[acodec!=none]/"
+                "best"
+            )
+        else:
+            # High: Opus 160k (highest audio fidelity, format 251 Opus / 160 kbps)
+            format_selector = (
+                "bestaudio[acodec=opus][abr>=150]/"
+                "bestaudio[abr>=150]/"
+                "bestaudio/"
+                "best[height<=480][acodec!=none]/"
+                "best[acodec!=none]/"
+                "best"
+            )
         opts.update({
             "noplaylist": True,
             "format": format_selector if prefer_audio else "best",

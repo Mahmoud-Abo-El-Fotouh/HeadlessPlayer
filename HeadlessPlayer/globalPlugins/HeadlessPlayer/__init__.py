@@ -177,6 +177,9 @@ class GlobalPlugin(_BaseGlobalPlugin):
         """Global Media Play/Pause key handler."""
         if self.controller and (self.controller.engine.is_loaded or not self.controller.playlist.is_empty()):
             self.controller.toggle_play_pause()
+        elif self.controller and getConfigValue("rememberPlaybackState", False) and self.state_store.get_last_session():
+            if not self.controller.restore_session(auto_play=True):
+                gesture.send()
         else:
             gesture.send()
 
@@ -243,7 +246,14 @@ class GlobalPlugin(_BaseGlobalPlugin):
         # 3. Clear singleton references
         set_controller(None)
 
-        # 4. Unregister Settings Panel Category
+        # 4. Clean up any leftover temporary installer packages on exit
+        try:
+            from .addon_updater import cleanup_temp_addon_packages
+            cleanup_temp_addon_packages()
+        except Exception:
+            pass
+
+        # 5. Unregister Settings Panel Category
         self._unregister_settings_panel()
 
         try:

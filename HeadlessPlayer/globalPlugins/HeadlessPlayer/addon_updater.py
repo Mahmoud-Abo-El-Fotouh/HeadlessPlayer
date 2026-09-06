@@ -45,12 +45,25 @@ USER_AGENT = "NVDA-Addon-HeadlessPlayer-Updater"
 
 
 def parse_version(ver_str: str) -> Tuple[int, ...]:
-    """Parses a version string (e.g. 'v1.2.2', '1.2.1') into a comparable tuple of ints."""
+    """Parses a version string (e.g. 'v1.2.2', '1.2.1') into a comparable tuple of ints padded with trailing zeros."""
     if not ver_str:
         return (0, 0, 0)
     clean = re.sub(r'^[vV]', '', str(ver_str).strip())
     parts = re.findall(r'\d+', clean)
-    return tuple(int(p) for p in parts) if parts else (0, 0, 0)
+    int_parts = [int(p) for p in parts] if parts else [0, 0, 0]
+    while len(int_parts) < 3:
+        int_parts.append(0)
+    return tuple(int_parts)
+
+
+def is_newer_version(latest_ver: str, current_ver: str) -> bool:
+    """Returns True if latest_ver is strictly newer than current_ver, with length normalization."""
+    t_latest = parse_version(latest_ver)
+    t_cur = parse_version(current_ver)
+    max_len = max(len(t_latest), len(t_cur))
+    p_latest = t_latest + (0,) * (max_len - len(t_latest))
+    p_cur = t_cur + (0,) * (max_len - len(t_cur))
+    return p_latest > p_cur
 
 
 def get_current_addon_version() -> str:
@@ -81,7 +94,7 @@ def get_current_addon_version() -> str:
     except Exception as e:
         logger.debug("Could not read manifest.ini for version: %s", e)
 
-    return "1.2.1"
+    return "1.2.4"
 
 
 def check_for_addon_update(
@@ -108,6 +121,12 @@ def check_for_addon_update(
             if resp.status != 200:
                 return False, None, f"error:http_{resp.status}"
             data = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        if e.code == 403:
+            logger.warning("GitHub API rate limit exceeded: %s", e)
+            return False, None, "error:rate_limit_exceeded"
+        logger.warning("HTTP error querying GitHub Releases API: %s", e)
+        return False, None, f"error:http_{e.code}"
     except Exception as e:
         logger.warning("Failed to query GitHub Releases API: %s", e)
         return False, None, f"error:{e}"
@@ -121,8 +140,6 @@ def check_for_addon_update(
         return False, None, "error:no_version_tag"
 
     cur_ver = get_current_addon_version()
-    cur_tuple = parse_version(cur_ver)
-    latest_tuple = parse_version(latest_ver)
 
     # Find the .nvda-addon asset
     addon_asset = None
@@ -148,7 +165,7 @@ def check_for_addon_update(
         "published_at": str(data.get("published_at") or ""),
     }
 
-    if latest_tuple > cur_tuple:
+    if is_newer_version(latest_ver, cur_ver):
         return True, update_info, "update_available"
     else:
         return False, update_info, "up_to_date"
@@ -161,35 +178,67 @@ def download_addon_file(
     timeout: int = 30
 ) -> bool:
     """
-    Downloads the .nvda-addon file from download_url to dest_path.
-    Invokes progress_cb(downloaded_bytes, total_bytes, percent) per chunk.
+    Downloads the .nvda-addon file from download_url safely to a temporary .part file first.
+    Atomically renames to dest_path upon verified completion.
+    Cleans up incomplete/corrupted partial files if interrupted.
     """
     req = urllib.request.Request(
         download_url,
         headers={"User-Agent": USER_AGENT}
     )
 
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        try:
-            raw_len = resp.headers.get("content-length", 0)
-            total_size = int(raw_len) if raw_len else 0
-        except (ValueError, TypeError):
-            total_size = 0
-        downloaded = 0
-        chunk_size = 64 * 1024
+    part_path = dest_path + ".part"
+    for p in (part_path, dest_path):
+        if os.path.exists(p):
+            try:
+                os.remove(p)
+            except OSError:
+                pass
 
-        with open(dest_path, "wb") as f:
-            while True:
-                chunk = resp.read(chunk_size)
-                if not chunk:
-                    break
-                f.write(chunk)
-                downloaded += len(chunk)
-                pct = (downloaded / total_size * 100.0) if total_size > 0 else 0.0
-                if progress_cb:
-                    progress_cb(downloaded, total_size, pct)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            try:
+                raw_len = resp.headers.get("content-length", 0)
+                total_size = int(raw_len) if raw_len else 0
+            except (ValueError, TypeError):
+                total_size = 0
+            downloaded = 0
+            chunk_size = 64 * 1024
 
-    return os.path.isfile(dest_path) and os.path.getsize(dest_path) > 0
+            with open(part_path, "wb") as f:
+                while True:
+                    chunk = resp.read(chunk_size)
+                    if not chunk:
+                        break
+                    f.write(chunk)
+                    downloaded += len(chunk)
+                    pct = (downloaded / total_size * 100.0) if total_size > 0 else 0.0
+                    if progress_cb:
+                        progress_cb(downloaded, total_size, pct)
+
+        if total_size > 0 and downloaded < total_size:
+            raise IOError(f"Incomplete download: received {downloaded} of {total_size} bytes")
+
+        if not os.path.isfile(part_path) or os.path.getsize(part_path) == 0:
+            raise IOError("Downloaded file is empty")
+
+        if os.path.exists(dest_path):
+            try:
+                os.remove(dest_path)
+            except OSError:
+                pass
+        os.replace(part_path, dest_path)
+        return True
+
+    except Exception as e:
+        logger.error("Download failed for %s: %s", download_url, e)
+        for p in (part_path, dest_path):
+            if os.path.exists(p):
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
+        raise
 
 
 # ---------------------------------------------------------------------------
@@ -323,24 +372,26 @@ class AddonUpdateDialog(_WxDialog):
         self.progressBar.SetValue(100)
         self.progressLabel.SetLabel(_("Download complete! Launching add-on installation..."))
 
-        # Launch NVDA native installation workflow
+        # Launch NVDA native installation workflow: prefer addonHandler for portable & installed NVDA
+        installed = False
         try:
-            os.startfile(file_path)
+            import addonHandler
+            if hasattr(addonHandler, "installAddonPackage"):
+                bundle = addonHandler.AddonBundle(file_path)
+                addonHandler.installAddonPackage(bundle)
+                installed = True
         except Exception as e:
-            logger.error("Could not start add-on file via os.startfile: %s", e)
+            logger.debug("addonHandler.installAddonPackage attempt: %s", e)
+
+        if not installed:
             try:
-                import addonHandler
-                addonHandler.installAddonPackage(file_path)
-            except Exception as e2:
-                logger.error("Could not install via addonHandler: %s", e2)
+                os.startfile(file_path)
+                installed = True
+            except Exception as e:
+                logger.error("Could not start add-on file via os.startfile: %s", e)
 
-        # Schedule background cleanup sweep after sufficient delay (3 minutes) to allow NVDA installer to unpack
-        def delayed_cleanup() -> None:
-            import time
-            time.sleep(180)
-            cleanup_temp_addon_packages()
-
-        threading.Thread(target=delayed_cleanup, daemon=True, name="HeadlessPlayer-Cleanup").start()
+        # Do NOT delete the installer mid-session!
+        # Temp cleanup is strictly handled at NVDA startup and shutdown.
 
         # Close update dialog so NVDA's installation confirmation dialog gains focus
         self.EndModal(wx.ID_OK)

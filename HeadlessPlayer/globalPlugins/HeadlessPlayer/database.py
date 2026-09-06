@@ -139,6 +139,9 @@ class DatabaseManager:
     def _init_database(self) -> None:
         """Loads existing data from disk or runs migration from legacy files."""
         with self._lock:
+            if not self._db_path or self._db_path == ":memory:":
+                return
+            loaded = False
             if os.path.isfile(self._db_path):
                 try:
                     with open(self._db_path, "rb") as f:
@@ -149,6 +152,7 @@ class DatabaseManager:
                         self._cache["positions"] = data.get("positions", {})
                         self._cache["recent_media"] = data.get("recent_media", [])
                         self._cache["playlists_state"] = data.get("playlists_state", {})
+                        loaded = True
                 except Exception as e:
                     logger.warning("Failed to load existing database file: %s", e)
                     # Automatically preserve corrupted database before resetting cache!
@@ -159,12 +163,38 @@ class DatabaseManager:
                     except Exception as bkp_err:
                         logger.error("Could not write backup for corrupted database: %s", bkp_err)
 
+            # If primary database could not be loaded, attempt recovery from rolling backups (.bak1, .bak2)
+            if not loaded:
+                for ext in (".bak1", ".bak2"):
+                    bak_file = self._db_path + ext
+                    if os.path.isfile(bak_file):
+                        try:
+                            with open(bak_file, "rb") as f:
+                                b_blob = f.read()
+                            b_data = _decode_database_payload(b_blob)
+                            if isinstance(b_data, dict):
+                                self._cache["settings"] = b_data.get("settings", {})
+                                self._cache["positions"] = b_data.get("positions", {})
+                                self._cache["recent_media"] = b_data.get("recent_media", [])
+                                self._cache["playlists_state"] = b_data.get("playlists_state", {})
+                                loaded = True
+                                logger.info("Successfully recovered database from backup: %s", bak_file)
+                                try:
+                                    self._save_to_disk()
+                                except Exception as save_err:
+                                    logger.warning("Could not immediately sync recovered db to disk: %s", save_err)
+                                break
+                        except Exception as bak_err:
+                            logger.warning("Failed to recover from %s: %s", bak_file, bak_err)
+
             # Migrate legacy state if present
             self._migrate_legacy_data()
 
     def _save_to_disk(self) -> None:
         """Atomically writes memory cache to disk via temp file replacement with retry."""
         with self._lock:
+            if not self._db_path or self._db_path == ":memory:":
+                return
             db_dir = os.path.dirname(self._db_path)
             if db_dir:
                 try:
@@ -177,10 +207,21 @@ class DatabaseManager:
                 payload = _encode_database_payload(self._cache)
                 with open(temp_path, "wb") as f:
                     f.write(payload)
-                
+
+                # Maintain rolling backups (.bak1 and .bak2) before replacing primary db
+                if os.path.exists(self._db_path) and os.path.getsize(self._db_path) > 0:
+                    bak1 = self._db_path + ".bak1"
+                    bak2 = self._db_path + ".bak2"
+                    try:
+                        if os.path.exists(bak1) and os.path.getsize(bak1) > 0:
+                            shutil.copy2(bak1, bak2)
+                        shutil.copy2(self._db_path, bak1)
+                    except Exception as bkp_err:
+                        logger.debug("Failed to rotate database backups: %s", bkp_err)
+
                 # Atomic replace on Windows with retry loop for transient locks (Error 32)
                 replaced = False
-                for attempt in range(4):
+                for attempt in range(5):
                     try:
                         if os.path.exists(self._db_path):
                             os.replace(temp_path, self._db_path)
@@ -189,8 +230,8 @@ class DatabaseManager:
                         replaced = True
                         break
                     except (PermissionError, OSError):
-                        if attempt < 3:
-                            time.sleep(0.04 * (attempt + 1))
+                        if attempt < 4:
+                            time.sleep(0.05 * (2 ** attempt))
                         else:
                             raise
             except Exception as e:
@@ -214,16 +255,24 @@ class DatabaseManager:
                         data = _decode_database_payload(f.read())
                     if isinstance(data, dict):
                         if data.get("settings") and isinstance(data["settings"], dict):
-                            self._cache["settings"].update(data["settings"])
+                            for k, v in data["settings"].items():
+                                if k not in self._cache["settings"]:
+                                    self._cache["settings"][k] = v
                         if data.get("positions") and isinstance(data["positions"], dict):
                             for path, rec in data["positions"].items():
                                 norm_key = normalize_file_path(path)
-                                if norm_key:
+                                if norm_key and norm_key not in self._cache["positions"]:
                                     self._cache["positions"][norm_key] = rec
                         if data.get("recent_media") and isinstance(data["recent_media"], list):
-                            self._cache["recent_media"] = data["recent_media"] + self._cache["recent_media"]
+                            existing_recent = {item.get("file_path") for item in self._cache["recent_media"] if isinstance(item, dict)}
+                            for item in data["recent_media"]:
+                                if isinstance(item, dict) and item.get("file_path") not in existing_recent:
+                                    self._cache["recent_media"].append(item)
+                                    existing_recent.add(item.get("file_path"))
                         if data.get("playlists_state") and isinstance(data["playlists_state"], dict):
-                            self._cache["playlists_state"].update(data["playlists_state"])
+                            for pl_name, pl_data in data["playlists_state"].items():
+                                if pl_name not in self._cache["playlists_state"]:
+                                    self._cache["playlists_state"][pl_name] = pl_data
                     try:
                         os.remove(legacy_data_json)
                     except Exception:
@@ -242,42 +291,49 @@ class DatabaseManager:
                         # Settings
                         settings = data.get("settings", {})
                         if isinstance(settings, dict):
-                            self._cache["settings"].update(settings)
+                            for k, v in settings.items():
+                                if k not in self._cache["settings"]:
+                                    self._cache["settings"][k] = v
                         # Positions
                         positions = data.get("positions", {})
                         if isinstance(positions, dict):
                             for path, rec in positions.items():
                                 if isinstance(rec, dict):
                                     norm_key = normalize_file_path(path)
-                                    self._cache["positions"][norm_key] = {
-                                        "position": float(rec.get("position", 0.0)),
-                                        "duration": float(rec["duration"]) if rec.get("duration") else None,
-                                        "filename": rec.get("filename") or os.path.basename(path),
-                                        "updated_at": time.time()
-                                    }
+                                    if norm_key and norm_key not in self._cache["positions"]:
+                                        self._cache["positions"][norm_key] = {
+                                            "position": float(rec.get("position", 0.0)),
+                                            "duration": float(rec["duration"]) if rec.get("duration") else None,
+                                            "filename": rec.get("filename") or os.path.basename(path),
+                                            "updated_at": time.time()
+                                        }
                         # Recent files
                         recent = data.get("recent_files", [])
                         if isinstance(recent, list):
+                            existing_recent = {item.get("file_path") for item in self._cache["recent_media"] if isinstance(item, dict)}
                             for r_path in recent:
                                 if isinstance(r_path, str) and r_path.strip():
                                     norm_key = normalize_file_path(r_path.strip())
-                                    fn = os.path.basename(r_path) if not r_path.startswith("http") else r_path
-                                    self._cache["recent_media"].insert(0, {
-                                        "file_path": norm_key,
-                                        "filename": fn,
-                                        "last_played": time.time()
-                                    })
+                                    if norm_key not in existing_recent:
+                                        fn = os.path.basename(r_path) if not r_path.startswith("http") else r_path
+                                        self._cache["recent_media"].append({
+                                            "file_path": norm_key,
+                                            "filename": fn,
+                                            "last_played": time.time()
+                                        })
+                                        existing_recent.add(norm_key)
                         # Last playlist
                         last_pl = data.get("last_playlist")
                         if isinstance(last_pl, dict) and last_pl.get("tracks"):
-                            self._cache["playlists_state"]["default"] = {
-                                "tracks": last_pl.get("tracks", []),
-                                "current_index": last_pl.get("current_index", 0),
-                                "shuffle": bool(last_pl.get("shuffle", False)),
-                                "repeat_mode": str(last_pl.get("repeat_mode", "off")),
-                                "auto_next": bool(last_pl.get("auto_next", True)),
-                                "updated_at": time.time()
-                            }
+                            if "default" not in self._cache["playlists_state"]:
+                                self._cache["playlists_state"]["default"] = {
+                                    "tracks": last_pl.get("tracks", []),
+                                    "current_index": last_pl.get("current_index", 0),
+                                    "shuffle": bool(last_pl.get("shuffle", False)),
+                                    "repeat_mode": str(last_pl.get("repeat_mode", "off")),
+                                    "auto_next": bool(last_pl.get("auto_next", True)),
+                                    "updated_at": time.time()
+                                }
                     try:
                         os.replace(legacy_json_path, legacy_json_path + ".migrated")
                     except Exception:
@@ -482,17 +538,23 @@ class DatabaseManager:
         name: str = "default",
         tracks: Optional[List[Dict[str, Any]]] = None,
         current_index: int = 0,
+        position: float = 0.0,
         shuffle: bool = False,
         repeat_mode: str = "off",
-        auto_next: bool = True
+        auto_next: bool = True,
+        source_target: Optional[str] = None,
+        source_type: str = "listing"
     ) -> None:
         with self._lock:
             self._cache["playlists_state"][name] = {
                 "tracks": list(tracks or []),
                 "current_index": int(current_index),
+                "position": float(position),
                 "shuffle": bool(shuffle),
                 "repeat_mode": str(repeat_mode),
                 "auto_next": bool(auto_next),
+                "source_target": source_target,
+                "source_type": source_type,
                 "updated_at": time.time()
             }
             self._save_to_disk()
@@ -505,9 +567,12 @@ class DatabaseManager:
             return {
                 "tracks": [],
                 "current_index": 0,
+                "position": 0.0,
                 "shuffle": False,
                 "repeat_mode": "off",
                 "auto_next": True,
+                "source_target": None,
+                "source_type": "listing",
             }
 
     def clear_playlist_state(self, name: str = "default") -> None:

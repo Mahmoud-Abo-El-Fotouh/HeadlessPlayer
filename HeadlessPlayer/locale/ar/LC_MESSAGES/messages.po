@@ -94,6 +94,12 @@ msgstr "تم تعطيل التكرار"
 msgid "Chapter %d: %s"
 msgstr "الفصل %d: %s"
 
+msgid "Chapter %d: %s, at %s"
+msgstr "الفصل %d: %s، عند %s"
+
+msgid "Chapter %d, at %s"
+msgstr "الفصل %d، عند %s"
+
 msgid "Chapter %d"
 msgstr "الفصل %d"
 
@@ -160,6 +166,9 @@ msgstr "النطق عند تحديد وتكرار م&قاطع A-B"
 
 msgid "Announce &chapter markers and names"
 msgstr "النطق عند التنقل بين ال&فصول وأسمائها"
+
+msgid "Announce chapter transitions &automatically during playback"
+msgstr "نطق الانتقال بين الفصول &تلقائياً أثناء التشغيل"
 
 msgid "Seek Jump Step Sizes (Seconds)"
 msgstr "قيم خطوات التقديم والتأخير (بالثواني)"
@@ -982,8 +991,8 @@ msgstr "&ملف كوكيز تسجيل الدخول اليدوي (cookies.txt ب�
 msgid "&Browse for cookies file..."
 msgstr "ا&ستعراض لاختيار ملف الكوكيز..."
 
-msgid "Tip: export cookies.txt while signed in to YouTube using a browser extension such as 'Get cookies.txt LOCALLY' (Chrome/Edge) or 'cookies.txt' (Firefox). The manual file takes priority over the browser choice above, and works even when Chrome blocks automatic cookie extraction."
-msgstr "نصيحة: صدّر ملف cookies.txt وأنت مسجل الدخول إلى يوتيوب باستخدام إضافة متصفح مثل 'Get cookies.txt LOCALLY' (كروم/إيدج) أو 'cookies.txt' (فيرفكس). الملف اليدوي له الأولوية على اختيار المتصفح أعلاه، ويعمل حتى عندما يمنع كروم السحب التلقائي للكوكيز."
+msgid "Tip: export cookies.txt while signed in to YouTube in a standard (non-incognito) browser window using an extension such as 'Get cookies.txt LOCALLY' (Chrome/Edge) or 'cookies.txt' (Firefox). Do not export from Incognito mode as private windows omit login session credentials. The manual file takes priority over the browser choice above."
+msgstr "نصيحة: صدّر ملف cookies.txt وأنت مسجل الدخول إلى يوتيوب في نافذة متصفح عادية (وليست مخفية) باستخدام إضافة مثل 'Get cookies.txt LOCALLY' (كروم/إيدج) أو 'cookies.txt' (فيرفكس). لا تقم بتصدير الكوكيز من وضع التصفح المخفي لأن النوافذ الخاصة تسقط بيانات تسجيل الدخول. الملف اليدوي له الأولوية على خيار المتصفح أعلاه."
 
 msgid "Select cookies.txt file"
 msgstr "اختر ملف cookies.txt"
@@ -1386,6 +1395,200 @@ msgid "Skip &outro credits and end cards"
 msgstr "تخطي شارات &النهاية والخاتمة"
 
 msgid "Skip self-&promotions and unpaid merchandise"
+msgid "French"
+msgstr "الفرنسية"
+
+msgid "Spanish"
+msgstr "الإسبانية"
+
+msgid "German"
+msgstr "الألمانية"
+
+msgid "Italian"
+msgstr "الإيطالية"
+
+msgid "Portuguese"
+msgstr "البرتغالية"
+
+msgid "Russian"
+msgstr "الروسية"
+
+msgid "Japanese"
+msgstr "اليابانية"
+
+msgid "Chinese"
+msgstr "الصينية"
+
+msgid "Chinese (Simplified)"
+msgstr "الصينية (المبسطة)"
+
+msgid "Chinese (Traditional)"
+msgstr "الصينية (التقليدية)"
+
+msgid "Hindi"
+msgstr "الهندية"
+
+msgid "Turkish"
+msgstr "التركية"
+
+msgid "Korean"
+msgstr "الكورية"
+
+msgid "&Follow Developer on Telegram (Mahmoud Abo El Fotouh)..."
+msgstr "&متابعة المطور على تيليجرام (محمود أبو الفتوح)..."
+
+msgid "&Delete Assigned Shortcut"
+msgstr "&حذف الاختصار المعين"
+
+msgid "Shortcut deleted for %s"
+msgstr "تم حذف الاختصار للإجراء %s"
+
+msgid "Replaying from beginning"
+msgstr "إعادة التشغيل من البداية"
+
+msgid "Shorts"
+msgstr "مقاطع Shorts"
+
+msgid "Shorts of %s"
+msgstr "مقاطع Shorts لقناة %s"
+
+msgid "Shorts from your subscriptions"
+msgstr "مقاطع Shorts من اشتراكاتي"
+
+msgid "Trending Shorts worldwide"
+msgstr "مقاطع Shorts الرائجة عالمياً"
+
+msgid "Sync YouTube &watch history and playback progress with your account"
+msgstr "مزامنة &سجل المشاهدة وتقدم التشغيل مع حساب يوتيوب"
+
+msgid "Trending Shorts (popular in your region)"
+msgstr "مقاطع Shorts الرائجة (الأكثر تداولاً في منطقتك)"
+
+msgid "Trending videos (popular in your region)"
+msgstr "الفيديوهات الرائجة (الأكثر تداولاً في منطقتك)"
+
+msgid "New music releases & charts"
+msgstr "أحدث الإصدارات الموسيقية والقوائم"
+
+msgid "Google YouTube Account - Read-Only"
+msgstr "حساب جوجل يوتيوب - قراءة فقط"
+
+msgid "Google YouTube Account &Sign In (Secure Read-Only)..."
+msgstr "تسجيل الدخول بحساب &جوجل يوتيوب (قراءة فقط آمنة)..."
+
+msgid "Sign In with Google (Browser)..."
+msgstr "تسجيل الدخول عبر جوجل (المتصفح)..."
+
+msgid "Sign Out"
+msgstr "تسجيل الخروج"
+
+msgid ""
+"Security Notice:\n"
+"• Permission is strictly READ-ONLY (youtube.readonly).\n"
+"• Tokens are encrypted with Windows DPAPI and tied to your Windows account.\n"
+"• This add-on cannot upload, delete, or modify any of your YouTube content.\n"
+msgstr ""
+"تنبيه أمان:\n"
+"• الصلاحية محصورة في القراءة فقط (youtube.readonly).\n"
+"• التوكنات مشفرة بخوارزمية Windows DPAPI ومربوطة بحساب ويندوز الخاص بك.\n"
+"• لا تستطيع هذه الإضافة رفع أو حذف أو تعديل أي محتوى في حسابك.\n"
+
+msgid "Status: Signed In as '%s' (Read-Only)"
+msgstr "الحالة: مسجل الدخول باسم '%s' (قراءة فقط)"
+
+msgid "Status: Not Signed In"
+msgstr "الحالة: غير مسجل الدخول"
+
+msgid "Opening browser... Please grant permission in your browser."
+msgstr "جاري فتح المتصفح... يرجى منح الإذن في المتصفح."
+
+msgid "Opening browser for Google authorization, please grant permission..."
+msgstr "جاري فتح المتصفح لمصادقة جوجل، يرجى الموافقة على الإذن..."
+
+msgid "Successfully signed in to YouTube as %s"
+msgstr "تم تسجيل الدخول إلى يوتيوب بنجاح باسم %s"
+
+msgid "Successfully signed in to YouTube!"
+msgstr "تم تسجيل الدخول إلى يوتيوب بنجاح!"
+
+msgid "Sign in failed: %s"
+msgstr "فشل تسجيل الدخول: %s"
+
+msgid "Signed out and cleared credentials successfully."
+msgstr "تم تسجيل الخروج ومسح بيانات الاعتماد بنجاح."
+
+msgid "My Playlists (Google Account)"
+msgstr "قوائم التشغيل الخاصة بي (حساب جوجل)"
+
+msgid "My Subscriptions (Google Account)"
+msgstr "اشتراكاتي (حساب جوجل)"
+
+msgid "Liked Videos (Google Account)"
+msgstr "الفيديوهات المعجب بها (حساب جوجل)"
+
+msgid "This section requires YouTube sign-in. Sign in with Google or enable sign-in cookies in HeadlessPlayer settings, then try again."
+msgstr "يتطلب هذا القسم تسجيل الدخول إلى YouTube. سجل دخولك بحساب Google أو فعل الكوكيز في إعدادات المشغل ثم حاول مجدداً."
+
+msgid ""
+"Security Notice:\n"
+"• Permission is strictly READ-ONLY (youtube.readonly).\n"
+"• Tokens are encrypted with Windows DPAPI and tied to your Windows account.\n"
+"• This add-on cannot upload, delete, or modify any of your YouTube content.\n"
+msgstr ""
+"تنبيه أمان:\n"
+"• الصلاحية محصورة في القراءة فقط (youtube.readonly).\n"
+"• التوكنات مشفرة بخوارزمية Windows DPAPI ومربوطة بحساب ويندوز الخاص بك.\n"
+"• لا تستطيع هذه الإضافة رفع أو حذف أو تعديل أي محتوى في حسابك.\n"
+
+msgid "Load more items..."
+msgstr "تحميل المزيد من العناصر..."
+
+msgid "— [Load more items...] —"
+msgstr "— [تحميل المزيد من العناصر...] —"
+
+msgid "Loading more items..."
+msgstr "جاري تحميل المزيد من العناصر..."
+
+msgid "%d more items loaded"
+msgstr "تم تحميل %d عناصر إضافية"
+
+msgid "No more items found."
+msgstr "لا توجد عناصر إضافية."
+
+msgid "%d more items loaded: %s"
+msgstr "تم تحميل %d عناصر إضافية: %s"
+
+msgid "Loading more items, please wait..."
+msgstr "جاري تحميل المزيد من العناصر، يرجى الانتظار..."
+
+msgid "&Category:"
+msgstr "&الفئة:"
+
+msgid "General & Playback"
+msgstr "الخيارات العامة والتشغيل"
+
+msgid "Online Streaming & SponsorBlock"
+msgstr "البث عبر الإنترنت وتجاوز الإعلانات"
+
+msgid "Shortcuts, Updates & About"
+msgstr "اختصارات المفاتيح والتحديثات والمعلومات"
+
+msgid "Calculate remaining &time based on current playback speed"
+msgstr "حساب الوقت المتبقي وفق سرعة التشغيل الحالية"
+
+msgid "Original remaining time: %s"
+msgstr "الوقت المتبقي الأصلي للمسار: %s"
+
+msgid "Skip &sponsors and paid advertisements"
+msgstr "تخطي &الرعاة والإعلانات المدفوعة"
+
+msgid "Skip &intro animations and intermission breaks"
+msgstr "تخطي شارات &البداية والمقدمات"
+
+msgid "Skip &outro credits and end cards"
+msgstr "تخطي شارات &النهاية والخاتمة"
+
+msgid "Skip self-&promotions and unpaid merchandise"
 msgstr "تخطي الترويج &الذاتي والمنتجات"
 
 msgid "Skip subscribe and like inter&action reminders"
@@ -1393,3 +1596,121 @@ msgstr "تخطي تذكيرات &التفاعل والاشتراك"
 
 msgid "Skip non-&music sections in music videos"
 msgstr "تخطي المقاطع غير &الموسيقية في الأغاني"
+
+msgid "Remember and &restore last playback session on reopening"
+msgstr "تذكر واستعادة &جلسة التشغيل الأخيرة عند إعادة الفتح"
+
+msgid "Streaming audio &quality:"
+msgstr "&جودة صوت البث:"
+
+msgid "High (Opus ~160 kbps - Best fidelity)"
+msgstr "عالي (Opus ~160 kbps - أعلى نقاء)"
+
+msgid "Medium (AAC ~128 kbps - Standard)"
+msgstr "متوسط (AAC ~128 kbps - قياسي)"
+
+msgid "Low (~64 kbps - Data saver)"
+msgstr "منخفض (~64 kbps - موفر للبيانات)"
+
+msgid "All Actions"
+msgstr "كافة الإجراءات"
+
+msgid "Playback & Core Controls"
+msgstr "التشغيل والتحكم الأساسي"
+
+msgid "Navigation & Chapters"
+msgstr "التنقل والفصول"
+
+msgid "Audio, Volume & Speed"
+msgstr "الصوت ومستوى الصوت والسرعة"
+
+msgid "Files, Streaming & Information"
+msgstr "الملفات والبث والمعلومات"
+
+msgid "&Filter Actions by Category:"
+msgstr "&تصفية الإجراءات حسب الفئة:"
+
+msgid "The shortcut '%s' is already assigned to '%s'.\n\nDo you want to reassign it to '%s' and remove it from '%s'?"
+msgstr "الاختصار '%s' معين بالفعل للإجراء '%s'.\n\nهل تريد إعادة تعيينه للإجراء '%s' وإزالته من '%s'؟"
+
+msgid "Shortcut Conflict"
+msgstr "تعارض في الاختصار"
+
+msgid "&Export Shortcuts (JSON)..."
+msgstr "&تصدير الاختصارات (JSON)..."
+
+msgid "&Import Shortcuts (JSON)..."
+msgstr "&استيراد الاختصارات (JSON)..."
+
+msgid "Export Shortcuts to JSON File"
+msgstr "تصدير الاختصارات إلى ملف JSON"
+
+msgid "Import Shortcuts from JSON File"
+msgstr "استيراد الاختصارات من ملف JSON"
+
+msgid "JSON Files (*.json)|*.json|All Files (*.*)|*.*"
+msgstr "ملفات JSON (*.json)|*.json|كافة الملفات (*.*)|*.*"
+
+msgid "Shortcuts successfully exported to:\n%s"
+msgstr "تم تصدير الاختصارات بنجاح إلى:\n%s"
+
+msgid "Export Successful"
+msgstr "نجح التصدير"
+
+msgid "Failed to export shortcuts:\n%s"
+msgstr "فشل تصدير الاختصارات:\n%s"
+
+msgid "Export Error"
+msgstr "خطأ في التصدير"
+
+msgid "Successfully imported %d shortcuts from:\n%s"
+msgstr "تم استيراد %d اختصار بنجاح من:\n%s"
+
+msgid "Import Successful"
+msgstr "نجح الاستيراد"
+
+msgid "Failed to import shortcuts:\n%s"
+msgstr "فشل استيراد الاختصارات:\n%s"
+
+msgid "Import Error"
+msgstr "خطأ في الاستيراد"
+
+msgid "Invalid shortcuts format: expected a JSON object."
+msgstr "تنسيق الاختصارات غير صالح: يُتوقع كائن JSON."
+
+msgid "This is a 32-bit system; the bundled media player requires a 64-bit version of Windows."
+msgstr "هذا النظام 32 بت والمشغل المدمج يتطلب نظام تشغيل ويندوز 64 بت."
+
+msgid "pressed twice"
+msgstr "مرتين متتاليتين"
+
+msgid "Speak remaining playback time (accounts for playback speed)."
+msgstr "نطق الوقت المتبقي للتشغيل (مع حساب سرعة التشغيل)."
+
+msgid "Speak original remaining playback time (unscaled by speed)."
+msgstr "نطق الوقت المتبقي الأصلي للتشغيل (بدون حساب السرعة)."
+
+msgid "Loading stream, please wait..."
+msgstr "جاري تحميل البث، يرجى الانتظار..."
+
+msgid "Reconnecting..."
+msgstr "جاري إعادة الاتصال..."
+
+msgid "Still loading, please wait..."
+msgstr "جاري التحميل، يرجى الانتظار..."
+
+msgid "YouTube requires sign-in verification for this content. Please configure valid sign-in cookies in HeadlessPlayer settings."
+msgstr "يتطلب يوتيوب التحقق من تسجيل الدخول لتشغيل هذا المحتوى. يرجى ضبط كوكيز تسجيل دخول صالحة في إعدادات المشغل الخفي."
+
+msgid "No items found. Your YouTube cookies appear to be missing login credentials. Please export cookies from a standard browser window, not Incognito mode."
+msgstr "لم يتم العثور على أية عناصر. يبدو أن ملف كوكيز يوتيوب يفتقد إلى بيانات تسجيل الدخول. يرجى تصدير الكوكيز من نافذة متصفح عادية وليست مخفية."
+
+msgid "No items found. Sign-in cookies may be invalid or expired. Please verify your cookies in settings."
+msgstr "لم يتم العثور على أية عناصر. قد تكون كوكيز تسجيل الدخول غير صالحة أو منتهية. يرجى التحقق من الكوكيز في الإعدادات."
+
+msgid "Notice: The selected cookies file does not appear to contain YouTube authentication tokens.\n\nFor YouTube account feeds (Recommendations, Subscriptions, History) to work reliably, please export cookies while signed in to your YouTube account in your browser."
+msgstr "تنبيه: يبدو أن ملف الكوكيز المختار لا يحتوي على توكنات مصادقة يوتيوب.\n\nلكي تعمل خلاصات حساب يوتيوب (المقترحات، الاشتراكات، السجل) بثبات، يرجى تصدير الكوكيز بعد تسجيل الدخول إلى حسابك في المتصفح."
+
+msgid "Cookies Verification"
+msgstr "التحقق من الكوكيز"
+

@@ -216,6 +216,11 @@ class Playlist:
         with self._lock:
             return len(self._tracks)
 
+    @property
+    def track_count(self) -> int:
+        """Alias for count."""
+        return self.count
+
     def __len__(self) -> int:
         return self.count
 
@@ -249,6 +254,11 @@ class Playlist:
 
     @property
     def shuffle(self) -> bool:
+        with self._lock:
+            return self._shuffle
+
+    @property
+    def is_shuffled(self) -> bool:
         with self._lock:
             return self._shuffle
 
@@ -918,7 +928,7 @@ class Playlist:
     def to_dict(self) -> Dict[str, Any]:
         with self._lock:
             return {
-                "tracks": [t.path for t in self._tracks],
+                "tracks": [t.to_dict() if hasattr(t, "to_dict") else t.path for t in self._tracks],
                 "current_index": self.original_index,
                 "shuffle": self._shuffle,
                 "repeat_mode": self._repeat_mode.value,
@@ -927,16 +937,19 @@ class Playlist:
 
     def from_dict(self, data: Dict[str, Any]) -> None:
         with self._lock:
-            paths = data.get("tracks", [])
+            items = data.get("tracks", [])
             self.clear()
-            if paths:
-                self._tracks = [
-                    Track.from_path(p) for p in paths
-                    if p and (
-                        str(p).strip().lower().startswith(("http://", "https://"))
-                        or (os.path.exists(p) and is_supported_media_file(p))
-                    )
-                ]
+            if items:
+                for it in items:
+                    if isinstance(it, dict):
+                        tr = Track.from_dict(it)
+                        p = tr.path
+                        if p and (tr.is_stream or (os.path.exists(p) and is_supported_media_file(p))):
+                            self._tracks.append(tr)
+                    elif isinstance(it, str) and it:
+                        p = it
+                        if str(p).strip().lower().startswith(("http://", "https://", "ytdl://", "custom://")) or (os.path.exists(p) and is_supported_media_file(p)):
+                            self._tracks.append(Track.from_path(p))
             self._repeat_mode = RepeatMode.from_string(data.get("repeat_mode", "off"))
             self._auto_next = bool(data.get("auto_next", True))
             saved_idx = int(data.get("current_index", 0))
@@ -948,3 +961,4 @@ class Playlist:
             should_shuffle = bool(data.get("shuffle", False))
             if should_shuffle:
                 self.set_shuffle(True)
+

@@ -120,20 +120,26 @@ class StateStore:
 
     def save_last_playlist(
         self,
-        tracks: Sequence[str],
+        tracks: Sequence[Union[str, Dict[str, Any]]],
         current_index: int = 0,
+        position: float = 0.0,
         shuffle: bool = False,
         repeat_mode: str = "off",
-        auto_next: bool = True
+        auto_next: bool = True,
+        source_target: Optional[str] = None,
+        source_type: str = "listing"
     ) -> None:
-        track_list = [{"path": t} if isinstance(t, str) else t for t in tracks]
+        track_list = [{"path": t} if isinstance(t, str) else dict(t) for t in tracks]
         self._db.save_playlist_state(
             name="default",
             tracks=track_list,
             current_index=current_index,
+            position=position,
             shuffle=shuffle,
             repeat_mode=str(repeat_mode),
-            auto_next=auto_next
+            auto_next=auto_next,
+            source_target=source_target,
+            source_type=source_type
         )
 
     def get_last_playlist(self) -> Dict[str, Any]:
@@ -141,6 +147,34 @@ class StateStore:
 
     def clear_last_playlist(self) -> None:
         self._db.clear_playlist_state("default")
+
+    def save_last_session(
+        self,
+        tracks: Sequence[Union[str, Dict[str, Any]]],
+        current_index: int = 0,
+        position: float = 0.0,
+        shuffle: bool = False,
+        repeat_mode: str = "off",
+        auto_next: bool = True,
+        source_target: Optional[str] = None,
+        source_type: str = "listing"
+    ) -> None:
+        self.save_last_playlist(
+            tracks=tracks,
+            current_index=current_index,
+            position=position,
+            shuffle=shuffle,
+            repeat_mode=repeat_mode,
+            auto_next=auto_next,
+            source_target=source_target,
+            source_type=source_type
+        )
+
+    def get_last_session(self) -> Dict[str, Any]:
+        return self.get_last_playlist()
+
+    def clear_last_session(self) -> None:
+        self.clear_last_playlist()
 
     # -------------------------------------------------------------------------
     # Player Settings API

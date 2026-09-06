@@ -77,6 +77,11 @@ class PlayerController:
         self._stream_audio_tracks: List[Dict[str, Any]] = []
         self._stream_audio_track_idx: int = 0
 
+        # Stream resolution guard and debounce tracking
+        self._is_resolving_stream: bool = False
+        self._resolving_track_path: Optional[str] = None
+        self._stream_auto_retries: int = 0
+
         # Dynamic streaming queue auto-extension tracking
         self._active_stream_source_url: Optional[str] = None
         self._active_stream_source_target: Optional[str] = None
@@ -91,6 +96,14 @@ class PlayerController:
 
         # Double-press tracking for remaining time queries
         self._last_remaining_time_press: float = 0.0
+
+        # Periodic session heartbeat auto-save tracking
+        self._last_heartbeat_save_time: float = time.time()
+
+        # Chapter transition tracking for automatic announcements and duplicate suppression
+        self._active_native_chapter_idx: Optional[int] = None
+        self._active_stream_chapter_idx: Optional[int] = None
+        self._suppress_next_auto_chapter: bool = False
 
         # Bind engine event callbacks
 
@@ -145,6 +158,10 @@ class PlayerController:
         except (ValueError, TypeError):
             self.engine.bass_gain = 0.0
 
+        # 5. Restore playback session if enabled
+        if cfg.get("rememberPlaybackState", False):
+            self.restore_session(auto_play=False)
+
     def _apply_config_to_input_layer(self, cfg: Dict[str, Any]) -> None:
         """Propagate seek/speed/volume step sizes to input_layer."""
         if not self.input_layer:
@@ -172,6 +189,10 @@ class PlayerController:
             self._is_terminating = True
             if hasattr(self.speech, "cancel_debounced_seek"):
                 self.speech.cancel_debounced_seek()
+            if getConfigValue("rememberPlaybackState", False):
+                self.save_session()
+            else:
+                self.state_store.clear_last_session()
             self.save_current_position()
             self.engine.shutdown()
 
@@ -195,6 +216,17 @@ class PlayerController:
                 self.speech.cancel_debounced_seek()
 
             log_info("CONTROLLER", "toggle_play_pause invoked: running=%s, loaded=%s, paused=%s", self.engine.is_running, getattr(self.engine, "is_loaded", False), getattr(self.engine, "paused", False))
+
+            if getattr(self, "_is_resolving_stream", False):
+                self.speech.speak(_("Loading stream, please wait..."))
+                return False
+
+            if self.playlist.is_empty() and getConfigValue("rememberPlaybackState", False):
+                if self.restore_session(auto_play=False):
+                    cur_track = self.playlist.get_current_track()
+                    if cur_track:
+                        return self.play_track(cur_track)
+
             if not self.engine.is_running:
                 self.start()
                 cur_track = self.playlist.get_current_track()
@@ -226,6 +258,8 @@ class PlayerController:
             new_pause = self.engine.toggle_pause()
             if new_pause:
                 self.save_current_position()
+                if getattr(self, "_restore_last_session", True):
+                    self.save_session()
                 self.speech.announce_playback_state("paused")
             else:
                 self.speech.announce_playback_state("playing")
@@ -238,6 +272,9 @@ class PlayerController:
     def play(self) -> bool:
         """Explicitly starts or resumes playback."""
         with self._lock:
+            if getattr(self, "_is_resolving_stream", False):
+                self.speech.speak(_("Loading stream, please wait..."))
+                return False
             if not self.engine.is_running or not getattr(self.engine, "path", None):
                 cur_track = self.playlist.get_current_track()
                 if cur_track:
@@ -267,6 +304,11 @@ class PlayerController:
         with self._lock:
             if hasattr(self.speech, "cancel_debounced_seek"):
                 self.speech.cancel_debounced_seek()
+            if getattr(self, "_is_resolving_stream", False):
+                self._is_resolving_stream = False
+                self._resolving_track_path = None
+                self._stream_play_generation += 1
+            self._stream_auto_retries = 0
             cur_path = self._last_loaded_path or getattr(self.engine, "path", None)
             if not cur_path:
                 cur_track = self.playlist.get_current_track()
@@ -535,18 +577,24 @@ class PlayerController:
     # -------------------------------------------------------------------------
 
     def next_chapter(self) -> bool:
-        """Jumps to next chapter and announces title/index."""
+        """Jumps to next chapter and announces title/index with start time."""
         with self._lock:
             if not self.engine.is_running:
                 return False
 
             # 1. Native mpv chapters for local media containers
             if self.engine.chapter_count > 0:
+                cur_chap = self.engine.chapter if self.engine.chapter is not None else -1
+                target_idx = min(self.engine.chapter_count - 1, cur_chap + 1) if cur_chap >= 0 else 0
                 res = self.engine.next_chapter()
                 if res:
-                    chap_num = self.engine.chapter + 1
-                    title = self.engine.get_current_chapter_title()
-                    self.speech.announce_chapter(chap_num, title)
+                    self._active_native_chapter_idx = target_idx
+                    self._suppress_next_auto_chapter = True
+                    chap_info = self.engine.get_chapter_info(target_idx) if hasattr(self.engine, "get_chapter_info") else None
+                    chap_num = target_idx + 1
+                    title = chap_info.get("title") if chap_info else self.engine.get_current_chapter_title()
+                    start_time = float(chap_info["time"]) if (chap_info and chap_info.get("time") is not None) else self.engine.get_current_chapter_start_time()
+                    self.speech.announce_chapter(chap_num, title, start_time=start_time)
                     return True
 
             # 2. Extracted stream chapters for YouTube / online media
@@ -564,26 +612,42 @@ class PlayerController:
                     target_ch = chapters[next_idx]
                     target_sec = float(target_ch.get("start_time", 0.0))
                     title = target_ch.get("title", f"Chapter {next_idx + 1}")
+                    self._active_stream_chapter_idx = next_idx
+                    self._suppress_next_auto_chapter = True
                     self.engine.seek_absolute(target_sec)
-                    self.speech.announce_chapter(next_idx + 1, title)
+                    self.speech.announce_chapter(next_idx + 1, title, start_time=target_sec)
                     return True
 
             self.speech.announce_no_chapters()
             return False
 
     def prev_chapter(self) -> bool:
-        """Jumps to previous chapter and announces title/index."""
+        """Jumps to previous chapter and announces title/index with start time."""
         with self._lock:
             if not self.engine.is_running:
                 return False
 
             # 1. Native mpv chapters for local media containers
             if self.engine.chapter_count > 0:
+                cur_chap = self.engine.chapter if self.engine.chapter is not None else 0
+                cur_time = self.engine.time_pos or 0.0
+                cur_info = self.engine.get_chapter_info(cur_chap) if hasattr(self.engine, "get_chapter_info") else None
+                cur_start = float(cur_info["time"]) if (cur_info and cur_info.get("time") is not None) else 0.0
+
+                if (cur_time - cur_start) > 3.0 or cur_chap == 0:
+                    target_idx = max(0, cur_chap)
+                else:
+                    target_idx = max(0, cur_chap - 1)
+
                 res = self.engine.prev_chapter()
                 if res:
-                    chap_num = max(1, self.engine.chapter + 1)
-                    title = self.engine.get_current_chapter_title()
-                    self.speech.announce_chapter(chap_num, title)
+                    self._active_native_chapter_idx = target_idx
+                    self._suppress_next_auto_chapter = True
+                    chap_info = self.engine.get_chapter_info(target_idx) if hasattr(self.engine, "get_chapter_info") else None
+                    chap_num = target_idx + 1
+                    title = chap_info.get("title") if chap_info else self.engine.get_current_chapter_title()
+                    start_time = float(chap_info["time"]) if (chap_info and chap_info.get("time") is not None) else self.engine.get_current_chapter_start_time()
+                    self.speech.announce_chapter(chap_num, title, start_time=start_time)
                     return True
 
             # 2. Extracted stream chapters for YouTube / online media
@@ -605,8 +669,10 @@ class PlayerController:
                 target_ch = chapters[target_idx]
                 target_sec = float(target_ch.get("start_time", 0.0))
                 title = target_ch.get("title", f"Chapter {target_idx + 1}")
+                self._active_stream_chapter_idx = target_idx
+                self._suppress_next_auto_chapter = True
                 self.engine.seek_absolute(target_sec)
-                self.speech.announce_chapter(target_idx + 1, title)
+                self.speech.announce_chapter(target_idx + 1, title, start_time=target_sec)
                 return True
 
             self.speech.announce_no_chapters()
@@ -665,6 +731,12 @@ class PlayerController:
             return self._play_stream_track(track)
 
         with self._lock:
+            self._is_resolving_stream = False
+            self._resolving_track_path = None
+            self._stream_auto_retries = 0
+            self._active_stream_source_target = None
+            self._active_stream_source_url = None
+            self._active_stream_has_more = False
             self._current_stream_chapters = list(getattr(track, "chapters", [])) if getattr(track, "chapters", None) else []
             # Invalidate any in-flight online stream resolution
             self._stream_play_generation += 1
@@ -674,16 +746,17 @@ class PlayerController:
             # 2. Target track to load
             target_path = track.path
 
-            # 3. Retrieve saved position for THIS specific track
-            cfg = getConfig()
-            if cfg.get("resumePosition", True):
-                saved_pos = self.state_store.get_position(target_path)
-                if saved_pos and saved_pos >= 1.0:
-                    self._pending_resume_pos = saved_pos
+            # 3. Retrieve saved position for THIS specific track (if not already set by session restore)
+            if self._pending_resume_pos is None or self._pending_resume_pos < 0.5:
+                cfg = getConfig()
+                if cfg.get("resumePosition", True):
+                    saved_pos = self.state_store.get_position(target_path)
+                    if saved_pos and saved_pos >= 1.0:
+                        self._pending_resume_pos = saved_pos
+                    else:
+                        self._pending_resume_pos = None
                 else:
                     self._pending_resume_pos = None
-            else:
-                self._pending_resume_pos = None
 
             # 4. Update currently loaded path
             self._last_loaded_path = target_path
@@ -833,8 +906,12 @@ class PlayerController:
 
     def _get_last_browse_dir(self) -> str:
         """Retrieves directory of the last played file or last browsed folder."""
+        saved_dir = self.state_store.get_setting("last_browse_dir")
+        if saved_dir and isinstance(saved_dir, str) and os.path.isdir(saved_dir):
+            return os.path.abspath(saved_dir)
+
         last_path = self._last_loaded_path
-        if last_path and os.path.exists(last_path):
+        if last_path and os.path.exists(last_path) and not last_path.startswith("http"):
             if os.path.isdir(last_path):
                 return os.path.abspath(last_path)
             return os.path.abspath(os.path.dirname(last_path))
@@ -843,7 +920,7 @@ class PlayerController:
         if recent:
             for r in recent:
                 p = r.get("file_path") if isinstance(r, dict) else r
-                if p and isinstance(p, str) and os.path.exists(p):
+                if p and isinstance(p, str) and not str(p).startswith("http") and os.path.exists(p):
                     return os.path.abspath(os.path.dirname(p) if os.path.isfile(p) else p)
 
         return os.path.expanduser("~")
@@ -949,7 +1026,7 @@ class PlayerController:
     def close_player(self) -> None:
         """
         Completely closes and stops the media player:
-        1. Saves current playback position if enabled.
+        1. Saves current playback session if enabled.
         2. Stops mpv playback and releases media resources.
         3. Shuts down / terminates background engine process.
         4. Clears active playlist queue.
@@ -958,6 +1035,10 @@ class PlayerController:
         with self._lock:
             if hasattr(self, "history_sync") and self.history_sync:
                 self.history_sync.stop_session(reason="stop")
+            if getConfigValue("rememberPlaybackState", False):
+                self.save_session()
+            else:
+                self.state_store.clear_last_session()
             self.save_current_position()
             self.engine.stop()
             self.engine.shutdown()
@@ -1352,6 +1433,12 @@ class PlayerController:
             fetching = getattr(self, "_active_stream_fetching", False)
             if not target or not has_more or fetching:
                 return
+            # A purely local playlist must never auto-extend from online sources
+            if not any(getattr(t, "is_stream", False) for t in self.playlist._tracks):
+                self._active_stream_source_target = None
+                self._active_stream_source_url = None
+                self._active_stream_has_more = False
+                return
             count = self.playlist.count
             if count >= 500:
                 self._active_stream_has_more = False
@@ -1413,18 +1500,27 @@ class PlayerController:
         The direct audio URL is (re)extracted at play time so links never expire.
         """
         with self._lock:
+            # If this exact track is already resolving in background, debounce and do not spawn duplicate threads
+            if getattr(self, "_is_resolving_stream", False) and getattr(self, "_resolving_track_path", None) == track.path:
+                self.speech.speak(_("Loading stream, please wait..."))
+                return True
+
+            self._is_resolving_stream = True
+            self._resolving_track_path = track.path
+
             self.save_current_position()
             self._stream_play_generation += 1
             generation = self._stream_play_generation
             self._last_loaded_path = track.path
             self._current_stream_chapters = list(getattr(track, "chapters", [])) if getattr(track, "chapters", None) else []
 
-            cfg = getConfig()
-            if cfg.get("resumePosition", True) and not track.metadata.get("is_live"):
-                saved_pos = self.state_store.get_position(track.path)
-                self._pending_resume_pos = saved_pos if (saved_pos and saved_pos >= 1.0) else None
-            else:
-                self._pending_resume_pos = None
+            if self._pending_resume_pos is None or self._pending_resume_pos < 0.5:
+                cfg = getConfig()
+                if cfg.get("resumePosition", True) and not track.metadata.get("is_live"):
+                    saved_pos = self.state_store.get_position(track.path)
+                    self._pending_resume_pos = saved_pos if (saved_pos and saved_pos >= 1.0) else None
+                else:
+                    self._pending_resume_pos = None
 
             orig_idx = self.playlist.current_index + 1
             total = self.playlist.count
@@ -1451,6 +1547,9 @@ class PlayerController:
             logger.error("Stream resolution failed for %s: %s", track.path, e)
             with self._lock:
                 stale = generation != self._stream_play_generation
+                if not stale:
+                    self._is_resolving_stream = False
+                    self._resolving_track_path = None
             if not stale:
                 self.engine.stop()
                 from . import stream_engine as se
@@ -1466,6 +1565,9 @@ class PlayerController:
         with self._lock:
             if generation != self._stream_play_generation or self._is_terminating:
                 return
+
+            self._is_resolving_stream = False
+            self._resolving_track_path = None
 
             # Enrich track metadata from the full extraction
             if info.get("title") and (not track.title or track.title == track.path):
@@ -1504,6 +1606,10 @@ class PlayerController:
         if not file_path or not os.path.exists(file_path):
             return
 
+        folder_dir = os.path.dirname(os.path.abspath(file_path))
+        if os.path.isdir(folder_dir):
+            self.state_store.save_setting("last_browse_dir", folder_dir)
+
         with self._lock:
             track = self.playlist.load_file_with_folder(file_path, append=False)
             if track:
@@ -1515,6 +1621,8 @@ class PlayerController:
         """Callback when user selects a folder in folder browser dialog."""
         if not folder_path or not os.path.isdir(folder_path):
             return
+
+        self.state_store.save_setting("last_browse_dir", os.path.abspath(folder_path))
 
         with self._lock:
             count = self.playlist.load_folder(folder_path, recursive=False, append=False)
@@ -1569,6 +1677,84 @@ class PlayerController:
                 duration_sec=dur
             )
 
+    def save_session(self) -> None:
+        """
+        Saves current playback session (playlist queue, current index, playback position,
+        shuffle, repeat mode, auto-next, and stream metadata) into state_store.
+        """
+        with self._lock:
+            if self.playlist.is_empty():
+                return
+            cur_pos = getattr(self.engine, "time_pos", 0.0) or 0.0
+            if cur_pos <= 0.0 and self._pending_resume_pos and self._pending_resume_pos >= 0.5:
+                cur_pos = self._pending_resume_pos
+            if cur_pos <= 0.0:
+                cur_track = self.playlist.get_current_track()
+                if cur_track and cur_track.path:
+                    saved = self.state_store.get_position(cur_track.path)
+                    if saved and saved >= 1.0:
+                        cur_pos = saved
+            st_target = getattr(self, "_active_stream_source_target", None)
+            st_type = getattr(self, "_active_stream_source_type", "listing")
+            if not any(getattr(t, "is_stream", False) for t in self.playlist._tracks):
+                st_target = None
+            tracks = [t.to_dict() if hasattr(t, "to_dict") else t.path for t in self.playlist._tracks]
+            self.state_store.save_last_session(
+                tracks=tracks,
+                current_index=self.playlist.original_index,
+                position=cur_pos,
+                shuffle=self.playlist.shuffle,
+                repeat_mode=self.playlist.repeat_mode.value,
+                auto_next=self.playlist.auto_next,
+                source_target=st_target,
+                source_type=st_type
+            )
+            log_info("CONTROLLER", "Playback session saved: %d tracks, idx=%d, pos=%.2f",
+                     len(tracks), self.playlist.original_index, cur_pos)
+
+    def restore_session(self, auto_play: bool = False) -> bool:
+        """
+        Restores the last saved playback session (tracks, position, queue, stream metadata).
+        Returns True if a session was successfully restored, False otherwise.
+        """
+        with self._lock:
+            if not self.playlist.is_empty():
+                return False
+            st = self.state_store.get_last_session()
+            if not st:
+                return False
+            tracks_data = st.get("tracks", [])
+            if not tracks_data:
+                return False
+
+            self.playlist.from_dict(st)
+            if self.playlist.is_empty():
+                return False
+
+            cur_track = self.playlist.get_current_track()
+            if cur_track:
+                self._last_loaded_path = cur_track.path
+                self._current_stream_chapters = list(getattr(cur_track, "chapters", []))
+                pos = float(st.get("position", 0.0))
+                if pos >= 0.5:
+                    self._pending_resume_pos = pos
+
+            if st.get("source_target"):
+                self._active_stream_source_target = st["source_target"]
+                self._active_stream_source_url = st["source_target"]
+                self._active_stream_source_type = st.get("source_type", "listing")
+                self._active_stream_next_idx = len(tracks_data) + 1
+                self._active_stream_batch_size = 50
+                self._active_stream_has_more = True
+
+            log_info("CONTROLLER", "Playback session restored: %d tracks, current_index=%d, pos=%.2f",
+                     self.playlist.count, self.playlist.original_index, float(st.get("position", 0.0)))
+
+            if auto_play and cur_track:
+                self.play_track(cur_track)
+
+            return True
+
     # -------------------------------------------------------------------------
     # Engine Event Handlers
     # -------------------------------------------------------------------------
@@ -1576,6 +1762,13 @@ class PlayerController:
     def _on_engine_file_loaded(self) -> None:
         """Fired when mpv finishes parsing a newly loaded media file."""
         with self._lock:
+            self._is_resolving_stream = False
+            self._resolving_track_path = None
+            self._stream_auto_retries = 0
+            self._active_native_chapter_idx = None
+            self._active_stream_chapter_idx = None
+            self._suppress_next_auto_chapter = False
+
             cur = self.playlist.get_current_track()
             if cur and (not cur.duration or cur.duration <= 0):
                 dur = getattr(self.engine, "duration", None)
@@ -1589,6 +1782,9 @@ class PlayerController:
                 if not getattr(self, "_silence_resume_announcement", False):
                     self.speech.announce_resume_position(target)
                 self._silence_resume_announcement = False
+
+        if getattr(self, "_restore_last_session", True):
+            self.save_session()
 
 
     def _on_engine_track_end(self, reason: str) -> None:
@@ -1607,26 +1803,86 @@ class PlayerController:
 
         with self._lock:
             cur_path = self._last_loaded_path or getattr(self.engine, "path", None)
+            cur_track = self.playlist.get_current_track()
+            dur = getattr(self.engine, "duration", 0.0) or (cur_track.duration if cur_track else 0.0) or 0.0
+            cur_pos = getattr(self.engine, "time_pos", 0.0) or 0.0
+            is_stream = bool(cur_track and getattr(cur_track, "is_stream", False))
 
             if reason == "eof":
-                # Clear completed position in state store
-                if cur_path:
-                    self.state_store.clear_position(cur_path)
-
-                # Coordinate auto-next or track repeat
-                next_t = self.playlist.on_track_ended()
-                if next_t:
-                    self.play_track(next_t)
-                    self._check_stream_queue_auto_extend()
+                # Check if playback finished cleanly or terminated prematurely
+                is_clean_finish = False
+                if dur > 15.0:
+                    is_clean_finish = cur_pos >= max(0.0, dur - 8.0)
+                elif dur > 0:
+                    is_clean_finish = cur_pos >= max(0.0, dur - 3.0)
+                elif not is_stream:
+                    # Non-stream local media with unknown duration
+                    is_clean_finish = True
                 else:
-                    self._last_loaded_path = None
-                    self.tone_manager.play_boundary_hit()
+                    # Stream with unknown duration or live stream:
+                    # Do not treat as clean auto-next completion
+                    is_clean_finish = False
+
+                if is_clean_finish:
+                    self._stream_auto_retries = 0
+                    # Clear completed position in state store
+                    if cur_path:
+                        self.state_store.clear_position(cur_path)
+
+                    # Coordinate auto-next or track repeat
+                    next_t = self.playlist.on_track_ended()
+                    if next_t:
+                        self.play_track(next_t)
+                        self._check_stream_queue_auto_extend()
+                    else:
+                        self._last_loaded_path = None
+                        self.tone_manager.play_boundary_hit()
+                else:
+                    # Premature EOF (network drop, socket closure, demuxer stall)
+                    logger.warning(
+                        "Track '%s' ended prematurely at pos=%.2f / dur=%.2f (is_stream=%s, reason=%s)",
+                        cur_path, cur_pos, dur, is_stream, reason
+                    )
+                    # Preserve playback position so progress is never lost
+                    if cur_path and cur_pos > 0.5:
+                        self.state_store.save_position(cur_path, cur_pos, dur)
+
+                    if is_stream and cur_track:
+                        auto_retries = getattr(self, "_stream_auto_retries", 0)
+                        if auto_retries < 2:
+                            self._stream_auto_retries = auto_retries + 1
+                            logger.info(
+                                "Auto-reconnecting stream for '%s' at %.2f (attempt %d/2)",
+                                cur_track.display_name, cur_pos, self._stream_auto_retries
+                            )
+                            # Invalidate cached stream URL to force re-resolution with fresh token
+                            try:
+                                from . import stream_engine
+                                stream_engine.clear_resolve_cache()
+                            except Exception:
+                                pass
+                            self._pending_resume_pos = cur_pos
+                            self._silence_resume_announcement = True
+                            self.speech.speak(_("Reconnecting..."))
+                            self.play_track(cur_track)
+                            return
+                        else:
+                            self._stream_auto_retries = 0
+                            self.engine.stop()
+                            self.tone_manager.play_boundary_hit()
+                            self.speech.speak(_(
+                                "Playback of this stream failed. Press Enter or Space to retry."
+                            ))
+                            return
+                    else:
+                        self.engine.stop()
+                        self.tone_manager.play_boundary_hit()
+                        self.speech.speak(_("Playback stopped."))
+                        return
+
             elif reason in ("stop", "quit"):
                 self.save_current_position()
             elif reason == "error":
-                # mpv could not open the media (e.g. an expired or blocked
-                # stream URL). Stay silent for local files (rare) but tell
-                # the user clearly for online streams instead of dead air.
                 cur = self.playlist.get_current_track()
                 if cur and getattr(cur, "is_stream", False):
                     # Drop the cached (bad/expired) stream URL so a retry
@@ -1642,8 +1898,78 @@ class PlayerController:
                     ))
 
     def _on_engine_property_change(self, name: str, data: Any) -> None:
-        """Fired on mpv property change events."""
-        pass
+        """Fired on mpv property change events (heartbeat auto-save and chapter transition announcements)."""
+        # Periodic 60s session heartbeat auto-save
+        if name == "time-pos" and data is not None:
+            now = time.time()
+            if getattr(self, "_restore_last_session", True) and (now - getattr(self, "_last_heartbeat_save_time", 0.0)) >= 60.0:
+                self._last_heartbeat_save_time = now
+                self.save_session()
+
+        if not getConfigValue("announceChapterAuto", True):
+            return
+
+        if not self.speech.is_announcement_enabled("chapter"):
+            return
+
+        # 1. Native mpv container chapters
+        if name == "chapter" and data is not None:
+            try:
+                ch_idx = int(data)
+            except (ValueError, TypeError):
+                return
+
+            with self._lock:
+                if self._suppress_next_auto_chapter:
+                    self._suppress_next_auto_chapter = False
+                    self._active_native_chapter_idx = ch_idx
+                    return
+
+                if self._active_native_chapter_idx is not None and ch_idx != self._active_native_chapter_idx:
+                    self._active_native_chapter_idx = ch_idx
+                    chap_num = ch_idx + 1
+                    chap_info = self.engine.get_chapter_info(ch_idx) if hasattr(self.engine, "get_chapter_info") else None
+                    title = chap_info.get("title") if chap_info else self.engine.get_current_chapter_title()
+                    start_time = float(chap_info["time"]) if (chap_info and chap_info.get("time") is not None) else self.engine.get_current_chapter_start_time()
+                    self.speech.announce_chapter(chap_num, title, start_time=start_time)
+                else:
+                    self._active_native_chapter_idx = ch_idx
+
+        # 2. Extracted stream chapters for YouTube / online media
+        elif name == "time-pos" and data is not None:
+            chapters = getattr(self, "_current_stream_chapters", None)
+            if not chapters:
+                return
+
+            try:
+                pos = float(data)
+            except (ValueError, TypeError):
+                return
+
+            cur_ch_idx = None
+            for i in range(len(chapters) - 1, -1, -1):
+                st = float(chapters[i].get("start_time", 0.0))
+                if pos >= (st - 0.2):
+                    cur_ch_idx = i
+                    break
+
+            if cur_ch_idx is None:
+                cur_ch_idx = 0
+
+            with self._lock:
+                if self._suppress_next_auto_chapter:
+                    self._suppress_next_auto_chapter = False
+                    self._active_stream_chapter_idx = cur_ch_idx
+                    return
+
+                if self._active_stream_chapter_idx is not None and cur_ch_idx != self._active_stream_chapter_idx:
+                    self._active_stream_chapter_idx = cur_ch_idx
+                    target_ch = chapters[cur_ch_idx]
+                    target_sec = float(target_ch.get("start_time", 0.0))
+                    title = target_ch.get("title", f"Chapter {cur_ch_idx + 1}")
+                    self.speech.announce_chapter(cur_ch_idx + 1, title, start_time=target_sec)
+                elif self._active_stream_chapter_idx is None:
+                    self._active_stream_chapter_idx = cur_ch_idx
 
     def _on_engine_playback_restart(self) -> None:
         """Fired when mpv restarts playback after seeking."""

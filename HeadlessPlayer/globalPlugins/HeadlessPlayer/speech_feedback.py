@@ -179,6 +179,7 @@ class SpeechFeedback:
             "track": "announceTrack",
             "loop": "announceLoop",
             "chapter": "announceChapter",
+            "chapter_auto": "announceChapterAuto",
         }
         config_key = key_map.get(category.lower())
         if config_key and config_key in cfg:
@@ -526,14 +527,25 @@ class SpeechFeedback:
         else:
             self.speak(_("Repeat disabled"))
 
-    def announce_chapter(self, chapter_num: int, title: Optional[str] = None) -> None:
+    def announce_chapter(
+        self,
+        chapter_num: int,
+        title: Optional[str] = None,
+        start_time: Optional[float] = None
+    ) -> None:
         """
-        Announces chapter navigation.
+        Announces chapter navigation or transition with optional title and start time.
         """
         if not self.is_announcement_enabled("chapter"):
             return
-        if title:
+        from .utils import format_time
+        time_str = format_time(start_time) if start_time is not None and start_time >= 0 else ""
+        if title and time_str:
+            msg = _("Chapter %d: %s, at %s") % (chapter_num, title, time_str)
+        elif title:
             msg = _("Chapter %d: %s") % (chapter_num, title)
+        elif time_str:
+            msg = _("Chapter %d, at %s") % (chapter_num, time_str)
         else:
             msg = _("Chapter %d") % chapter_num
         self.speak(msg)

@@ -806,6 +806,28 @@ class HeadlessEngine:
             item = self.chapter_list[self.chapter]
             return item.get("title") if isinstance(item, dict) else None
 
+    def get_current_chapter_start_time(self) -> Optional[float]:
+        """Get the start time (in seconds) of the current chapter if available."""
+        with self._lock:
+            if not self.chapter_list or self.chapter < 0 or self.chapter >= len(self.chapter_list):
+                return None
+            item = self.chapter_list[self.chapter]
+            if isinstance(item, dict):
+                t = item.get("time")
+                try:
+                    return float(t) if t is not None else None
+                except (ValueError, TypeError):
+                    return None
+            return None
+
+    def get_chapter_info(self, chapter_idx: int) -> Optional[Dict[str, Any]]:
+        """Get chapter info (title, time) for a specific chapter index."""
+        with self._lock:
+            if not self.chapter_list or chapter_idx < 0 or chapter_idx >= len(self.chapter_list):
+                return None
+            item = self.chapter_list[chapter_idx]
+            return dict(item) if isinstance(item, dict) else None
+
     # -------------------------------------------------------------------------
     # Audio Stream Tracks
     # -------------------------------------------------------------------------

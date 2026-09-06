@@ -17,6 +17,14 @@ from typing import List, Optional
 
 logger = logging.getLogger("HeadlessPlayer.MpvProcess")
 
+try:
+    from . import _  # type: ignore
+except (ImportError, ValueError):
+    try:
+        _ = _  # type: ignore
+    except NameError:
+        _ = lambda text: text
+
 # Default pipe endpoint
 DEFAULT_PIPE_NAME = r"\\.\pipe\nvda_headless_player"
 
@@ -95,18 +103,26 @@ if kernel32 is not None:
 
 
 
+def is_64bit_os() -> bool:
+    """Returns True if the host operating system architecture is 64-bit."""
+    machine = platform.machine().lower()
+    if machine in ("amd64", "x86_64", "em64t", "arm64", "aarch64"):
+        return True
+    if "PROGRAMFILES(X86)" in os.environ:
+        return True
+    return False
+
+
 def get_system_architecture() -> str:
     """
     Detect machine CPU architecture normalized to 'x64', 'arm64', or 'x86'.
     """
-    arch = platform.machine().lower()
-    if arch in ("amd64", "x86_64", "em64t"):
-        return "x64"
-    elif arch in ("arm64", "aarch64"):
-        return "arm64"
-    elif arch in ("i386", "i686", "x86"):
+    if not is_64bit_os():
         return "x86"
-    return "x64"  # Default fallback
+    arch = platform.machine().lower()
+    if arch in ("arm64", "aarch64"):
+        return "arm64"
+    return "x64"
 
 
 def find_mpv_binary(
@@ -142,7 +158,13 @@ def find_mpv_binary(
     ]
     if arch == "x64":
         candidate_bundled.append(os.path.join(addon_root, "resources", "bin", "x64", "mpv.exe"))
-    candidate_bundled.append(os.path.join(addon_root, "resources", "bin", "mpv.exe"))
+        candidate_bundled.append(os.path.join(addon_root, "resources", "bin", "mpv.exe"))
+    elif arch == "x86":
+        # Pure 32-bit Windows system: ONLY check 32-bit binary path to avoid WinError 216
+        candidate_bundled.append(os.path.join(addon_root, "resources", "bin", "x86", "mpv.exe"))
+    else:
+        candidate_bundled.append(os.path.join(addon_root, "resources", "bin", "mpv.exe"))
+
     for path in candidate_bundled:
         if os.path.isfile(path):
             logger.info("Found bundled mpv binary: %s", path)
@@ -177,7 +199,7 @@ def find_mpv_binary(
 def get_default_mpv_args(pipe_name: str = DEFAULT_PIPE_NAME) -> List[str]:
     """
     Construct the baseline headless arguments for mpv.
-    Guarantees no window, no console, no OSD, pitch preservation, and IPC server initialization.
+    Guarantees no window, no console, no OSD, pitch preservation, 100M streaming buffer, and IPC server initialization.
     """
     return [
         "--idle=yes",
@@ -191,6 +213,12 @@ def get_default_mpv_args(pipe_name: str = DEFAULT_PIPE_NAME) -> List[str]:
         "--volume-max=150",
         "--hr-seek=yes",
         "--hr-seek-framedrop=no",
+        "--demuxer-max-bytes=100M",
+        "--demuxer-readahead-secs=30",
+        "--stream-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5",
+        "--demuxer-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5",
+        "--network-timeout=15",
+        "--cache=yes",
         "--ytdl=no",
         "--config=no",
         "--load-scripts=no",
@@ -299,7 +327,16 @@ class MpvProcess:
 
         binary = self.executable_path
         if not binary:
-            logger.error("Cannot launch mpv: No executable found in discovery cascade.")
+            if not is_64bit_os():
+                msg = _("This is a 32-bit system; the bundled media player requires a 64-bit version of Windows.")
+                try:
+                    import ui
+                    ui.message(msg)
+                except Exception:
+                    pass
+                logger.error("Cannot launch mpv: 32-bit OS detected and no 32-bit mpv binary found.")
+            else:
+                logger.error("Cannot launch mpv: No executable found in discovery cascade.")
             return False
 
         args = [binary] + get_default_mpv_args(self.pipe_name) + self.extra_args
@@ -333,6 +370,19 @@ class MpvProcess:
             # Assign to Win32 Job Object for crash daemon protection
             self._assign_process_to_job()
             return True
+        except OSError as e:
+            if getattr(e, "winerror", None) == 216:
+                msg = _("This is a 32-bit system; the bundled media player requires a 64-bit version of Windows.")
+                try:
+                    import ui
+                    ui.message(msg)
+                except Exception:
+                    pass
+                logger.error("Architecture mismatch: %s is a 64-bit binary and cannot run on this 32-bit Windows system.", binary)
+            else:
+                logger.error("Failed to launch mpv subprocess: %s", e, exc_info=True)
+            self.process = None
+            return False
         except Exception as e:
             logger.error("Failed to launch mpv subprocess: %s", e, exc_info=True)
             self.process = None

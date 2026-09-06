@@ -43,13 +43,15 @@ from .tones_helper import tone_manager, ToneCueManager
 from .utils import log_debug, log_exception, log_info, log_error
 
 try:
-    from .config_spec import getConfig
+    from .config_spec import getConfig, getConfigValue
 except ImportError:
     try:
-        from config_spec import getConfig
+        from config_spec import getConfig, getConfigValue
     except ImportError:
         def getConfig() -> Dict[str, Any]:
             return {}
+        def getConfigValue(k: str, d: Any = None) -> Any:
+            return d
 
 logger = logging.getLogger(__name__)
 
@@ -331,9 +333,29 @@ class ModalInputLayer:
         log_debug("INPUT", "set_player_mode: active=%s, announce=%s", active, announce)
 
         if active:
+            try:
+                from .mpv_process import is_64bit_os, find_mpv_binary
+                if not is_64bit_os():
+                    addon_root = getattr(self.controller, "addon_root", None) if self.controller else None
+                    if not find_mpv_binary(addon_root=addon_root):
+                        self.tone_manager.play_mode_exit()
+                        self._is_active = False
+                        self._speak(_("This is a 32-bit system; the bundled media player requires a 64-bit version of Windows."))
+                        return
+            except Exception as e:
+                logger.debug("Error checking 64-bit OS compatibility: %s", e)
+
             self.tone_manager.play_mode_enter()
             if announce:
                 self._speak(_("Player Mode active"))
+            # Restore session if playlist is empty and option is enabled
+            if self.controller and hasattr(self.controller, "restore_session"):
+                try:
+                    if getattr(self.controller, "playlist", None) and self.controller.playlist.is_empty():
+                        if getConfigValue("rememberPlaybackState", False):
+                            self.controller.restore_session(auto_play=False)
+                except Exception as e:
+                    logger.debug("Error restoring session on mode enter: %s", e)
             # Pre-warm mpv engine in background thread so it is instantly ready
             if self.controller and hasattr(self.controller, "start"):
                 import threading
