@@ -60,7 +60,6 @@ from .ipc_client import WinNamedPipeClient
 from .mpv_process import MpvProcess, find_mpv_binary, DEFAULT_PIPE_NAME
 from .playlist import Playlist, Track, RepeatMode
 from .state_store import StateStore, get_state_store
-from .tones_helper import ToneCueManager, tone_manager
 from .speech_feedback import SpeechFeedback, get_speech_feedback, set_speech_feedback
 from .input_layer import ModalInputLayer
 from .controller import PlayerController, get_controller, set_controller
@@ -102,18 +101,16 @@ class GlobalPlugin(_BaseGlobalPlugin):
 
         # 2. Instantiate Components
         self.state_store: StateStore = get_state_store()
-        self.tone_manager: ToneCueManager = tone_manager
         self.speech: SpeechFeedback = get_speech_feedback()
         self.playlist: Playlist = Playlist()
         self.engine: HeadlessEngine = HeadlessEngine()
-        self.input_layer: ModalInputLayer = ModalInputLayer(tone_mgr=self.tone_manager)
+        self.input_layer: ModalInputLayer = ModalInputLayer()
 
         # 3. Instantiate Central Controller
         self.controller: PlayerController = PlayerController(
             engine=self.engine,
             playlist=self.playlist,
             state_store=self.state_store,
-            tone_mgr=self.tone_manager,
             speech_feedback=self.speech,
             input_layer=self.input_layer
         )

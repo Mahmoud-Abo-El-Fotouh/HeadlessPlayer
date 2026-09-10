@@ -70,16 +70,6 @@ LANGUAGE_NAMES: Dict[str, str] = {
     "ko": _("Korean"),
 }
 
-try:
-    from .tones_helper import play_seek_click, tone_manager
-except ImportError:
-    try:
-        from tones_helper import play_seek_click, tone_manager
-    except ImportError:
-        def play_seek_click() -> None:
-            pass
-        tone_manager = None
-
 logger = logging.getLogger("HeadlessPlayer.SpeechFeedback")
 
 # Default rapid seek debounce interval in seconds
@@ -304,17 +294,9 @@ class SpeechFeedback:
         play_click: bool = True
     ) -> None:
         """
-        Handles seek navigation events with instantaneous acoustic feedback (click)
-        and coalesces rapid seeks into a single spoken announcement after 250ms of inactivity.
+        Handles seek navigation events and coalesces rapid seeks into a single spoken announcement after 250ms of inactivity.
         """
-        # 1. Instantaneous auditory feedback
-        if play_click:
-            try:
-                play_seek_click()
-            except Exception:
-                pass
-
-        # 2. Check verbosity setting
+        # Check verbosity setting
         if not self.is_announcement_enabled("seek"):
             return
 

@@ -39,7 +39,6 @@ except (ImportError, ValueError):
     except NameError:
         _ = lambda text: text
 
-from .tones_helper import tone_manager, ToneCueManager
 from .utils import log_debug, log_exception, log_info, log_error
 
 try:
@@ -189,10 +188,9 @@ class ModalInputLayer:
     def __init__(
         self,
         controller: Optional[Any] = None,
-        tone_mgr: Optional[ToneCueManager] = None
+        tone_mgr: Optional[Any] = None
     ) -> None:
         self.controller = controller
-        self.tone_manager = tone_mgr or tone_manager
         self._is_active: bool = False
         self._is_suspended: bool = False
         self._registered: bool = False
@@ -338,14 +336,12 @@ class ModalInputLayer:
                 if not is_64bit_os():
                     addon_root = getattr(self.controller, "addon_root", None) if self.controller else None
                     if not find_mpv_binary(addon_root=addon_root):
-                        self.tone_manager.play_mode_exit()
                         self._is_active = False
                         self._speak(_("This is a 32-bit system; the bundled media player requires a 64-bit version of Windows."))
                         return
             except Exception as e:
                 logger.debug("Error checking 64-bit OS compatibility: %s", e)
 
-            self.tone_manager.play_mode_enter()
             if announce:
                 self._speak(_("Player Mode active"))
             # Restore session if playlist is empty and option is enabled
@@ -365,7 +361,6 @@ class ModalInputLayer:
                     name="HeadlessPlayer-PrewarmEngine"
                 ).start()
         else:
-            self.tone_manager.play_mode_exit()
             if announce:
                 self._speak(_("Player Mode exited"))
 
@@ -533,9 +528,8 @@ class ModalInputLayer:
             log_info("INPUT", "Gesture handled successfully: key='%s'", main_key)
             return False  # Handled and consumed
 
-        # Unmapped key: swallow completely and play subtle feedback click
+        # Unmapped key: swallow completely
         log_info("INPUT", "Unmapped key pressed: key='%s', vk=0x%02X", main_key, vk)
-        self.tone_manager.play_unmapped_key()
         return False
 
     def _is_toggle_gesture(self, gesture: Any) -> bool:

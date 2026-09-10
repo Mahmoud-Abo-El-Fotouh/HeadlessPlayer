@@ -23,7 +23,6 @@ except (ImportError, ValueError):
 from .engine import HeadlessEngine, SPEED_PRESETS
 from .playlist import Playlist, Track, RepeatMode
 from .state_store import StateStore, get_state_store
-from .tones_helper import ToneCueManager, tone_manager
 from .speech_feedback import SpeechFeedback, get_speech_feedback
 from .input_layer import ModalInputLayer
 from .config_spec import getConfig, getConfigValue, setConfigValue, saveConfig
@@ -46,7 +45,7 @@ class PlayerController:
         engine: Optional[HeadlessEngine] = None,
         playlist: Optional[Playlist] = None,
         state_store: Optional[StateStore] = None,
-        tone_mgr: Optional[ToneCueManager] = None,
+        tone_mgr: Optional[Any] = None,
         speech_feedback: Optional[SpeechFeedback] = None,
         input_layer: Optional[ModalInputLayer] = None,
         pipe_name: Optional[str] = None
@@ -55,7 +54,6 @@ class PlayerController:
 
         # Component instances
         self.state_store: StateStore = state_store if state_store is not None else get_state_store()
-        self.tone_manager: ToneCueManager = tone_mgr if tone_mgr is not None else tone_manager
         self.speech: SpeechFeedback = speech_feedback if speech_feedback is not None else get_speech_feedback()
         self.playlist: Playlist = playlist if playlist is not None else Playlist()
         
@@ -394,12 +392,6 @@ class PlayerController:
             cur_pos = self.engine.time_pos
             target_pos = cur_pos + delta_sec
 
-            # Boundary hits
-            if target_pos <= 0.0:
-                self.tone_manager.play_boundary_hit()
-            elif dur > 0 and target_pos >= dur:
-                self.tone_manager.play_boundary_hit()
-
             res = self.engine.seek(delta_sec)
             new_pos = self.engine.time_pos
 
@@ -420,7 +412,6 @@ class PlayerController:
             res = self.engine.seek_percent(percent)
             dur = self.engine.duration
             target_pos = (percent / 100.0) * dur if dur > 0 else 0.0
-            self.tone_manager.play_seek_click()
             self.speech.announce_percent_jump(percent, target_pos)
             return res
 
@@ -437,7 +428,6 @@ class PlayerController:
             if not self.engine.is_running:
                 return False
             res = self.engine.seek_absolute(0.0)
-            self.tone_manager.play_seek_click()
             self.speech.announce_percent_jump(0, 0.0)
             return res
 
@@ -450,7 +440,6 @@ class PlayerController:
             if dur and dur > 2.0:
                 target = max(0.0, dur - 1.0)
                 res = self.engine.seek_absolute(target)
-                self.tone_manager.play_seek_click()
                 self.speech.speak(_("Track end"))
                 return res
             elif dur and dur > 0:
@@ -509,24 +498,19 @@ class PlayerController:
             if not self.engine.is_running:
                 return 0.0
             pos = self.engine.set_ab_point_a()
-            self.tone_manager.play_point_a()
             self.speech.announce_point_a(pos)
             return pos
 
     def set_ab_point_b(self) -> Tuple[float, bool]:
-        """Marks Point B (end of A-B loop) with acoustic cue and speech announcement."""
+        """Marks Point B (end of A-B loop) with speech announcement."""
         with self._lock:
             if not self.engine.is_running:
                 return 0.0, False
             pos, is_valid = self.engine.set_ab_point_b()
             if is_valid:
-                self.tone_manager.play_point_b()
-                self.tone_manager.play_loop_active()
                 self.speech.announce_point_b(pos)
                 if self.engine.ab_loop_a is not None:
                     self.speech.announce_ab_loop_active(self.engine.ab_loop_a, pos)
-            else:
-                self.tone_manager.play_boundary_hit()
             return pos, is_valid
 
     def toggle_repeat(self) -> str:
@@ -543,7 +527,6 @@ class PlayerController:
             if self.engine.ab_loop_a is not None and self.engine.ab_loop_b is not None:
                 res = self.engine.toggle_repeat()
                 if res == "ab_loop_on":
-                    self.tone_manager.play_loop_active()
                     self.speech.announce_ab_loop_active(self.engine.ab_loop_a, self.engine.ab_loop_b)
                 elif res == "ab_loop_off":
                     self.speech.announce_repeat_mode("off")
@@ -787,7 +770,6 @@ class PlayerController:
                 return next_t
             else:
                 # Boundary reached
-                self.tone_manager.play_boundary_hit()
                 if manual:
                     self.speech.announce_boundary(is_start=False)
                 return None
@@ -800,7 +782,6 @@ class PlayerController:
                 self.play_track(prev_t)
                 return prev_t
             else:
-                self.tone_manager.play_boundary_hit()
                 self.speech.announce_boundary(is_start=True)
                 return None
 
@@ -808,7 +789,6 @@ class PlayerController:
         """Jumps directly to the first track in the playlist (Control + Home)."""
         with self._lock:
             if self.playlist.is_empty():
-                self.tone_manager.play_boundary_hit()
                 self.speech.announce_boundary(is_start=True)
                 return None
             first_t = self.playlist.first_track()
@@ -821,7 +801,6 @@ class PlayerController:
         """Jumps directly to the last track in the playlist (Control + End)."""
         with self._lock:
             if self.playlist.is_empty():
-                self.tone_manager.play_boundary_hit()
                 self.speech.announce_boundary(is_start=False)
                 return None
             last_t = self.playlist.last_track()
@@ -1836,7 +1815,6 @@ class PlayerController:
                         self._check_stream_queue_auto_extend()
                     else:
                         self._last_loaded_path = None
-                        self.tone_manager.play_boundary_hit()
                 else:
                     # Premature EOF (network drop, socket closure, demuxer stall)
                     logger.warning(
@@ -1869,14 +1847,12 @@ class PlayerController:
                         else:
                             self._stream_auto_retries = 0
                             self.engine.stop()
-                            self.tone_manager.play_boundary_hit()
                             self.speech.speak(_(
                                 "Playback of this stream failed. Press Enter or Space to retry."
                             ))
                             return
                     else:
                         self.engine.stop()
-                        self.tone_manager.play_boundary_hit()
                         self.speech.speak(_("Playback stopped."))
                         return
 
@@ -1892,7 +1868,6 @@ class PlayerController:
                         stream_engine.clear_resolve_cache()
                     except Exception:
                         pass
-                    self.tone_manager.play_boundary_hit()
                     self.speech.speak(_(
                         "Playback of this stream failed. Press Enter or Space to retry."
                     ))
