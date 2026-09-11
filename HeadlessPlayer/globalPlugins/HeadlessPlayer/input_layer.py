@@ -94,6 +94,7 @@ VK_NUMPAD9 = 0x69
 VK_A = 0x41
 VK_B = 0x42
 VK_C = 0x43
+VK_D = 0x44
 VK_E = 0x45
 VK_F = 0x46
 VK_H = 0x48
@@ -439,6 +440,9 @@ class ModalInputLayer:
             "open_file_dialog": ["open_file_dialog", "prompt_open_file", "load_file_dialog"],
             "open_url_dialog": ["open_url_dialog", "prompt_open_url", "open_url"],
             "copy_current_url": ["copy_current_url", "copy_url", "copy_link"],
+            "copy_direct_url": ["copy_direct_url", "copy_stream_url"],
+            "export_clip": ["export_clip", "export", "download"],
+            "quick_export": ["quick_export", "export_quick"],
             "open_account_feed": ["open_account_feed", "account_feed", "open_account"],
             "open_folder_dialog": ["open_folder_dialog", "prompt_open_folder", "load_folder_dialog"],
             "load_from_explorer": ["load_from_explorer", "load_explorer_selection", "play_explorer_selection"],
@@ -840,8 +844,20 @@ class ModalInputLayer:
             self._safe_call("open_url_dialog")
             return True
 
-        if self._matches_action(gesture, "copy_url", ((main_key == "v" or vk == VK_V) and not (has_ctrl or has_alt))):
+        if self._matches_action(gesture, "copy_direct_url", ((main_key == "v" or vk == VK_V) and has_shift and not (has_ctrl or has_alt))):
+            self._safe_call("copy_direct_url")
+            return True
+
+        if self._matches_action(gesture, "copy_url", ((main_key == "v" or vk == VK_V) and not (has_ctrl or has_alt or has_shift))):
             self._safe_call("copy_current_url")
+            return True
+
+        if self._matches_action(gesture, "quick_export", ((main_key == "d" or vk == VK_D) and has_shift and not (has_ctrl or has_alt))):
+            self._safe_call("quick_export")
+            return True
+
+        if self._matches_action(gesture, "export_clip", ((main_key == "d" or vk == VK_D) and not (has_ctrl or has_alt or has_shift))):
+            self._safe_call("export_clip")
             return True
 
         if self._matches_action(gesture, "account_feed", ((main_key == "p" or vk == VK_P) and not (has_ctrl or has_alt or has_shift))):

@@ -1108,3 +1108,145 @@ msgstr "Notice: The selected cookies file does not appear to contain YouTube aut
 msgid "Cookies Verification"
 msgstr "Cookies Verification"
 
+
+
+msgid "Multi-language audio tracks are not available in InnerTube mode. Using original audio."
+msgstr "Multi-language audio tracks are not available in InnerTube mode. Using original audio."
+
+msgid "InnerTube Direct API (Fast, Lightweight, Device Code)"
+msgstr "InnerTube Direct API (Fast, Lightweight, Device Code)"
+
+msgid "yt-dlp Engine (Universal compatibility)"
+msgstr "yt-dlp Engine (Universal compatibility)"
+
+msgid "Preferred YouTube streaming &engine:"
+msgstr "Preferred YouTube streaming &engine:"
+
+msgid "Check for &Updates..."
+msgstr "Check for &Updates..."
+
+msgid "&Test streaming engine now..."
+msgstr "&Test streaming engine now..."
+
+msgid "YouTube Account (OAuth2 Device Code Sign-In)"
+msgstr "YouTube Account (OAuth2 Device Code Sign-In)"
+
+msgid "Sign &in to YouTube (Device Code)..."
+msgstr "Sign &in to YouTube (Device Code)..."
+
+msgid "Sign &out of YouTube"
+msgstr "Sign &out of YouTube"
+
+msgid "Account status: Signed in to YouTube (Device Code)"
+msgstr "Account status: Signed in to YouTube (Device Code)"
+
+msgid "Account status: Not signed in"
+msgstr "Account status: Not signed in"
+
+msgid "The streaming engine is unavailable: curl.exe was not found on this computer."
+msgstr "The streaming engine is unavailable: curl.exe was not found on this computer."
+
+msgid "Sign in to YouTube"
+msgstr "Sign in to YouTube"
+
+msgid "Signed out of YouTube."
+msgstr "Signed out of YouTube."
+
+msgid "Testing..."
+msgstr "Testing..."
+
+msgid "Testing the streaming engine, please wait..."
+msgstr "Testing the streaming engine, please wait..."
+
+msgid "Checking curl..."
+msgstr "Checking curl..."
+
+msgid "Contacting YouTube..."
+msgstr "Contacting YouTube..."
+
+msgid "Resolving a test stream..."
+msgstr "Resolving a test stream..."
+
+msgid "The streaming engine is working properly.\n"
+"%s"
+msgstr "The streaming engine is working properly.\n"
+"%s"
+
+msgid "Engine Test Succeeded"
+msgstr "Engine Test Succeeded"
+
+msgid "The streaming engine test failed:\n"
+"%s"
+msgstr "The streaming engine test failed:\n"
+"%s"
+
+msgid "Engine Test Failed"
+msgstr "Engine Test Failed"
+
+msgid "Requesting a sign-in code from Google, please wait..."
+msgstr "Requesting a sign-in code from Google, please wait..."
+
+msgid "Your sign-in &code:"
+msgstr "Your sign-in &code:"
+
+msgid "Open this &address in any browser:"
+msgstr "Open this &address in any browser:"
+
+msgid "&Open browser and copy code"
+msgstr "&Open browser and copy code"
+
+msgid "Code %s copied to the clipboard. Paste it in the browser page and approve access, then return here."
+msgstr "Code %s copied to the clipboard. Paste it in the browser page and approve access, then return here."
+
+msgid "Could not start the sign-in. Check your internet connection and try again."
+msgstr "Could not start the sign-in. Check your internet connection and try again."
+
+msgid "Signed in to YouTube successfully."
+msgstr "Signed in to YouTube successfully."
+
+msgid "The sign-in code expired. Please try again."
+msgstr "The sign-in code expired. Please try again."
+
+msgid "Access was denied in the browser."
+msgstr "Access was denied in the browser."
+
+msgid "Sign-in failed: %s"
+msgstr "Sign-in failed: %s"
+
+msgid "Open the address below in any browser (on this or another device), sign in to your Google account and enter the code. This window signs you in automatically once you approve."
+msgstr "Open the address below in any browser (on this or another device), sign in to your Google account and enter the code. This window signs you in automatically once you approve."
+
+msgid "Your code is %s. Press the Open browser button, then enter the code and approve access."
+msgstr "Your code is %s. Press the Open browser button, then enter the code and approve access."
+
+msgid "yt-dlp Engine & Sign-In Cookies"
+msgstr "yt-dlp Engine & Sign-In Cookies"
+
+msgid "Checking yt-dlp engine..."
+msgstr "Checking yt-dlp engine..."
+
+msgid "Extracting test stream..."
+msgstr "Extracting test stream..."
+
+msgid "This section requires YouTube sign-in. Use Device Code sign-in in HeadlessPlayer settings, then try again."
+msgstr "This section requires YouTube sign-in. Use Device Code sign-in in HeadlessPlayer settings, then try again."
+
+msgid "Please complete YouTube sign-in in HeadlessPlayer settings."
+msgstr "Please complete YouTube sign-in in HeadlessPlayer settings."
+
+msgid "Could not connect to YouTube. Please check your internet connection or re-authenticate your YouTube account in HeadlessPlayer settings."
+msgstr "Could not connect to YouTube. Please check your internet connection or re-authenticate your YouTube account in HeadlessPlayer settings."
+
+msgid "Clip saved successfully as %s in the downloads folder. It is copied to the clipboard."
+msgstr "Clip saved successfully as %s in the downloads folder. It is copied to the clipboard."
+
+msgid "Clip saved successfully as %s in the downloads folder."
+msgstr "Clip saved successfully as %s in the downloads folder."
+
+msgid "Clip saved successfully as %(file)s in %(folder)s. It is copied to the clipboard."
+msgstr "Clip saved successfully as %(file)s in %(folder)s. It is copied to the clipboard."
+
+msgid "Clip saved successfully as %(file)s in %(folder)s."
+msgstr "Clip saved successfully as %(file)s in %(folder)s."
+
+

@@ -45,6 +45,12 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "bassGain": 0.0,
     "streamAudioFormat": "best",
     "streamAudioQuality": "high",
+    "exportFolder": "",
+    "exportFormat": "mp3",
+    "exportQuality": "high",
+    "exportAudioToVideo": False,
+    "exportVideoQuality": "",
+    "exportAutoCopy": True,
 }
 
 DEFAULT_KEYMAP: Dict[str, str] = {
@@ -91,6 +97,9 @@ DEFAULT_KEYMAP: Dict[str, str] = {
     "show_help": "h",
     "open_url": "u",
     "copy_url": "v",
+    "copy_direct_url": "shift+v",
+    "export_clip": "d",
+    "quick_export": "shift+d",
     "account_feed": "p",
     "close_player": "x",
     "exit_mode": "escape",

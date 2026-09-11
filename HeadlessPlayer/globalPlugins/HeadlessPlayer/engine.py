@@ -82,6 +82,8 @@ class HeadlessEngine:
         self.ab_loop_a: Optional[float] = None
         self.ab_loop_b: Optional[float] = None
         self.ab_loop_active: bool = False
+        self._cached_ab_a: Optional[float] = None
+        self._cached_ab_b: Optional[float] = None
         self.track_repeat: bool = False
         self.chapters: int = 0
         self.chapter: int = 0
@@ -293,12 +295,15 @@ class HeadlessEngine:
                     if self._last_skipped_segment and self.time_pos < (self._last_skipped_segment[0] - 1.0):
                         self._last_skipped_segment = None
 
-                    # Enforce A-B loop boundary to ensure robust looping across all media & stream types
+                    # Emergency watchdog for A-B loop:
+                    # mpv handles A-B looping natively and gaplessly when ab-loop-a/b are set.
+                    # We only intervene if playback significantly overshoots Point B (> 1.2s),
+                    # preventing redundant double-seeks, audio stutter, and streaming buffer stalls.
                     if self.ab_loop_active and self.ab_loop_a is not None and self.ab_loop_b is not None:
-                        if self.time_pos >= self.ab_loop_b:
+                        if self.time_pos > (self.ab_loop_b + 1.2):
                             import time
                             now = time.time()
-                            if now - getattr(self, "_last_ab_seek_time", 0.0) > 0.5:
+                            if now - getattr(self, "_last_ab_seek_time", 0.0) > 1.0:
                                 self._last_ab_seek_time = now
                                 self.seek_absolute(self.ab_loop_a)
 
@@ -348,10 +353,16 @@ class HeadlessEngine:
             elif name == "path":
                 self.path = str(data) if data is not None else ""
             elif name == "ab-loop-a":
-                self.ab_loop_a = float(data) if (data is not None and data != "no") else None
+                val = float(data) if (data is not None and data != "no") else None
+                self.ab_loop_a = val
+                if val is not None:
+                    self._cached_ab_a = val
                 self._update_ab_active_state()
             elif name == "ab-loop-b":
-                self.ab_loop_b = float(data) if (data is not None and data != "no") else None
+                val = float(data) if (data is not None and data != "no") else None
+                self.ab_loop_b = val
+                if val is not None:
+                    self._cached_ab_b = val
                 self._update_ab_active_state()
             elif name == "loop-file":
                 self.track_repeat = bool(data and data != "no")
@@ -408,10 +419,15 @@ class HeadlessEngine:
                 self.duration = 0.0
                 self.ab_loop_a = None
                 self.ab_loop_b = None
+                self._cached_ab_a = None
+                self._cached_ab_b = None
                 self.ab_loop_active = False
                 self.is_loaded = False
                 self.path = file_path
                 self.filename = os.path.basename(file_path) if os.path.exists(file_path) else file_path
+            # Explicitly clear mpv native loop properties so previous file points never leak to new media
+            self._ipc.send_command_async(["set_property", "ab-loop-a", "no"])
+            self._ipc.send_command_async(["set_property", "ab-loop-b", "no"])
 
         logger.info("Loading media: %s (mode: %s)", file_path, mode)
         log_debug("ENGINE", "load_file: path='%s', append=%s, mode=%s", file_path, append, mode)
@@ -483,7 +499,11 @@ class HeadlessEngine:
             self.core_idle = True
             self.ab_loop_a = None
             self.ab_loop_b = None
+            self._cached_ab_a = None
+            self._cached_ab_b = None
             self.ab_loop_active = False
+        self._ipc.send_command_async(["set_property", "ab-loop-a", "no"])
+        self._ipc.send_command_async(["set_property", "ab-loop-b", "no"])
         return self._ipc.send_command_async(["stop"])
 
     def toggle_mute(self) -> bool:
@@ -586,7 +606,7 @@ class HeadlessEngine:
             self._last_skipped_segment = None
         if not self._ipc or not self._ipc.is_connected():
             return False
-        return self._ipc.send_command_async(["seek", self.time_pos, "absolute"])
+        return self._ipc.send_command_async(["seek", self.time_pos, "absolute+exact"])
 
     def seek_percent(self, percent: float) -> bool:
         """
@@ -689,9 +709,11 @@ class HeadlessEngine:
 
         with self._lock:
             self.ab_loop_a = pos
+            self._cached_ab_a = pos
             # If point B was previously set and is now <= point A, clear point B
             if self.ab_loop_b is not None and self.ab_loop_b <= pos:
                 self.ab_loop_b = None
+                self._cached_ab_b = None
                 self._ipc.send_command_async(["set_property", "ab-loop-b", "no"])
             self._update_ab_active_state()
 
@@ -717,6 +739,7 @@ class HeadlessEngine:
                 return pos, False
 
             self.ab_loop_b = pos
+            self._cached_ab_b = pos
             self.ab_loop_active = True
 
         self._ipc.send_command_async(["set_property", "ab-loop-b", pos])
@@ -728,7 +751,7 @@ class HeadlessEngine:
     def toggle_repeat(self) -> str:
         """
         Toggle repeat mode:
-        1. If Point A & Point B are set: toggles A-B segment repeat.
+        1. If Point A & Point B are set (or cached): toggles A-B segment repeat.
            Returns 'ab_loop_on' or 'ab_loop_off'.
         2. If no A-B points are set: toggles single-track repeat.
            Returns 'track_repeat_on' or 'track_repeat_off'.
@@ -737,20 +760,35 @@ class HeadlessEngine:
             return "track_repeat_off"
 
         with self._lock:
-            # Case 1: A-B points exist
-            if self.ab_loop_a is not None and self.ab_loop_b is not None:
+            # Case 1: A-B points exist (either active or preserved in cache)
+            has_points = (
+                (self.ab_loop_a is not None and self.ab_loop_b is not None)
+                or (self._cached_ab_a is not None and self._cached_ab_b is not None)
+            )
+            if has_points:
                 if self.ab_loop_active:
-                    # Deactivate A-B loop in mpv but keep cached points
+                    # Deactivate A-B loop in mpv but keep cached points intact
                     self.ab_loop_active = False
+                    if self.ab_loop_a is not None:
+                        self._cached_ab_a = self.ab_loop_a
+                    if self.ab_loop_b is not None:
+                        self._cached_ab_b = self.ab_loop_b
+                    self.ab_loop_a = None
+                    self.ab_loop_b = None
                     self._ipc.send_command_async(["set_property", "ab-loop-a", "no"])
                     self._ipc.send_command_async(["set_property", "ab-loop-b", "no"])
                     return "ab_loop_off"
                 else:
-                    # Reactivate A-B loop with saved points
+                    # Reactivate A-B loop using saved cached points
+                    a = self._cached_ab_a
+                    b = self._cached_ab_b
+                    self.ab_loop_a = a
+                    self.ab_loop_b = b
                     self.ab_loop_active = True
-                    self._ipc.send_command_async(["set_property", "ab-loop-a", self.ab_loop_a])
-                    self._ipc.send_command_async(["set_property", "ab-loop-b", self.ab_loop_b])
-                    self.seek_absolute(self.ab_loop_a)
+                    self._ipc.send_command_async(["set_property", "ab-loop-a", a])
+                    self._ipc.send_command_async(["set_property", "ab-loop-b", b])
+                    if a is not None:
+                        self.seek_absolute(a)
                     return "ab_loop_on"
 
             # Case 2: Track Repeat fallback
@@ -769,16 +807,16 @@ class HeadlessEngine:
 
     def clear_ab_points(self) -> None:
         """Clear all marked A-B loop points and deactivate segment looping."""
-        if not self.is_running:
-            return
-
         with self._lock:
             self.ab_loop_a = None
             self.ab_loop_b = None
+            self._cached_ab_a = None
+            self._cached_ab_b = None
             self.ab_loop_active = False
 
-        self._ipc.send_command_async(["set_property", "ab-loop-a", "no"])
-        self._ipc.send_command_async(["set_property", "ab-loop-b", "no"])
+        if self.is_running:
+            self._ipc.send_command_async(["set_property", "ab-loop-a", "no"])
+            self._ipc.send_command_async(["set_property", "ab-loop-b", "no"])
         logger.info("Cleared A-B loop points.")
 
     @property

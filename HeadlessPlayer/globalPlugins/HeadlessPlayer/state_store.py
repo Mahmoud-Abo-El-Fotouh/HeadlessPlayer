@@ -63,6 +63,8 @@ class StateStore:
         file_path: str,
         position_sec: float,
         duration_sec: Optional[float] = None,
+        file_size: Optional[int] = None,
+        file_mtime: Optional[float] = None,
         min_threshold_sec: float = 1.0,
         end_threshold_sec: float = 1.0
     ) -> bool:
@@ -70,13 +72,24 @@ class StateStore:
             file_path=file_path,
             position_sec=position_sec,
             duration_sec=duration_sec,
+            file_size=file_size,
+            file_mtime=file_mtime,
             min_threshold_sec=min_threshold_sec,
             end_threshold_sec=end_threshold_sec
         )
         return True
 
-    def get_position(self, file_path: str) -> float:
-        return self._db.get_position(file_path) or 0.0
+    def get_position(
+        self,
+        file_path: str,
+        current_duration: Optional[float] = None,
+        current_size: Optional[int] = None
+    ) -> float:
+        return self._db.get_position(
+            file_path,
+            current_duration=current_duration,
+            current_size=current_size
+        ) or 0.0
 
     def clear_position(self, file_path: str) -> None:
         self._db.clear_position(file_path)
@@ -84,10 +97,17 @@ class StateStore:
     def get_all_positions(self) -> Dict[str, Dict[str, Any]]:
         return self._db.get_all_positions()
 
-    def get_position_record(self, file_path: str) -> Optional[Dict[str, Any]]:
-        positions = self._db.get_all_positions()
-        norm = normalize_file_path(file_path)
-        return positions.get(norm)
+    def get_position_record(
+        self,
+        file_path: str,
+        current_duration: Optional[float] = None,
+        current_size: Optional[int] = None
+    ) -> Optional[Dict[str, Any]]:
+        return self._db.get_position_record(
+            file_path,
+            current_duration=current_duration,
+            current_size=current_size
+        )
 
     def prune_positions(self, max_entries: int = 500) -> int:
         return self._db.prune_positions(max_entries=max_entries)

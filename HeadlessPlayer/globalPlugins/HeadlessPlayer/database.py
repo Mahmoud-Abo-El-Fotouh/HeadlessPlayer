@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import shutil
 import tempfile
 import threading
@@ -95,21 +96,37 @@ def get_default_db_path() -> str:
     return os.path.join(tempfile.gettempdir(), DB_FILE_NAME)
 
 
+_YT_ID_REGEX = re.compile(
+    r'(?:https?://)?(?:www\.|m\.|music\.)?'
+    r'(?:youtube\.com/(?:watch\?(?:.*&)?v=|shorts/|embed/|v/|live/)|youtu\.be/|youtube:)'
+    r'([a-zA-Z0-9_-]{11})',
+    re.IGNORECASE
+)
+
+
 def normalize_file_path(file_path: str) -> str:
     """
-    Normalizes a file path for consistent database keys on Windows.
-    Online URLs are preserved verbatim.
+    Normalizes a file path or stream URL for consistent database keys on Windows.
+    - YouTube streams are normalized to canonical 'youtube:<video_id>'.
+    - Local files are expanded to absolute paths and normalized case.
+    - Other online URLs are preserved cleanly.
     """
     if not file_path:
         return ""
-    if file_path.strip().lower().startswith(("http://", "https://")):
-        return file_path.strip()
+    p = str(file_path).strip()
+    m = _YT_ID_REGEX.search(p)
+    if m:
+        return f"youtube:{m.group(1)}"
+
+    if p.lower().startswith(("http://", "https://", "ytdl://", "custom://")):
+        return p
+
     try:
-        expanded = os.path.expanduser(os.path.expandvars(file_path))
+        expanded = os.path.expanduser(os.path.expandvars(p))
         abs_path = os.path.abspath(expanded)
         return os.path.normcase(abs_path)
     except Exception:
-        return file_path.strip().lower()
+        return p.lower()
 
 
 class DatabaseManager:
@@ -189,6 +206,8 @@ class DatabaseManager:
 
             # Migrate legacy state if present
             self._migrate_legacy_data()
+            # Migrate and enrich positions to v2 canonical and fingerprint format
+            self._migrate_positions_v2()
 
     def _save_to_disk(self) -> None:
         """Atomically writes memory cache to disk via temp file replacement with retry."""
@@ -353,6 +372,64 @@ class DatabaseManager:
             except Exception:
                 pass
 
+    def _migrate_positions_v2(self) -> None:
+        """
+        Migrates legacy position records to the v2 Smart Media Fingerprint format:
+        1. Backs up database before migration to *.pre_migration_backup.
+        2. Normalizes all legacy YouTube URLs into canonical 'youtube:<video_id>' keys.
+        3. Enriches existing local files that are present on disk with file_size and mtime.
+        Guarantees zero data loss.
+        """
+        with self._lock:
+            positions = self._cache.get("positions")
+            if not positions or not isinstance(positions, dict):
+                return
+
+            backup_created = False
+            if self._db_path and self._db_path != ":memory:" and os.path.isfile(self._db_path):
+                backup_path = f"{self._db_path}.pre_migration_backup"
+                if not os.path.isfile(backup_path):
+                    try:
+                        shutil.copy2(self._db_path, backup_path)
+                        backup_created = True
+                        logger.info("Created pre-migration database backup at %s", backup_path)
+                    except Exception as e:
+                        logger.warning("Could not create pre-migration backup: %s", e)
+
+            modified = False
+            keys = list(positions.keys())
+            for key in keys:
+                rec = positions.get(key)
+                if not isinstance(rec, dict):
+                    continue
+
+                norm_key = normalize_file_path(key)
+                # 1. YouTube URL canonicalization
+                if norm_key != key and norm_key.startswith("youtube:"):
+                    if norm_key not in positions:
+                        positions[norm_key] = rec
+                    else:
+                        existing = positions[norm_key]
+                        if float(rec.get("updated_at", 0)) >= float(existing.get("updated_at", 0)):
+                            positions[norm_key] = rec
+                    del positions[key]
+                    modified = True
+
+                # 2. Local file fingerprint auto-enrichment
+                elif not norm_key.startswith(("http://", "https://", "youtube:", "ytdl://", "custom://")):
+                    if rec.get("file_size") is None:
+                        try:
+                            if os.path.isfile(norm_key):
+                                rec["file_size"] = os.path.getsize(norm_key)
+                                rec["file_mtime"] = os.path.getmtime(norm_key)
+                                modified = True
+                        except Exception:
+                            pass
+
+            if modified:
+                logger.info("Successfully migrated database positions to v2 format")
+                self._save_to_disk()
+
     # -------------------------------------------------------------------------
     # Settings Key-Value API
     # -------------------------------------------------------------------------
@@ -411,6 +488,8 @@ class DatabaseManager:
         filename: Optional[str] = None,
         position: Optional[float] = None,
         duration: Optional[float] = None,
+        file_size: Optional[int] = None,
+        file_mtime: Optional[float] = None,
         min_threshold_sec: float = 1.0,
         end_threshold_sec: float = 3.0,
         **kwargs: Any
@@ -429,14 +508,32 @@ class DatabaseManager:
         norm_path = normalize_file_path(file_path)
         if not norm_path:
             return
+
+        # For local media files, automatically extract media fingerprint (size and mtime) if not passed
+        is_stream = norm_path.startswith(("http://", "https://", "youtube:", "ytdl://", "custom://"))
+        if not is_stream:
+            try:
+                if file_size is None and os.path.isfile(norm_path):
+                    file_size = os.path.getsize(norm_path)
+                if file_mtime is None and os.path.isfile(norm_path):
+                    file_mtime = os.path.getmtime(norm_path)
+            except Exception:
+                pass
+
         with self._lock:
-            fn = filename or (os.path.basename(file_path) if not file_path.startswith("http") else file_path)
-            self._cache["positions"][norm_path] = {
+            fn = filename or (os.path.basename(file_path) if not is_stream else norm_path)
+            rec: Dict[str, Any] = {
                 "position": float(pos),
                 "duration": float(dur) if dur is not None else None,
                 "filename": fn,
                 "updated_at": time.time()
             }
+            if file_size is not None:
+                rec["file_size"] = int(file_size)
+            if file_mtime is not None:
+                rec["file_mtime"] = float(file_mtime)
+
+            self._cache["positions"][norm_path] = rec
             self._save_to_disk()
 
     def prune_positions(self, max_entries: int = 500) -> int:
@@ -456,25 +553,93 @@ class DatabaseManager:
             self._save_to_disk()
             return to_remove_count
 
-    def get_position(self, file_path: str) -> Optional[float]:
+    def get_position(
+        self,
+        file_path: str,
+        current_duration: Optional[float] = None,
+        current_size: Optional[int] = None
+    ) -> Optional[float]:
+        rec = self.get_position_record(
+            file_path,
+            current_duration=current_duration,
+            current_size=current_size
+        )
+        if rec and isinstance(rec, dict):
+            return float(rec.get("position", 0.0))
+        return None
+
+    def get_position_record(
+        self,
+        file_path: str,
+        current_duration: Optional[float] = None,
+        current_size: Optional[int] = None
+    ) -> Optional[Dict[str, Any]]:
         norm_path = normalize_file_path(file_path)
         if not norm_path:
-            return None
-        with self._lock:
-            rec = self._cache["positions"].get(norm_path)
-            if rec and isinstance(rec, dict):
-                return float(rec.get("position", 0.0))
             return None
 
-    def get_position_record(self, file_path: str) -> Optional[Dict[str, Any]]:
-        norm_path = normalize_file_path(file_path)
-        if not norm_path:
-            return None
         with self._lock:
             rec = self._cache["positions"].get(norm_path)
-            if rec and isinstance(rec, dict):
-                return dict(rec)
-            return None
+            if not rec or not isinstance(rec, dict):
+                # Fallback check for streams: if norm_path is youtube:ID, check raw file_path
+                if norm_path.startswith("youtube:") and file_path in self._cache["positions"]:
+                    rec = self._cache["positions"][file_path]
+                else:
+                    return None
+
+            pos = float(rec.get("position", 0.0))
+            dur = float(rec.get("duration", 0.0)) if rec.get("duration") is not None else None
+
+            is_stream = norm_path.startswith(("http://", "https://", "youtube:", "ytdl://", "custom://"))
+
+            if not is_stream:
+                # Local File Fingerprint Verification
+                if os.path.isfile(norm_path):
+                    try:
+                        actual_size = current_size if current_size is not None else os.path.getsize(norm_path)
+                        actual_mtime = os.path.getmtime(norm_path)
+
+                        # Check file_size mismatch (file replaced or overwritten)
+                        saved_size = rec.get("file_size")
+                        if saved_size is not None and actual_size is not None:
+                            if saved_size != actual_size:
+                                logger.info(
+                                    "Position invalidated for '%s': file size changed (saved=%d, actual=%d)",
+                                    norm_path, saved_size, actual_size
+                                )
+                                del self._cache["positions"][norm_path]
+                                self._save_to_disk()
+                                return None
+
+                        # Check duration mismatch if known (differs by > 3s)
+                        saved_dur = rec.get("duration")
+                        if saved_dur and current_duration and current_duration > 0:
+                            if abs(float(current_duration) - float(saved_dur)) > 3.0:
+                                logger.info(
+                                    "Position invalidated for '%s': duration changed (saved=%.1f, actual=%.1f)",
+                                    norm_path, float(saved_dur), float(current_duration)
+                                )
+                                del self._cache["positions"][norm_path]
+                                self._save_to_disk()
+                                return None
+
+                        # Backward-Compatible Auto-Enrichment:
+                        # If record lacks file_size, enrich it now so it is protected going forward
+                        if saved_size is None and actual_size is not None:
+                            rec["file_size"] = actual_size
+                            rec["file_mtime"] = actual_mtime
+                            self._save_to_disk()
+
+                    except Exception as e:
+                        logger.debug("Error checking file fingerprint for '%s': %s", norm_path, e)
+
+            # Finished check: If position is within 3s of end, treat as completed
+            if dur and dur > 0 and (dur - pos) <= 3.0:
+                del self._cache["positions"][norm_path]
+                self._save_to_disk()
+                return None
+
+            return dict(rec)
 
     def get_all_positions(self) -> Dict[str, Dict[str, Any]]:
         """Returns a copy of all stored position records."""
@@ -486,8 +651,14 @@ class DatabaseManager:
         if not norm_path:
             return
         with self._lock:
+            modified = False
             if norm_path in self._cache["positions"]:
                 del self._cache["positions"][norm_path]
+                modified = True
+            if file_path != norm_path and file_path in self._cache["positions"]:
+                del self._cache["positions"][file_path]
+                modified = True
+            if modified:
                 self._save_to_disk()
 
     def clear_all_positions(self) -> None:

@@ -110,15 +110,47 @@ class _UrlInputDialog(_DialogBase):
         mainSizer.Fit(self)
         self.CenterOnScreen()
 
-        # Pre-select all text so screen reader announces it and it is ready to replace
+        # Ensure focus is immediately on the text input box and text is selected
+        self.textCtrl.SetFocus()
         if self._is_prefilled:
-            self.textCtrl.SetSelection(-1, -1)
-            wx.CallAfter(self.textCtrl.SelectAll)
+            self.textCtrl.SelectAll()
+
+        def _ensure_focus_and_selection() -> None:
+            try:
+                if self and self.textCtrl:
+                    self.textCtrl.SetFocus()
+                    if self._is_prefilled:
+                        self.textCtrl.SelectAll()
+            except Exception:
+                pass
+
+        wx.CallAfter(_ensure_focus_and_selection)
 
         # Event bindings
         self.textCtrl.Bind(wx.EVT_TEXT_ENTER, self.onOk)
         self.textCtrl.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
         self.Bind(wx.EVT_BUTTON, self.onOk, id=wx.ID_OK)
+
+    @staticmethod
+    def _get_clipboard_text() -> str:
+        try:
+            import api
+            clip_text = api.getClipData()
+            if clip_text and isinstance(clip_text, str):
+                return clip_text.strip()
+        except Exception:
+            pass
+        try:
+            import wx
+            if wx.TheClipboard.Open():
+                data = wx.TextDataObject()
+                success = wx.TheClipboard.GetData(data)
+                wx.TheClipboard.Close()
+                if success:
+                    return data.GetText().strip()
+        except Exception:
+            pass
+        return ""
 
     def onKeyDown(self, evt: Any) -> None:
         import wx
@@ -128,6 +160,29 @@ class _UrlInputDialog(_DialogBase):
 
         if kc in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
             self.onOk(evt)
+            return
+
+        # Smart paste handling (Ctrl+V and Shift+Insert):
+        # Automatically extract clean URL if clipboard contains an embedded URL
+        is_ctrl_v = (mods & wx.MOD_CONTROL) and kc in (ord("V"), ord("v"))
+        is_shift_insert = (mods & wx.MOD_SHIFT) and kc == wx.WXK_INSERT
+        if is_ctrl_v or is_shift_insert:
+            clip_text = self._get_clipboard_text()
+            if clip_text:
+                extracted = stream_engine.extract_url(clip_text)
+                if extracted:
+                    self.textCtrl.SetValue(extracted)
+                    self.textCtrl.SelectAll()
+                    self._is_prefilled = True
+                    return
+                else:
+                    if self._is_prefilled:
+                        self.textCtrl.SetValue(clip_text)
+                        self._is_prefilled = False
+                        self.textCtrl.SetInsertionPointEnd()
+                        return
+            self._is_prefilled = False
+            evt.Skip()
             return
 
         if self._is_prefilled:
@@ -150,13 +205,6 @@ class _UrlInputDialog(_DialogBase):
                 evt.Skip()
                 return
 
-            # If Ctrl+V (paste): clear prefill so pasted text replaces it completely
-            if (mods & wx.MOD_CONTROL) and kc in (ord("V"), ord("v")):
-                self._is_prefilled = False
-                self.textCtrl.SetValue("")
-                evt.Skip()
-                return
-
             # Printable characters (letters, numbers, space, punctuation, Arabic text):
             # Clear the pre-filled URL completely so the typed character starts fresh!
             is_printable = False
@@ -174,8 +222,21 @@ class _UrlInputDialog(_DialogBase):
         evt.Skip()
 
     def onOk(self, evt: Any) -> None:
-        self.value = self.textCtrl.GetValue().strip()
-        self.EndModal(wx.ID_OK)
+        raw_val = self.textCtrl.GetValue().strip()
+        extracted = stream_engine.extract_url(raw_val)
+        if extracted:
+            self.value = extracted
+        else:
+            self.value = raw_val
+        if hasattr(self, "IsModal") and callable(getattr(self, "IsModal", None)):
+            if self.IsModal():
+                self.EndModal(wx.ID_OK)
+            else:
+                self.Close()
+        elif hasattr(self, "EndModal"):
+            self.EndModal(wx.ID_OK)
+        elif hasattr(self, "Close"):
+            self.Close()
 
 
 def prompt_url_input(

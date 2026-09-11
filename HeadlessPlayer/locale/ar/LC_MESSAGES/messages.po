@@ -1714,3 +1714,309 @@ msgstr "تنبيه: يبدو أن ملف الكوكيز المختار لا يح
 msgid "Cookies Verification"
 msgstr "التحقق من الكوكيز"
 
+
+
+msgid "Multi-language audio tracks are not available in InnerTube mode. Using original audio."
+msgstr "مسارات الصوت متعددة اللغات غير متاحة في وضع InnerTube. يتم استخدام مسار الصوت الأصلي."
+
+msgid "InnerTube Direct API (Fast, Lightweight, Device Code)"
+msgstr "محرك InnerTube المباشر (سريع، خفيف، ويدعم كود الجهاز)"
+
+msgid "yt-dlp Engine (Universal compatibility)"
+msgstr "محرك yt-dlp (توافقية شاملة)"
+
+msgid "Preferred YouTube streaming &engine:"
+msgstr "محرك بث يوتيوب ال&مفضل:"
+
+msgid "Check for &Updates..."
+msgstr "التحقق من الت&حديثات..."
+
+msgid "&Test streaming engine now..."
+msgstr "ا&ختبار محرك البث الآن..."
+
+msgid "YouTube Account (OAuth2 Device Code Sign-In)"
+msgstr "حساب يوتيوب (تسجيل الدخول برمز الجهاز OAuth2)"
+
+msgid "Sign &in to YouTube (Device Code)..."
+msgstr "تسجيل ال&دخول إلى يوتيوب (رمز الجهاز)..."
+
+msgid "Sign &out of YouTube"
+msgstr "تسجيل ال&خروج من يوتيوب"
+
+msgid "Account status: Signed in to YouTube (Device Code)"
+msgstr "حالة الحساب: تم تسجيل الدخول إلى يوتيوب (رمز الجهاز)"
+
+msgid "Account status: Not signed in"
+msgstr "حالة الحساب: غير مسجل الدخول"
+
+msgid "The streaming engine is unavailable: curl.exe was not found on this computer."
+msgstr "محرك البث غير متاح: لم يتم العثور على أداة curl.exe على هذا الكمبيوتر."
+
+msgid "Sign in to YouTube"
+msgstr "تسجيل الدخول إلى يوتيوب"
+
+msgid "Signed out of YouTube."
+msgstr "تم تسجيل الخروج من يوتيوب."
+
+msgid "Testing..."
+msgstr "جاري الاختبار..."
+
+msgid "Testing the streaming engine, please wait..."
+msgstr "جاري اختبار محرك البث، يرجى الانتظار..."
+
+msgid "Checking curl..."
+msgstr "التحقق من curl..."
+
+msgid "Contacting YouTube..."
+msgstr "الاتصال بيوتيوب..."
+
+msgid "Resolving a test stream..."
+msgstr "استخراج رابط بث تجريبي..."
+
+msgid "The streaming engine is working properly.\n"
+"%s"
+msgstr "محرك البث يعمل بشكل سليم.\n"
+"%s"
+
+msgid "Engine Test Succeeded"
+msgstr "نجح اختبار المحرك"
+
+msgid "The streaming engine test failed:\n"
+"%s"
+msgstr "فشل اختبار محرك البث:\n"
+"%s"
+
+msgid "Engine Test Failed"
+msgstr "فشل اختبار المحرك"
+
+msgid "Requesting a sign-in code from Google, please wait..."
+msgstr "جاري طلب رمز تسجيل الدخول من Google، يرجى الانتظار..."
+
+msgid "Your sign-in &code:"
+msgstr "ر&مز تسجيل الدخول الخاص بك:"
+
+msgid "Open this &address in any browser:"
+msgstr "افتح هذا ال&عنوان في أي متصفح:"
+
+msgid "&Open browser and copy code"
+msgstr "&فتح المتصفح ونسخ الرمز"
+
+msgid "Code %s copied to the clipboard. Paste it in the browser page and approve access, then return here."
+msgstr "تم نسخ الرمز %s إلى الحافظة. الصقه في صفحة المتصفح ووافق على الإذن، ثم عد إلى هنا."
+
+msgid "Could not start the sign-in. Check your internet connection and try again."
+msgstr "تعذر بدء تسجيل الدخول. تحقق من اتصالك بالإنترنت وحاول مرة أخرى."
+
+msgid "Signed in to YouTube successfully."
+msgstr "تم تسجيل الدخول إلى يوتيوب بنجاح."
+
+msgid "The sign-in code expired. Please try again."
+msgstr "انتهت صلاحية رمز تسجيل الدخول. يرجى المحاولة مرة أخرى."
+
+msgid "Access was denied in the browser."
+msgstr "تم رفض الوصول من خلال المتصفح."
+
+msgid "Sign-in failed: %s"
+msgstr "فشل تسجيل الدخول: %s"
+
+msgid "Open the address below in any browser (on this or another device), sign in to your Google account and enter the code. This window signs you in automatically once you approve."
+msgstr "افتح العنوان أدناه في أي متصفح (على هذا الجهاز أو جهاز آخر)، وسجل الدخول بحساب Google ثم أدخل الرمز. ستقوم هذه النافذة بتسجيل دخولك تلقائياً بمجرد الموافقة."
+
+msgid "Your code is %s. Press the Open browser button, then enter the code and approve access."
+msgstr "رمزك هو %s. اضغط على زر فتح المتصفح، ثم أدخل الرمز ووافق على الوصول."
+
+msgid "yt-dlp Engine & Sign-In Cookies"
+msgstr "محرك yt-dlp وكوكيز تسجيل الدخول"
+
+msgid "Checking yt-dlp engine..."
+msgstr "فحص محرك yt-dlp..."
+
+msgid "Extracting test stream..."
+msgstr "استخراج رابط بث تجريبي..."
+
+msgid "This section requires YouTube sign-in. Use Device Code sign-in in HeadlessPlayer settings, then try again."
+msgstr "يتطلب هذا القسم تسجيل الدخول إلى يوتيوب. استخدم تسجيل الدخول برمز الجهاز في إعدادات HeadlessPlayer، ثم حاول مرة أخرى."
+
+msgid "Please complete YouTube sign-in in HeadlessPlayer settings."
+msgstr "يرجى إكمال تسجيل الدخول إلى يوتيوب في إعدادات HeadlessPlayer."
+
+msgid "Could not connect to YouTube. Please check your internet connection or re-authenticate your YouTube account in HeadlessPlayer settings."
+msgstr "تعذر الاتصال بيوتيوب. يرجى التحقق من اتصال الإنترنت أو إعادة تسجيل الدخول لحساب يوتيوب في إعدادات HeadlessPlayer."
+
+msgid "Copy Direct Audio Link of Current Stream"
+msgstr "نسخ الرابط المباشر لصوت البث الحالي"
+
+msgid "Export / Download Clip (A-B selection or whole item)"
+msgstr "تصدير / تحميل مقطع (التحديد بين A و B أو العنصر كاملًا)"
+
+msgid "Quick Export with remembered settings"
+msgstr "تصدير سريع بالإعدادات المحفوظة"
+
+msgid "Downloads & Clip Export"
+msgstr "التحميل وتصدير المقاطع"
+
+msgid "Clip Export & Downloads (D / Shift+D)"
+msgstr "تصدير المقاطع والتحميل (D / Shift+D)"
+
+msgid "Default download &folder (empty = Downloads\\\\HeadlessPlayer):"
+msgstr "&مجلد التحميل الافتراضي (فارغ = Downloads\\\\HeadlessPlayer):"
+
+msgid "&Browse for folder..."
+msgstr "ا&ستعراض لاختيار مجلد..."
+
+msgid "Audio MP3"
+msgstr "صوت MP3"
+
+msgid "Audio M4A / AAC"
+msgstr "صوت M4A / AAC"
+
+msgid "Video MP4"
+msgstr "فيديو MP4"
+
+msgid "Default export f&ormat:"
+msgstr "&صيغة التصدير الافتراضية:"
+
+msgid "Highest quality"
+msgstr "أعلى جودة"
+
+msgid "Story optimized (small file)"
+msgstr "مناسب للستوري (حجم صغير)"
+
+msgid "Default &quality:"
+msgstr "ال&جودة الافتراضية:"
+
+msgid "Automatically &copy the saved file path to the clipboard"
+msgstr "&نسخ مسار الملف المحفوظ إلى الحافظة تلقائيًا"
+
+msgid "D: export the A-B selection (or the whole item) as MP3, M4A or MP4 video; if only point A is set, the current position becomes point B. Shift+D: quick export with the settings remembered from the last dialog. Shift+V: copy the direct audio link of the playing YouTube item. Conversion is done by the bundled mpv encoder."
+msgstr "D: تصدير التحديد بين A و B (أو العنصر كاملًا) بصيغة MP3 أو M4A أو فيديو MP4؛ وإن كانت النقطة A وحدها محددة يصبح الموضع الحالي هو النقطة B. Shift+D: تصدير سريع بالإعدادات المحفوظة من آخر نافذة. Shift+V: نسخ الرابط المباشر لصوت عنصر يوتيوب الذي يعمل. التحويل يتم عبر محرك الترميز في mpv المرفق."
+
+msgid "Select download folder"
+msgstr "اختر مجلد التحميل"
+
+msgid "Copy the direct audio media link of the playing YouTube item."
+msgstr "نسخ الرابط المباشر لملف الصوت لعنصر يوتيوب الذي يعمل."
+
+msgid "Export the A-B selection (or the whole item) as MP3, M4A or MP4 video; with only point A set, the current position becomes B."
+msgstr "تصدير التحديد بين A و B (أو العنصر كاملًا) بصيغة MP3 أو M4A أو فيديو MP4؛ وإن كانت A وحدها محددة يصبح الموضع الحالي هو B."
+
+msgid "Quick export of the A-B selection with the remembered settings, no dialog."
+msgstr "تصدير سريع للتحديد بين A و B بالإعدادات المحفوظة بدون نافذة."
+
+msgid "No online stream is playing."
+msgstr "لا يوجد بث من الإنترنت قيد التشغيل."
+
+msgid "The direct audio link is not available yet."
+msgstr "الرابط المباشر للصوت غير متاح بعد."
+
+msgid "Direct audio link copied to clipboard."
+msgstr "تم نسخ الرابط المباشر للصوت إلى الحافظة."
+
+msgid "An export is already in progress, please wait."
+msgstr "هناك عملية تصدير قيد التنفيذ بالفعل، الرجاء الانتظار."
+
+msgid "Live streams cannot be exported."
+msgstr "لا يمكن تصدير البث المباشر."
+
+msgid "End point set at the current position."
+msgstr "تم تثبيت نقطة النهاية عند الموضع الحالي."
+
+msgid "No A-B selection: the whole item will be downloaded. Press Escape and use [ and ] to select a part instead."
+msgstr "لا يوجد تحديد بين A و B: سيتم تحميل العنصر كاملًا. اضغط Escape واستخدم [ و ] لتحديد جزء بدلًا من ذلك."
+
+msgid "No selection. Preparing to download the whole item; use [ and ] to select a part."
+msgstr "لا يوجد تحديد. جارٍ التجهيز لتحميل العنصر كاملًا؛ استخدم [ و ] لتحديد جزء."
+
+msgid "No A-B selection: the whole file will be converted. Press Escape and use [ and ] to select a part instead."
+msgstr "لا يوجد تحديد بين A و B: سيتم تحويل الملف كاملًا. اضغط Escape واستخدم [ و ] لتحديد جزء بدلًا من ذلك."
+
+msgid "No selection. The whole file will be exported; use [ and ] to select a part."
+msgstr "لا يوجد تحديد. سيتم تصدير الملف كاملًا؛ استخدم [ و ] لتحديد جزء."
+
+msgid "Preparing export from %(a)s to %(b)s..."
+msgstr "جارٍ تجهيز التصدير من %(a)s إلى %(b)s..."
+
+msgid "Set point A (and optionally B) first, then press Shift+D for quick export."
+msgstr "حدّد النقطة A (والنقطة B اختياريًا) أولًا، ثم اضغط Shift+D للتصدير السريع."
+
+msgid "Quick export in progress..."
+msgstr "جاري التصدير السريع..."
+
+msgid "Quick export failed: %s"
+msgstr "فشل التصدير السريع: %s"
+
+msgid "Exporting %(fmt)s clip in the background..."
+msgstr "جارٍ تصدير المقطع بصيغة %(fmt)s في الخلفية..."
+
+msgid "Downloading and converting the whole item to %(fmt)s in the background..."
+msgstr "جارٍ تحميل العنصر كاملًا وتحويله إلى %(fmt)s في الخلفية..."
+
+msgid "Export failed: %s"
+msgstr "فشل التصدير: %s"
+
+msgid "Clip saved successfully as %s in the downloads folder. It is copied to the clipboard."
+msgstr "تم حفظ المقطع بنجاح باسم %s في مجلد التنزيلات. تم نسخه إلى الحافظة."
+
+msgid "Clip saved successfully as %s in the downloads folder."
+msgstr "تم حفظ المقطع بنجاح باسم %s في مجلد التنزيلات."
+
+msgid "Clip saved successfully as %(file)s in %(folder)s. It is copied to the clipboard."
+msgstr "تم حفظ المقطع بنجاح باسم %(file)s في مجلد %(folder)s. تم نسخه إلى الحافظة."
+
+msgid "Clip saved successfully as %(file)s in %(folder)s."
+msgstr "تم حفظ المقطع بنجاح باسم %(file)s في مجلد %(folder)s."
+
+msgid "Audio MP3 (works everywhere)"
+msgstr "صوت MP3 (يعمل في كل مكان)"
+
+msgid "Audio M4A / AAC (high purity)"
+msgstr "صوت M4A / AAC (نقاء عالٍ)"
+
+msgid "Video MP4 (H.264 + AAC, stories & chats)"
+msgstr "فيديو MP4 (H.264 + AAC، للستوري والمحادثات)"
+
+msgid "Highest quality (original)"
+msgstr "أعلى جودة (الأصلية)"
+
+msgid "Story optimized (small file, fast upload)"
+msgstr "مناسب للستوري (حجم صغير، رفع سريع)"
+
+msgid "Export clip: %(title)s (from %(a)s to %(b)s, %(d)d seconds)"
+msgstr "تصدير مقطع: %(title)s (من %(a)s إلى %(b)s، %(d)d ثانية)"
+
+msgid "Download / export whole item: %s"
+msgstr "تحميل / تصدير العنصر كاملًا: %s"
+
+msgid "File &name:"
+msgstr "ا&سم الملف:"
+
+msgid "Export &format:"
+msgstr "&صيغة التصدير:"
+
+msgid "&Quality / size:"
+msgstr "ال&جودة / الحجم:"
+
+msgid "&Video quality (YouTube):"
+msgstr "جودة ال&فيديو (يوتيوب):"
+
+msgid "Convert audio to a story video (MP4 with animated &waveform)"
+msgstr "تحويل الصوت إلى فيديو ستوري (MP4 مع &موجة صوتية متحركة)"
+
+msgid "Save &to folder:"
+msgstr "الحفظ &في المجلد:"
+
+msgid "&Browse..."
+msgstr "ا&ستعراض..."
+
+msgid "&Remember these settings for Quick Export (Shift+D)"
+msgstr "&تذكر هذه الإعدادات للتصدير السريع (Shift+D)"
+
+msgid "Select export folder"
+msgstr "اختر مجلد التصدير"
+
+msgid "&Export"
+msgstr "&تصدير"
+
+msgid "%s (video with audio)"
+msgstr "%s (فيديو مع الصوت)"
+

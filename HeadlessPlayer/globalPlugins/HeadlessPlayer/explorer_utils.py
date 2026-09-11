@@ -50,19 +50,32 @@ def _get_foreground_window() -> int:
 
 def _is_descendant_window(parent_hwnd: int, child_hwnd: int) -> bool:
     """
-    Checks if child_hwnd is identical to or a child of parent_hwnd.
+    Checks if child_hwnd is identical to or a descendant/tab of parent_hwnd.
     """
     if parent_hwnd == child_hwnd:
         return True
     try:
         import winUser
-        return winUser.isDescendantWindow(parent_hwnd, child_hwnd)
+        if winUser.isDescendantWindow(parent_hwnd, child_hwnd):
+            return True
     except Exception:
-        try:
-            import ctypes
-            return bool(ctypes.windll.user32.IsChild(parent_hwnd, child_hwnd))
-        except Exception:
-            return False
+        pass
+    try:
+        import ctypes
+        if ctypes.windll.user32.IsChild(parent_hwnd, child_hwnd):
+            return True
+    except Exception:
+        pass
+    try:
+        import ctypes
+        GA_ROOT = 2
+        r1 = ctypes.windll.user32.GetAncestor(parent_hwnd, GA_ROOT)
+        r2 = ctypes.windll.user32.GetAncestor(child_hwnd, GA_ROOT)
+        if r1 and r2 and r1 == r2:
+            return True
+    except Exception:
+        pass
+    return False
 
 
 def _query_shell_windows_com(fg_hwnd: int) -> List[str]:
@@ -248,15 +261,20 @@ def _get_focus_explorer_paths() -> List[str]:
         except Exception:
             pass
 
-        # 4. Safe standard directories to look for focused files
-        search_dirs = [
-            os.path.expanduser("~"),
-            os.path.join(os.path.expanduser("~"), "Desktop"),
-            os.path.join(os.path.expanduser("~"), "Downloads"),
-            os.path.join(os.path.expanduser("~"), "Music"),
-            os.path.join(os.path.expanduser("~"), "Videos"),
-            os.path.join(os.path.expanduser("~"), "Documents"),
-        ]
+        # 4. Search directories priority:
+        # If open Explorer directories were found, search them FIRST and ONLY them!
+        # Do not fall back to Downloads or Desktop if the user is inside an open Explorer window!
+        if open_dirs:
+            search_dirs = list(open_dirs)
+        else:
+            search_dirs = [
+                os.path.expanduser("~"),
+                os.path.join(os.path.expanduser("~"), "Desktop"),
+                os.path.join(os.path.expanduser("~"), "Downloads"),
+                os.path.join(os.path.expanduser("~"), "Music"),
+                os.path.join(os.path.expanduser("~"), "Videos"),
+                os.path.join(os.path.expanduser("~"), "Documents"),
+            ]
 
         for d in search_dirs:
             if not os.path.isdir(d):

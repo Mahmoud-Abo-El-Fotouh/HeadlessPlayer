@@ -97,6 +97,9 @@ ACTION_DISPLAY_NAMES: List[Tuple[str, str]] = [
     ("elapsed_time", _("Speak Elapsed Time")),
     ("show_help", _("Show Shortcuts Help Dialog")),
     ("cycle_audio_track", _("Cycle Audio Track / Languages")),
+    ("copy_direct_url", _("Copy Direct Audio Link of Current Stream")),
+    ("export_clip", _("Export / Download Clip (A-B selection or whole item)")),
+    ("quick_export", _("Quick Export with remembered settings")),
     ("close_player", _("Close Player (Quit)")),
     ("exit_mode", _("Exit Player Mode")),
 ]
@@ -110,6 +113,9 @@ ACTION_CATEGORIES: List[Tuple[str, str]] = [
 ]
 
 ACTION_CATEGORY_MAP: Dict[str, str] = {
+    "copy_direct_url": "streaming",
+    "export_clip": "streaming",
+    "quick_export": "streaming",
     "play_pause": "playback",
     "stop": "playback",
     "point_a": "playback",
@@ -901,6 +907,7 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
             _("General & Playback"),
             _("Speech & Announcements"),
             _("Online Streaming & SponsorBlock"),
+            _("Downloads & Clip Export"),
             _("Shortcuts, Updates & About"),
         ]
         self.categoryChoice = helper.addLabeledControl(
@@ -916,12 +923,14 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         self.panelGeneral = wx.Panel(self)
         self.panelSpeech = wx.Panel(self)
         self.panelStreaming = wx.Panel(self)
+        self.panelExport = wx.Panel(self)
         self.panelShortcuts = wx.Panel(self)
 
         self.categoryPanels = [
             self.panelGeneral,
             self.panelSpeech,
             self.panelStreaming,
+            self.panelExport,
             self.panelShortcuts,
         ]
 
@@ -1339,10 +1348,48 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         self.panelShortcuts.SetSizer(sizerShortcuts)
         helper.addItem(self.panelShortcuts)
 
+        # =============================================================
+        # Category: Downloads & Clip Export
+        # =============================================================
+        sizerExport = wx.BoxSizer(wx.VERTICAL)
+        exportHelper = guiHelper.BoxSizerHelper(self.panelExport, sizer=sizerExport)
+        exBox = wx.StaticBox(self.panelExport, label=_("Clip Export & Downloads (D / Shift+D)"))
+        exGroup = guiHelper.BoxSizerHelper(self.panelExport, sizer=wx.StaticBoxSizer(exBox, wx.VERTICAL))
+        self.exportFolderCtrl = exGroup.addLabeledControl(
+            _("Default download &folder (empty = Downloads\\HeadlessPlayer):"), wx.TextCtrl)
+        self.exportFolderCtrl.SetValue(str(cfg.get("exportFolder", "") or ""))
+        self.browseExportFolderBtn = exGroup.addItem(wx.Button(self.panelExport, label=_("&Browse for folder...")))
+        if hasattr(wx, "EVT_BUTTON"):
+            self.browseExportFolderBtn.Bind(wx.EVT_BUTTON, self.onBrowseExportFolder)
+        self.exportFormatChoices = [("mp3", _("Audio MP3")), ("m4a", _("Audio M4A / AAC")), ("mp4", _("Video MP4"))]
+        self.exportFormatChoice = exGroup.addLabeledControl(
+            _("Default export f&ormat:"), wx.Choice, choices=[l for _v, l in self.exportFormatChoices])
+        curFmt = str(cfg.get("exportFormat", "mp3")).lower()
+        self.exportFormatChoice.SetSelection(next((i for i, (v, _l) in enumerate(self.exportFormatChoices) if v == curFmt), 0))
+        self.exportQualityChoices = [("high", _("Highest quality")), ("story", _("Story optimized (small file)"))]
+        self.exportQualityChoice = exGroup.addLabeledControl(
+            _("Default &quality:"), wx.Choice, choices=[l for _v, l in self.exportQualityChoices])
+        curQ = str(cfg.get("exportQuality", "high")).lower()
+        self.exportQualityChoice.SetSelection(next((i for i, (v, _l) in enumerate(self.exportQualityChoices) if v == curQ), 0))
+        self.exportAutoCopyChk = exGroup.addItem(
+            wx.CheckBox(self.panelExport, label=_("Automatically &copy the saved file path to the clipboard")))
+        self.exportAutoCopyChk.SetValue(bool(cfg.get("exportAutoCopy", True)))
+        exHint = wx.StaticText(self.panelExport, label=_(
+            "D: export the A-B selection (or the whole item) as MP3, M4A or MP4 video; if only point A is set, "
+            "the current position becomes point B. Shift+D: quick export with the settings remembered from the last dialog. "
+            "Shift+V: copy the direct audio link of the playing YouTube item. Conversion is done by the bundled mpv encoder."
+        ))
+        exHint.Wrap(560)
+        exGroup.addItem(exHint)
+        exportHelper.addItem(exGroup.sizer)
+        self.panelExport.SetSizer(sizerExport)
+        helper.addItem(self.panelExport)
+
         # Initially show only the first category (General & Playback)
         self.panelGeneral.Show()
         self.panelSpeech.Hide()
         self.panelStreaming.Hide()
+        self.panelExport.Hide()
         self.panelShortcuts.Hide()
 
     def onCategoryChanged(self, evt: Any) -> None:
@@ -1584,6 +1631,17 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
                 except Exception:
                     pass
 
+    def onBrowseExportFolder(self, evt: Any) -> None:
+        if not wx:
+            return
+        import os
+        current = self.exportFolderCtrl.GetValue().strip()
+        start_dir = current if current and os.path.isdir(current) else os.path.join(os.path.expanduser("~"), "Downloads")
+        dlg = wx.DirDialog(self, message=_("Select download folder"), defaultPath=start_dir, style=wx.DD_DEFAULT_STYLE)
+        with dlg:
+            if dlg.ShowModal() == wx.ID_OK:
+                self.exportFolderCtrl.SetValue(dlg.GetPath())
+
     def onSave(self) -> None:
         """
         Invoked when the user clicks OK or Apply in NVDA Settings.
@@ -1712,6 +1770,19 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         if hasattr(self, "cookiesFileCtrl"):
             try:
                 setConfigValue("ytdlpCookiesFile", self.cookiesFileCtrl.GetValue().strip().strip('"'))
+            except Exception:
+                pass
+
+        if hasattr(self, "exportFolderCtrl"):
+            try:
+                setConfigValue("exportFolder", self.exportFolderCtrl.GetValue().strip().strip('"'))
+                i = self.exportFormatChoice.GetSelection()
+                if 0 <= i < len(self.exportFormatChoices):
+                    setConfigValue("exportFormat", self.exportFormatChoices[i][0])
+                j = self.exportQualityChoice.GetSelection()
+                if 0 <= j < len(self.exportQualityChoices):
+                    setConfigValue("exportQuality", self.exportQualityChoices[j][0])
+                setConfigValue("exportAutoCopy", bool(self.exportAutoCopyChk.GetValue()))
             except Exception:
                 pass
 

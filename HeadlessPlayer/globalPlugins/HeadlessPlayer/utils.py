@@ -397,3 +397,141 @@ def log_exception(tag: str, message: str, exc: Optional[BaseException] = None) -
         except Exception:
             pass
     _logger.exception(f"[HeadlessPlayer:{tag}] {message}")
+
+
+def copy_to_clipboard(target: str) -> bool:
+    """
+    Copies target to the Windows clipboard.
+    If target is an existing local file on disk, places BOTH CF_HDROP (file object)
+    and CF_UNICODETEXT (clean path string) onto the clipboard so that:
+    - Pasting in Windows Explorer, WhatsApp, Telegram, Discord pastes/sends the actual FILE.
+    - Pasting in text fields / Notepad pastes the file path string.
+    If target is a URL or text, copies it as CF_UNICODETEXT.
+    """
+    target = str(target or "").strip()
+    if not target:
+        return False
+
+    is_local_file = os.path.isabs(target) and os.path.exists(target)
+
+    # 1. Official NVDA clipboard API (ensures NVDA hooks & unit tests capture copy)
+    api_success = False
+    try:
+        import api
+        api_success = bool(api.copyToClip(target))
+    except Exception:
+        pass
+
+    if not is_local_file and api_success:
+        return True
+
+    # 2. High-fidelity native Win32 dual format clipboard (sets CF_HDROP for files)
+    try:
+        import ctypes
+        from ctypes import wintypes
+        import time
+
+        user32 = ctypes.windll.user32
+        kernel32 = ctypes.windll.kernel32
+
+        kernel32.GlobalAlloc.argtypes = [wintypes.UINT, ctypes.c_size_t]
+        kernel32.GlobalAlloc.restype = wintypes.HGLOBAL
+        kernel32.GlobalLock.argtypes = [wintypes.HGLOBAL]
+        kernel32.GlobalLock.restype = wintypes.LPVOID
+        kernel32.GlobalUnlock.argtypes = [wintypes.HGLOBAL]
+        kernel32.GlobalUnlock.restype = wintypes.BOOL
+        kernel32.GlobalFree.argtypes = [wintypes.HGLOBAL]
+        kernel32.GlobalFree.restype = wintypes.HGLOBAL
+
+        user32.OpenClipboard.argtypes = [wintypes.HWND]
+        user32.OpenClipboard.restype = wintypes.BOOL
+        user32.EmptyClipboard.argtypes = []
+        user32.EmptyClipboard.restype = wintypes.BOOL
+        user32.SetClipboardData.argtypes = [wintypes.UINT, wintypes.HANDLE]
+        user32.SetClipboardData.restype = wintypes.HANDLE
+        user32.CloseClipboard.argtypes = []
+        user32.CloseClipboard.restype = wintypes.BOOL
+
+        CF_UNICODETEXT = 13
+        CF_HDROP = 15
+        GHND = 0x0042
+
+        class DROPFILES(ctypes.Structure):
+            _fields_ = [
+                ("pFiles", wintypes.DWORD),
+                ("pt", wintypes.POINT),
+                ("fNC", wintypes.BOOL),
+                ("fWide", wintypes.BOOL),
+            ]
+
+        for _ in range(5):
+            h_drop = None
+            h_text = None
+            try:
+                text_bytes = (target + "\x00").encode("utf-16-le")
+                h_text = kernel32.GlobalAlloc(GHND, len(text_bytes))
+                if h_text:
+                    p_text = kernel32.GlobalLock(h_text)
+                    if p_text:
+                        ctypes.memmove(p_text, text_bytes, len(text_bytes))
+                        kernel32.GlobalUnlock(h_text)
+
+                if is_local_file:
+                    wide_path = (target + "\x00\x00").encode("utf-16-le")
+                    df_size = ctypes.sizeof(DROPFILES)
+                    total_size = df_size + len(wide_path)
+                    h_drop = kernel32.GlobalAlloc(GHND, total_size)
+                    if h_drop:
+                        p_drop = kernel32.GlobalLock(h_drop)
+                        if p_drop:
+                            df = DROPFILES()
+                            df.pFiles = df_size
+                            df.fWide = True
+                            ctypes.memmove(p_drop, ctypes.byref(df), df_size)
+                            ctypes.memmove(p_drop + df_size, wide_path, len(wide_path))
+                            kernel32.GlobalUnlock(h_drop)
+
+                opened = user32.OpenClipboard(0)
+                if not opened:
+                    opened = user32.OpenClipboard(user32.GetDesktopWindow())
+
+                if opened:
+                    try:
+                        user32.EmptyClipboard()
+                        if h_drop:
+                            user32.SetClipboardData(CF_HDROP, h_drop)
+                            h_drop = None
+                        if h_text:
+                            user32.SetClipboardData(CF_UNICODETEXT, h_text)
+                            h_text = None
+                        return True
+                    finally:
+                        user32.CloseClipboard()
+            except Exception:
+                pass
+            finally:
+                if h_drop:
+                    kernel32.GlobalFree(h_drop)
+                if h_text:
+                    kernel32.GlobalFree(h_text)
+            time.sleep(0.04)
+    except Exception:
+        pass
+
+    # 3. wx fallback
+    try:
+        import wx
+        if wx.TheClipboard.Open():
+            if is_local_file:
+                fdo = wx.FileDataObject()
+                fdo.AddFile(target)
+                wx.TheClipboard.SetData(fdo)
+            else:
+                wx.TheClipboard.SetData(wx.TextDataObject(target))
+            wx.TheClipboard.Flush()
+            wx.TheClipboard.Close()
+            return True
+    except Exception:
+        pass
+
+    return api_success

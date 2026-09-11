@@ -103,6 +103,10 @@ class PlayerController:
         self._active_stream_chapter_idx: Optional[int] = None
         self._suppress_next_auto_chapter: bool = False
 
+        # Clip export and direct stream info state
+        self._export_busy: bool = False
+        self._current_stream_info: Optional[Dict[str, Any]] = None
+
         # Bind engine event callbacks
 
         self._bind_engine_callbacks()
@@ -523,11 +527,17 @@ class PlayerController:
             if not self.engine.is_running:
                 return "off"
 
-            # Check if A-B loop points are marked
-            if self.engine.ab_loop_a is not None and self.engine.ab_loop_b is not None:
+            # Check if A-B loop points are marked or cached
+            has_ab = (
+                (self.engine.ab_loop_a is not None and self.engine.ab_loop_b is not None)
+                or (getattr(self.engine, "_cached_ab_a", None) is not None and getattr(self.engine, "_cached_ab_b", None) is not None)
+            )
+            if has_ab:
                 res = self.engine.toggle_repeat()
                 if res == "ab_loop_on":
-                    self.speech.announce_ab_loop_active(self.engine.ab_loop_a, self.engine.ab_loop_b)
+                    a = self.engine.ab_loop_a if self.engine.ab_loop_a is not None else getattr(self.engine, "_cached_ab_a", 0.0)
+                    b = self.engine.ab_loop_b if self.engine.ab_loop_b is not None else getattr(self.engine, "_cached_ab_b", 0.0)
+                    self.speech.announce_ab_loop_active(a or 0.0, b or 0.0)
                 elif res == "ab_loop_off":
                     self.speech.announce_repeat_mode("off")
                 return res
@@ -723,17 +733,20 @@ class PlayerController:
             self._current_stream_chapters = list(getattr(track, "chapters", [])) if getattr(track, "chapters", None) else []
             # Invalidate any in-flight online stream resolution
             self._stream_play_generation += 1
-            # 1. Save playback position of previous track before loading the new one
-            self.save_current_position()
-
-            # 2. Target track to load
             target_path = track.path
 
-            # 3. Retrieve saved position for THIS specific track (if not already set by session restore)
+            # 1. Save playback position of previous track before loading the new one
+            if self._last_loaded_path and self._last_loaded_path != target_path:
+                self.save_current_position(target_path=self._last_loaded_path)
+
+            # 2. Retrieve saved position for THIS specific track (if not already set by session restore)
             if self._pending_resume_pos is None or self._pending_resume_pos < 0.5:
                 cfg = getConfig()
                 if cfg.get("resumePosition", True):
-                    saved_pos = self.state_store.get_position(target_path)
+                    saved_pos = self.state_store.get_position(
+                        target_path,
+                        current_duration=getattr(track, "duration", None)
+                    )
                     if saved_pos and saved_pos >= 1.0:
                         self._pending_resume_pos = saved_pos
                     else:
@@ -741,7 +754,7 @@ class PlayerController:
                 else:
                     self._pending_resume_pos = None
 
-            # 4. Update currently loaded path
+            # 3. Update currently loaded path
             self._last_loaded_path = target_path
 
             # 5. Load into mpv engine (clearing any stream HTTP headers first)
@@ -1153,44 +1166,243 @@ class PlayerController:
             resume_capture=self._resume_input,
         )
 
+    def _canonical_current_track_path(self) -> Optional[str]:
+        """Returns the stable, canonical URL or file path for the active track, never an ephemeral proxy URL."""
+        cur_track = self.playlist.get_current_track()
+        cand = (cur_track.path if (cur_track and cur_track.path) else None) or self._last_loaded_path
+        if cand and not ("127.0.0.1" in str(cand) or "localhost" in str(cand)):
+            return str(cand).strip()
+        eng_path = getattr(self.engine, "path", None)
+        if eng_path and not ("127.0.0.1" in str(eng_path) or "localhost" in str(eng_path)):
+            return str(eng_path).strip()
+        if cur_track and hasattr(cur_track, "metadata"):
+            meta_id = cur_track.metadata.get("id")
+            if meta_id:
+                return f"https://www.youtube.com/watch?v={meta_id}"
+        return None
+
+    def _copy_to_clipboard(self, target: str) -> bool:
+        """Copies file (CF_HDROP + CF_UNICODETEXT) or URL to the Windows clipboard."""
+        from .utils import copy_to_clipboard
+        return copy_to_clipboard(target)
+
     def copy_current_url(self) -> None:
         """
         Copies the current track's source URL (for online streams) or its
         file path (for local files) to the Windows clipboard (V key).
+        For local files, places both CF_HDROP (file object) and CF_UNICODETEXT
+        onto the clipboard so pasting in WhatsApp/Telegram/Explorer pastes the FILE.
+        Never copies internal/ephemeral localhost proxy URLs.
+        """
+        cur = self.playlist.get_current_track()
+        target_path = self._canonical_current_track_path()
+        if not target_path:
+            self.speech.speak(_("Nothing is currently loaded."))
+            return
+
+        if target_path.startswith("youtube:"):
+            vid = target_path.split(":", 1)[1]
+            target_path = f"https://www.youtube.com/watch?v={vid}"
+
+        copied = self._copy_to_clipboard(target_path)
+        if copied:
+            is_stream = bool(
+                (cur and getattr(cur, "is_stream", False))
+                or target_path.startswith(("http://", "https://", "ytdl://", "custom://"))
+            )
+            if is_stream:
+                self.speech.speak(_("Link copied to clipboard."))
+            else:
+                self.speech.speak(_("File and path copied to clipboard."))
+        else:
+            self.speech.speak(_("Could not copy to clipboard."))
+
+    def _speak_async(self, text: str) -> None:
+        try:
+            import wx
+            wx.CallAfter(self.speech.speak, text)
+        except Exception:
+            self.speech.speak(text)
+
+    def copy_direct_url(self) -> None:
+        """Shift+V: copies the direct audio media link of the playing online item."""
+        cur = self.playlist.get_current_track()
+        if not cur or not getattr(cur, "is_stream", False):
+            self.speech.speak(_("No online stream is playing."))
+            return
+        info = self._current_stream_info or {}
+        url = str(info.get("direct_url") or "")
+        if not url or (info.get("webpage_url") and info.get("id") and info.get("id") not in cur.path):
+            try:
+                from . import stream_engine
+                info = stream_engine.resolve_stream(cur.path)
+                url = str(info.get("direct_url") or "")
+            except Exception as e:
+                logger.error("copy_direct_url resolve failed: %s", e)
+                url = ""
+        if not url:
+            url = str(info.get("stream_url") or "")
+            if url.startswith("http://127.0.0.1"):
+                url = ""
+        if not url:
+            self.speech.speak(_("The direct audio link is not available yet."))
+            return
+        if self._copy_to_clipboard(url):
+            self.speech.speak(_("Direct audio link copied to clipboard."))
+        else:
+            self.speech.speak(_("Could not copy to clipboard."))
+
+    def _export_range(self) -> Tuple[Optional[float], Optional[float], str]:
+        """
+        Returns (start, end, scenario): both points, A + current position as B,
+        or nothing selected.
+        """
+        a = self.engine.ab_loop_a
+        b = self.engine.ab_loop_b
+        if a is not None and b is not None and b > a:
+            return float(a), float(b), "ab"
+        if a is not None:
+            pos = float(self.engine.time_pos or 0.0)
+            if pos > float(a) + 0.5:
+                try:
+                    self.engine.set_ab_point_b(pos)
+                except Exception:
+                    pass
+                return float(a), pos, "a_auto"
+        return None, None, "none"
+
+    def _export_source(self, cur: Any) -> Any:
+        from . import clip_exporter
+        info = self._current_stream_info if (getattr(cur, "is_stream", False) and self._current_stream_info
+                                             and (self._current_stream_info.get("id") or "") in (cur.path or "")) else None
+        return clip_exporter.describe_source(cur.path, cur.display_name, info)
+
+    def export_clip(self) -> None:
+        """
+        D key: opens the Clip Exporter for the A-B selection (or the whole
+        item) of the playing media.
         """
         cur = self.playlist.get_current_track()
         if not cur or not cur.path:
             self.speech.speak(_("Nothing is currently loaded."))
             return
-
-        copied = False
-        import time
-        for _attempt in range(3):
-            try:
-                import api
-                copied = api.copyToClip(cur.path)
-                if copied:
-                    break
-            except Exception:
-                pass
-            try:
-                import wx
-                if wx.TheClipboard.Open():
-                    wx.TheClipboard.SetData(wx.TextDataObject(cur.path))
-                    wx.TheClipboard.Close()
-                    copied = True
-                    break
-            except Exception:
-                pass
-            time.sleep(0.05)
-
-        if copied:
+        if self._export_busy:
+            self.speech.speak(_("An export is already in progress, please wait."))
+            return
+        if self._current_track_is_live_stream():
+            self.speech.speak(_("Live streams cannot be exported."))
+            return
+        start, end, scenario = self._export_range()
+        if scenario == "a_auto":
+            self.speech.speak(_("End point set at the current position."))
+        intro = ""
+        if scenario == "none":
             if getattr(cur, "is_stream", False):
-                self.speech.speak(_("Link copied to clipboard."))
+                intro = _("No A-B selection: the whole item will be downloaded. Press Escape and use [ and ] to select a part instead.")
+                self.speech.speak(_("No selection. Preparing to download the whole item; use [ and ] to select a part."))
             else:
-                self.speech.speak(_("File path copied to clipboard."))
+                intro = _("No A-B selection: the whole file will be converted. Press Escape and use [ and ] to select a part instead.")
+                self.speech.speak(_("No selection. The whole file will be exported; use [ and ] to select a part."))
         else:
-            self.speech.speak(_("Could not copy to clipboard."))
+            self.speech.speak(_("Preparing export from %(a)s to %(b)s...") % {"a": format_time(start), "b": format_time(end)})
+
+        def worker() -> None:
+            from . import clip_exporter
+            try:
+                source = self._export_source(cur)
+            except Exception as e:
+                if "LIVE" in str(e):
+                    self._speak_async(_("Live streams cannot be exported."))
+                else:
+                    logger.error("export source failed: %s", e, exc_info=True)
+                    self._speak_async(self._stream_error_message(e) if getattr(cur, "is_stream", False) else str(e))
+                return
+            defaults = clip_exporter.get_default_settings()
+
+            def on_submit(res: Dict[str, Any]) -> None:
+                if res.get("remember"):
+                    clip_exporter.remember_settings(res)
+                self._run_export(source, res, start, end, res.get("filename", ""), res.get("folder", ""))
+
+            self._exit_player_mode_for_dialog()
+            from .export_dialog import prompt_export_dialog
+            prompt_export_dialog(source, start, end, defaults, on_submit, None,
+                                 suspend_capture=self._suspend_input, resume_capture=self._resume_input,
+                                 intro_message=intro)
+
+        threading.Thread(target=worker, daemon=True, name="HeadlessPlayer-ExportPrep").start()
+
+    def quick_export(self) -> None:
+        """Shift+D: exports the A-B selection immediately with the remembered settings."""
+        cur = self.playlist.get_current_track()
+        if not cur or not cur.path:
+            self.speech.speak(_("Nothing is currently loaded."))
+            return
+        if self._export_busy:
+            self.speech.speak(_("An export is already in progress, please wait."))
+            return
+        if self._current_track_is_live_stream():
+            self.speech.speak(_("Live streams cannot be exported."))
+            return
+        start, end, scenario = self._export_range()
+        if scenario == "none":
+            self.speech.speak(_("Set point A (and optionally B) first, then press Shift+D for quick export."))
+            return
+        self.speech.speak(_("Quick export in progress..."))
+
+        def worker() -> None:
+            from . import clip_exporter
+            try:
+                source = self._export_source(cur)
+            except Exception as e:
+                self._speak_async(_("Live streams cannot be exported.") if "LIVE" in str(e) else _("Quick export failed: %s") % str(e)[:100])
+                return
+            settings = clip_exporter.get_default_settings()
+            filename = clip_exporter.suggest_filename(source.title, start, end, settings["format"])
+            self._run_export(source, settings, start, end, filename, settings["folder"])
+
+        threading.Thread(target=worker, daemon=True, name="HeadlessPlayer-QuickExport").start()
+
+    def _run_export(self, source: Any, settings: Dict[str, Any], start: Optional[float], end: Optional[float], filename: str, folder: str) -> None:
+        from . import clip_exporter
+        self._export_busy = True
+        fmt = str(settings.get("format", "mp3")).upper()
+        if start is not None:
+            self._speak_async(_("Exporting %(fmt)s clip in the background...") % {"fmt": fmt})
+        else:
+            self._speak_async(_("Downloading and converting the whole item to %(fmt)s in the background...") % {"fmt": fmt})
+
+        def on_done(path: Optional[str], err: Optional[Exception]) -> None:
+            self._export_busy = False
+            if err or not path:
+                self._speak_async(_("Export failed: %s") % (str(err)[:120] if err else ""))
+                return
+            fname = os.path.basename(path)
+            target_dir = os.path.dirname(path)
+            default_downloads = os.path.normcase(os.path.abspath(os.path.join(os.path.expanduser("~"), "Downloads")))
+            norm_target = os.path.normcase(os.path.abspath(target_dir))
+            is_downloads = (norm_target == default_downloads or norm_target.startswith(default_downloads + os.sep))
+
+            if is_downloads:
+                if copied:
+                    self._speak_async(_("Clip saved successfully as %s in the downloads folder. It is copied to the clipboard.") % fname)
+                else:
+                    self._speak_async(_("Clip saved successfully as %s in the downloads folder.") % fname)
+            else:
+                folder_name = os.path.basename(norm_target) or norm_target
+                if copied:
+                    self._speak_async(
+                        _("Clip saved successfully as %(file)s in %(folder)s. It is copied to the clipboard.")
+                        % {"file": fname, "folder": folder_name}
+                    )
+                else:
+                    self._speak_async(
+                        _("Clip saved successfully as %(file)s in %(folder)s.")
+                        % {"file": fname, "folder": folder_name}
+                    )
+
+        clip_exporter.export_async(source, settings, start, end, filename, folder, on_done)
+
 
     def open_account_feed(self) -> None:
         """
@@ -1487,19 +1699,25 @@ class PlayerController:
             self._is_resolving_stream = True
             self._resolving_track_path = track.path
 
-            self.save_current_position()
+            if self._last_loaded_path and self._last_loaded_path != track.path:
+                self.save_current_position(target_path=self._last_loaded_path)
+
             self._stream_play_generation += 1
             generation = self._stream_play_generation
-            self._last_loaded_path = track.path
             self._current_stream_chapters = list(getattr(track, "chapters", [])) if getattr(track, "chapters", None) else []
 
             if self._pending_resume_pos is None or self._pending_resume_pos < 0.5:
                 cfg = getConfig()
                 if cfg.get("resumePosition", True) and not track.metadata.get("is_live"):
-                    saved_pos = self.state_store.get_position(track.path)
+                    saved_pos = self.state_store.get_position(
+                        track.path,
+                        current_duration=getattr(track, "duration", None)
+                    )
                     self._pending_resume_pos = saved_pos if (saved_pos and saved_pos >= 1.0) else None
                 else:
                     self._pending_resume_pos = None
+
+            self._last_loaded_path = track.path
 
             orig_idx = self.playlist.current_index + 1
             total = self.playlist.count
@@ -1576,7 +1794,11 @@ class PlayerController:
             else:
                 self.speech.speak(_("Playback engine failed to start."))
 
-    def _current_track_is_live_stream(self) -> bool:
+    def _current_track_is_live_stream(self, path: Optional[str] = None) -> bool:
+        if path:
+            for t in getattr(self.playlist, "_tracks", []):
+                if getattr(t, "path", None) == path:
+                    return bool(getattr(t, "is_stream", False) and getattr(t, "metadata", {}).get("is_live"))
         cur = self.playlist.get_current_track()
         return bool(cur and getattr(cur, "is_stream", False) and cur.metadata.get("is_live"))
 
@@ -1633,23 +1855,31 @@ class PlayerController:
     # Position Resume & State Storage
     # -------------------------------------------------------------------------
 
-    def save_current_position(self) -> None:
+    def save_current_position(self, target_path: Optional[str] = None) -> None:
         """Saves active playback position to the persistent StateStore."""
-        track_path = self._last_loaded_path or getattr(self.engine, "path", None)
+        # The position in the mpv engine belongs strictly to what is currently loaded in the engine!
+        track_path = target_path or self._last_loaded_path
         if not track_path:
-            cur_track = self.playlist.get_current_track()
-            track_path = cur_track.path if (cur_track and cur_track.path) else None
+            track_path = self._canonical_current_track_path()
         if not track_path:
             return
 
         # Never persist positions for live streams (they have no fixed timeline)
-        if self._current_track_is_live_stream():
+        if self._current_track_is_live_stream(track_path):
             return
+
+        # If track_path is an internal localhost proxy URL, resolve to canonical ID/URL
+        if "127.0.0.1" in str(track_path) or "localhost" in str(track_path):
+            canonical = self._canonical_current_track_path()
+            if canonical and not ("127.0.0.1" in str(canonical) or "localhost" in str(canonical)):
+                track_path = canonical
+            else:
+                return
 
         pos = getattr(self.engine, "time_pos", 0.0)
         dur = getattr(self.engine, "duration", None)
 
-        if pos > 0:
+        if pos and pos > 0:
             self.state_store.save_position(
                 file_path=track_path,
                 position_sec=pos,
@@ -1811,6 +2041,7 @@ class PlayerController:
                     # Coordinate auto-next or track repeat
                     next_t = self.playlist.on_track_ended()
                     if next_t:
+                        self._last_loaded_path = None
                         self.play_track(next_t)
                         self._check_stream_queue_auto_extend()
                     else:
