@@ -16,186 +16,134 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-msgid "Headless Media Player"
-msgstr "Headless Media Player"
+msgid " and "
+msgstr " and "
 
-msgid "Completely headless, privacy-oriented media player for NVDA operated via modal keyboard capture."
-msgstr "Completely headless, privacy-oriented media player for NVDA operated via modal keyboard capture."
+msgid "%d items"
+msgstr "%d items"
 
-msgid "Player Mode active"
-msgstr "Player Mode active"
+msgid "%d minutes"
+msgstr "%d minutes"
 
-msgid "Player Mode exited"
-msgstr "Player Mode exited"
+msgid "%d more items loaded: %s"
+msgstr "%d more items loaded: %s"
 
-msgid "Playing"
-msgstr "Playing"
+msgid "%d seconds"
+msgstr "%d seconds"
 
-msgid "Paused"
-msgstr "Paused"
+msgid "%s (video with audio)"
+msgstr "%s (video with audio)"
 
-msgid "Stopped"
-msgstr "Stopped"
+msgid "&Announce when a sponsor or promo segment is skipped"
+msgstr "&Announce when a sponsor or promo segment is skipped"
 
-msgid "Muted"
-msgstr "Muted"
+msgid "&Assign Selected Suggestion"
+msgstr "&Assign Selected Suggestion"
 
-msgid "Unmuted"
-msgstr "Unmuted"
+msgid "&Back"
+msgstr "&Back"
 
-msgid "Volume %d percent"
-msgstr "Volume %d percent"
+msgid "&Browse for cookies file..."
+msgstr "&Browse for cookies file..."
 
-msgid "Speed %.2fx"
-msgstr "Speed %.2fx"
+msgid "&Browse for folder..."
+msgstr "&Browse for folder..."
 
-msgid "Speed %.2fx (Preset)"
-msgstr "Speed %.2fx (Preset)"
+msgid "&Browse..."
+msgstr "&Browse..."
 
-msgid "Speed reset to 1.0x"
-msgstr "Speed reset to 1.0x"
+msgid "&Category:"
+msgstr "&Category:"
 
-msgid "Forward %s, position %s of %s"
-msgstr "Forward %s, position %s of %s"
+msgid "&Close"
+msgstr "&Close"
 
-msgid "Backward %s, position %s of %s"
-msgstr "Backward %s, position %s of %s"
+msgid "&Delete Assigned Shortcut"
+msgstr "&Delete Assigned Shortcut"
 
-msgid "Jump to %d percent, position %s"
-msgstr "Jump to %d percent, position %s"
+msgid "&Download and Install Update"
+msgstr "&Download and Install Update"
 
-msgid "Start of media"
-msgstr "Start of media"
+msgid "&Enable recent media history tracking"
+msgstr "&Enable recent media history tracking"
 
-msgid "End of media"
-msgstr "End of media"
+msgid "&Export"
+msgstr "&Export"
 
-msgid "A-B Repeat: Start point set at %s"
-msgstr "A-B Repeat: Start point set at %s"
-
-msgid "A-B Repeat: End point set at %s"
-msgstr "A-B Repeat: End point set at %s"
-
-msgid "A-B Looping active from %s to %s"
-msgstr "A-B Looping active from %s to %s"
-
-msgid "A-B Repeat cleared"
-msgstr "A-B Repeat cleared"
-
-msgid "Repeat Track enabled"
-msgstr "Repeat Track enabled"
-
-msgid "Repeat Playlist enabled"
-msgstr "Repeat Playlist enabled"
-
-msgid "Repeat disabled"
-msgstr "Repeat disabled"
-
-msgid "Chapter %d: %s"
-msgstr "Chapter %d: %s"
-
-msgid "Chapter %d: %s, at %s"
-msgstr "Chapter %d: %s, at %s"
-
-msgid "Chapter %d, at %s"
-msgstr "Chapter %d, at %s"
-
-msgid "Chapter %d"
-msgstr "Chapter %d"
-
-msgid "No chapters available in media"
-msgstr "No chapters available in media"
-
-msgid "Audio track %d: %s (%s)"
-msgstr "Audio track %d: %s (%s)"
-
-msgid "Audio track %d"
-msgstr "Audio track %d"
-
-msgid "Loaded %d files into playlist"
-msgstr "Loaded %d files into playlist"
-
-msgid "Loaded %d files into playlist, total duration: %s"
-msgstr "Loaded %d files into playlist, total duration: %s"
-
-msgid "Playlist empty"
-
-msgstr "Playlist empty"
-
-msgid "Track %d of %d: %s"
-msgstr "Track %d of %d: %s"
-
-msgid "Auto-next enabled"
-msgstr "Auto-next enabled"
-
-msgid "Auto-next disabled"
-msgstr "Auto-next disabled"
-
-msgid "Shuffle enabled"
-msgstr "Shuffle enabled"
-
-msgid "Shuffle disabled"
-msgstr "Shuffle disabled"
-
-msgid "Title: %s, Duration: %s, Track %d of %d"
-msgstr "Title: %s, Duration: %s, Track %d of %d"
-
-msgid "Remaining time: %s"
-msgstr "Remaining time: %s"
-
-msgid "Elapsed time: %s"
-msgstr "Elapsed time: %s"
-
-msgid "Speech Feedback & Announcements"
-msgstr "Speech Feedback & Announcements"
-
-msgid "Announce &volume changes"
-msgstr "Announce &volume changes"
-
-msgid "Announce &seek position and jump offsets"
-msgstr "Announce &seek position and jump offsets"
-
-msgid "Announce playback s&peed adjustments"
-msgstr "Announce playback s&peed adjustments"
-
-msgid "Announce &track titles and playlist navigation"
-msgstr "Announce &track titles and playlist navigation"
-
-msgid "Announce A-B &loop and segment markers"
-msgstr "Announce A-B &loop and segment markers"
-
-msgid "Announce &chapter markers and names"
-msgstr "Announce &chapter markers and names"
-
-msgid "Announce chapter transitions &automatically during playback"
-msgstr "Announce chapter transitions &automatically during playback"
-
-msgid "Seek Jump Step Sizes (Seconds)"
-msgstr "Seek Jump Step Sizes (Seconds)"
-
-msgid "&Normal seek jump (Left/Right arrows):"
-msgstr "&Normal seek jump (Left/Right arrows):"
-
-msgid "&Slow / precise seek jump (Alt + Left/Right):"
-msgstr "&Slow / precise seek jump (Alt + Left/Right):"
+msgid "&Export Shortcuts (JSON)..."
+msgstr "&Export Shortcuts (JSON)..."
 
 msgid "&Fast seek jump (Ctrl + Left/Right):"
 msgstr "&Fast seek jump (Ctrl + Left/Right):"
 
+msgid "&Filter Actions by Category:"
+msgstr "&Filter Actions by Category:"
+
+msgid "&Follow Developer on Telegram (Mahmoud Abo El Fotouh)..."
+msgstr "&Follow Developer on Telegram (Mahmoud Abo El Fotouh)..."
+
+msgid "&Import Shortcuts (JSON)..."
+msgstr "&Import Shortcuts (JSON)..."
+
+msgid "&Maximum items loaded from an online playlist or channel:"
+msgstr "&Maximum items loaded from an online playlist or channel:"
+
+msgid "&Maximum recent entries per category:"
+msgstr "&Maximum recent entries per category:"
+
+msgid "&Normal seek jump (Left/Right arrows):"
+msgstr "&Normal seek jump (Left/Right arrows):"
+
+msgid "&Open"
+msgstr "&Open"
+
+msgid "&Play"
+msgstr "&Play"
+
+msgid "&Player Action:"
+msgstr "&Player Action:"
+
+msgid "&Press Key on Keyboard Directly..."
+msgstr "&Press Key on Keyboard Directly..."
+
+msgid "&Quality / size:"
+msgstr "&Quality / size:"
+
+msgid "&Remember these settings for Quick Export (Shift+D)"
+msgstr "&Remember these settings for Quick Export (Shift+D)"
+
+msgid "&Reset to Defaults"
+msgstr "&Reset to Defaults"
+
+msgid "&Retry Download"
+msgstr "&Retry Download"
+
+msgid "&Search Key Suggestions (type e.g. 'ta', 'control', 'page', 'arrow'):"
+msgstr "&Search Key Suggestions (type e.g. 'ta', 'control', 'page', 'arrow'):"
+
+msgid "&Slow / precise seek jump (Alt + Left/Right):"
+msgstr "&Slow / precise seek jump (Alt + Left/Right):"
+
 msgid "&Ultrafast seek jump (Shift + Left/Right):"
 msgstr "&Ultrafast seek jump (Shift + Left/Right):"
 
-msgid "Playback Defaults & Options"
-msgstr "Playback Defaults & Options"
+msgid "&Video quality (YouTube):"
+msgstr "&Video quality (YouTube):"
 
-msgid "Default playback s&peed:"
-msgstr "Default playback s&peed:"
+msgid "(Not Set)"
+msgstr "(Not Set)"
 
 msgid "0.5x"
 msgstr "0.5x"
 
 msgid "0.75x"
 msgstr "0.75x"
+
+msgid "1 minute"
+msgstr "1 minute"
+
+msgid "1 second"
+msgstr "1 second"
 
 msgid "1.0x (Normal)"
 msgstr "1.0x (Normal)"
@@ -218,209 +166,273 @@ msgstr "2.5x"
 msgid "3.0x"
 msgstr "3.0x"
 
-msgid "Default &repeat mode:"
-msgstr "Default &repeat mode:"
+msgid "A new version (%s) of Headless Media Player is available! (Current version: %s)"
+msgstr "A new version (%s) of Headless Media Player is available! (Current version: %s)"
 
-msgid "Off"
-msgstr "Off"
+msgid "A-B Looping active from %s to %s"
+msgstr "A-B Looping active from %s to %s"
 
-msgid "Repeat Current Track"
-msgstr "Repeat Current Track"
+msgid "A-B Repeat cleared"
+msgstr "A-B Repeat cleared"
 
-msgid "Repeat Entire Playlist"
-msgstr "Repeat Entire Playlist"
+msgid "A-B Repeat: End point set at %s"
+msgstr "A-B Repeat: End point set at %s"
 
-msgid "Auto-advance to &next track when media finishes"
-msgstr "Auto-advance to &next track when media finishes"
-
-msgid "Remember and &resume playback position for media"
-msgstr "Remember and &resume playback position for media"
-
-msgid "Play audio &earcons when entering/exiting Player Mode"
-msgstr "Play audio &earcons when entering/exiting Player Mode"
-
-msgid "Automatically enter &Player Mode when loading new media"
-msgstr "Automatically enter &Player Mode when loading new media"
-
-msgid "Media engine failed to start"
-msgstr "Media engine failed to start"
-
-msgid "Media file not found: %s"
-msgstr "Media file not found: %s"
-
-msgid "Unsupported media format or corrupted file"
-msgstr "Unsupported media format or corrupted file"
-
-msgid "Error communicating with media player pipe"
-msgstr "Error communicating with media player pipe"
-
-msgid "Select Media File"
-msgstr "Select Media File"
-
-msgid "Select Media Folder"
-msgstr "Select Media Folder"
-
-msgid "Media Files"
-msgstr "Media Files"
-
-msgid "All Files"
-msgstr "All Files"
-
-msgid "No media files found in selected folder"
-msgstr "No media files found in selected folder"
-
-msgid "No media files currently selected in Windows Explorer"
-msgstr "No media files currently selected in Windows Explorer"
-
-msgid "Playback resumed from %s"
-msgstr "Playback resumed from %s"
-
-msgid "Audio track %d: %s"
-msgstr "Audio track %d: %s"
-
-msgid "Default Test Media"
-msgstr "Default Test Media"
-
-msgid "Select Media Files"
-msgstr "Select Media Files"
-
-msgid "Select Media Folder to Queue"
-msgstr "Select Media Folder to Queue"
-
-msgid "Toggles Headless Media Player keyboard capture mode."
-msgstr "Toggles Headless Media Player keyboard capture mode."
-
-msgid "HEADLESS MEDIA PLAYER - KEYBOARD SHORTCUTS HELP"
-msgstr "HEADLESS MEDIA PLAYER - KEYBOARD SHORTCUTS HELP"
-
-msgid "Headless Media Player - Shortcuts Help"
-msgstr "Headless Media Player - Shortcuts Help"
-
-msgid "MODE TOGGLE & ESSENTIALS:"
-msgstr "MODE TOGGLE & ESSENTIALS:"
-
-msgid "Enter or exit Headless Player Mode."
-msgstr "Enter or exit Headless Player Mode."
-
-msgid "Exit Player Mode and return to normal desktop keyboard control."
-msgstr "Exit Player Mode and return to normal desktop keyboard control."
-
-msgid "Silence speech immediately while in Player Mode."
-msgstr "Silence speech immediately while in Player Mode."
-
-msgid "Show this keyboard shortcuts help window."
-msgstr "Show this keyboard shortcuts help window."
-
-msgid "PLAYBACK & VOLUME CONTROLS:"
-msgstr "PLAYBACK & VOLUME CONTROLS:"
-
-msgid "Play / Pause toggle."
-msgstr "Play / Pause toggle."
-
-msgid "Stop playback and rewind to beginning."
-msgstr "Stop playback and rewind to beginning."
-
-msgid "Mute / Unmute audio."
-msgstr "Mute / Unmute audio."
-
-msgid "Adjust volume (+/- 5%)."
-msgstr "Adjust volume (+/- 5%)."
-
-msgid "SEEKING & JUMPS:"
-msgstr "SEEKING & JUMPS:"
-
-msgid "Normal seek (+/- 5 seconds)."
-msgstr "Normal seek (+/- 5 seconds)."
-
-msgid "Slow & precise seek (+/- 1 second)."
-msgstr "Slow & precise seek (+/- 1 second)."
-
-msgid "Fast seek (+/- 30 seconds)."
-msgstr "Fast seek (+/- 30 seconds)."
-
-msgid "Ultrafast seek (+/- 5 minutes)."
-msgstr "Ultrafast seek (+/- 5 minutes)."
-
-msgid "Number keys 1 to 9 (Top Row) : "
-msgstr "Number keys 1 to 9 (Top Row) : "
-
-msgid "Jump directly to 10% through 90% of file duration."
-msgstr "Jump directly to 10% through 90% of file duration."
-
-msgid "PITCH-PRESERVED SPEED CONTROLS:"
-msgstr "PITCH-PRESERVED SPEED CONTROLS:"
-
-msgid "Fine speed adjustment (+/- 0.1x)."
-msgstr "Fine speed adjustment (+/- 0.1x)."
-
-msgid "Cycle preset speeds (1.0x, 1.5x, 1.75x, 2.0x, 2.5x, 3.0x)."
-msgstr "Cycle preset speeds (1.0x, 1.5x, 1.75x, 2.0x, 2.5x, 3.0x)."
+msgid "A-B Repeat: Start point set at %s"
+msgstr "A-B Repeat: Start point set at %s"
 
 msgid "A-B SEGMENT LOOP & REPEAT MODES:"
 msgstr "A-B SEGMENT LOOP & REPEAT MODES:"
 
-msgid "Mark start of loop (Point A)."
-msgstr "Mark start of loop (Point A)."
+msgid "About & Developer"
+msgstr "About & Developer"
 
-msgid "Mark end of loop (Point B)."
-msgstr "Mark end of loop (Point B)."
+msgid "Add as an a&dditional shortcut (keep the current one)"
+msgstr "Add as an a&dditional shortcut (keep the current one)"
 
-msgid "Toggle repeat: A-B loop (if marked) or cycle Single Track / Playlist / Off."
-msgstr "Toggle repeat: A-B loop (if marked) or cycle Single Track / Playlist / Off."
+msgid "Adjust volume (+/- 5%)."
+msgstr "Adjust volume (+/- 5%)."
 
-msgid "Clear marked A-B loop points."
-msgstr "Clear marked A-B loop points."
+msgid "All Actions"
+msgstr "All Actions"
 
-msgid "PLAYLIST, FOLDERS & WINDOWS EXPLORER:"
-msgstr "PLAYLIST, FOLDERS & WINDOWS EXPLORER:"
+msgid "An export is already in progress, please wait."
+msgstr "An export is already in progress, please wait."
 
-msgid "Open file dialog (select single media file)."
-msgstr "Open file dialog (select single media file)."
+msgid "Announce &chapter markers and names"
+msgstr "Announce &chapter markers and names"
 
-msgid "Open folder dialog (load entire folder as playlist)."
-msgstr "Open folder dialog (load entire folder as playlist)."
+msgid "Announce &seek position and jump offsets"
+msgstr "Announce &seek position and jump offsets"
 
-msgid "Play active selection directly from Windows Explorer / Desktop."
-msgstr "Play active selection directly from Windows Explorer / Desktop."
+msgid "Announce &track titles and playlist navigation"
+msgstr "Announce &track titles and playlist navigation"
 
-msgid "Previous / Next track in playlist."
-msgstr "Previous / Next track in playlist."
+msgid "Announce &volume changes"
+msgstr "Announce &volume changes"
 
-msgid "Toggle Auto-Next track playback."
-msgstr "Toggle Auto-Next track playback."
+msgid "Announce A-B &loop and segment markers"
+msgstr "Announce A-B &loop and segment markers"
 
-msgid "Toggle playlist shuffle / random mode."
-msgstr "Toggle playlist shuffle / random mode."
+msgid "Announce chapter transitions &automatically during playback"
+msgstr "Announce chapter transitions &automatically during playback"
+
+msgid "Announce playback s&peed adjustments"
+msgstr "Announce playback s&peed adjustments"
+
+msgid "Announce playlist &total duration when loaded"
+msgstr "Announce playlist &total duration when loaded"
+
+msgid "Arabic"
+msgstr "Arabic"
+
+msgid "Assigned %s to %s"
+msgstr "Assigned %s to %s"
+
+msgid "Audio M4A / AAC"
+msgstr "Audio M4A / AAC"
+
+msgid "Audio M4A / AAC (high purity)"
+msgstr "Audio M4A / AAC (high purity)"
+
+msgid "Audio MP3"
+msgstr "Audio MP3"
+
+msgid "Audio MP3 (works everywhere)"
+msgstr "Audio MP3 (works everywhere)"
+
+msgid "Audio track %d"
+msgstr "Audio track %d"
+
+msgid "Audio track %d: %s"
+msgstr "Audio track %d: %s"
+
+msgid "Audio track %d: %s (%s)"
+msgstr "Audio track %d: %s (%s)"
+
+msgid "Audio, Volume & Speed"
+msgstr "Audio, Volume & Speed"
+
+msgid "Auto-advance to &next track when media finishes"
+msgstr "Auto-advance to &next track when media finishes"
+
+msgid "Auto-next disabled"
+msgstr "Auto-next disabled"
+
+msgid "Auto-next enabled"
+msgstr "Auto-next enabled"
+
+msgid "Automatically &copy the saved file path to the clipboard"
+msgstr "Automatically &copy the saved file path to the clipboard"
+
+msgid "Automatically enter &Player Mode when loading new media"
+msgstr "Automatically enter &Player Mode when loading new media"
+
+msgid "Backward %s, position %s of %s"
+msgstr "Backward %s, position %s of %s"
+
+msgid "Bass Down (-3 dB)"
+msgstr "Bass Down (-3 dB)"
+
+msgid "Bass Up (+3 dB)"
+msgstr "Bass Up (+3 dB)"
+
+msgid "Bass: %s dB"
+msgstr "Bass: %s dB"
+
+msgid "Bass: normal"
+msgstr "Bass: normal"
+
+msgid "Browse recent playlists (folders & playlists) backward / forward."
+msgstr "Browse recent playlists (folders & playlists) backward / forward."
+
+msgid "Browse recent tracks (files & streams) backward / forward."
+msgstr "Browse recent tracks (files & streams) backward / forward."
+
+msgid "Calculate elapsed ti&me based on current playback speed"
+msgstr "Calculate elapsed ti&me based on current playback speed"
+
+msgid "Calculate remaining &time based on current playback speed"
+msgstr "Calculate remaining &time based on current playback speed"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Cancel recent browsing mode without leaving Player Mode."
+msgstr "Cancel recent browsing mode without leaving Player Mode."
+
+msgid "Channel"
+msgstr "Channel"
+
+msgid "Chapter %d"
+msgstr "Chapter %d"
+
+msgid "Chapter %d, at %s"
+msgstr "Chapter %d, at %s"
+
+msgid "Chapter %d: %s"
+msgstr "Chapter %d: %s"
+
+msgid "Chapter %d: %s, at %s"
+msgstr "Chapter %d: %s, at %s"
 
 msgid "CHAPTERS & VIDEO AUDIO TRACKS:"
 msgstr "CHAPTERS & VIDEO AUDIO TRACKS:"
 
-msgid "Jump to Next / Previous chapter."
-msgstr "Jump to Next / Previous chapter."
+msgid "Check for &Add-on Updates on GitHub..."
+msgstr "Check for &Add-on Updates on GitHub..."
 
-msgid "Cycle audio tracks / languages in video files."
-msgstr "Cycle audio tracks / languages in video files."
+msgid "Check for &Updates of the streaming engine now..."
+msgstr "Check for &Updates of the streaming engine now..."
 
-msgid "SPEECH QUERIES:"
-msgstr "SPEECH QUERIES:"
+msgid "Checking for add-on updates, please wait..."
+msgstr "Checking for add-on updates, please wait..."
 
-msgid "Speak full media information (title, duration, playlist index)."
-msgstr "Speak full media information (title, duration, playlist index)."
+msgid "Checking for add-on updates..."
+msgstr "Checking for add-on updates..."
 
-msgid "Speak remaining playback time."
-msgstr "Speak remaining playback time."
+msgid "Checking for streaming engine updates, please wait..."
+msgstr "Checking for streaming engine updates, please wait..."
 
-msgid "Speak elapsed playback time."
-msgstr "Speak elapsed playback time."
+msgid "Checking for updates..."
+msgstr "Checking for updates..."
 
-msgid "Directly loads and plays selected or focused media files/folders from Windows Explorer."
-msgstr "Directly loads and plays selected or focused media files/folders from Windows Explorer."
+msgid "Chinese"
+msgstr "Chinese"
 
-msgid "Directly load and play focused/selected media from Explorer/Desktop without entering Player Mode."
-msgstr "Directly load and play focused/selected media from Explorer/Desktop without entering Player Mode."
+msgid "Chinese (Simplified)"
+msgstr "Chinese (Simplified)"
 
-msgid "Player Mode Keyboard Shortcuts"
-msgstr "Player Mode Keyboard Shortcuts"
+msgid "Chinese (Traditional)"
+msgstr "Chinese (Traditional)"
+
+msgid "Clear A-B Loop Points"
+msgstr "Clear A-B Loop Points"
+
+msgid "Clear marked A-B loop points."
+msgstr "Clear marked A-B loop points."
+
+msgid "Clip Export & Downloads (D / Shift+D)"
+msgstr "Clip Export & Downloads (D / Shift+D)"
+
+msgid "Clip saved successfully as %(file)s in %(folder)s."
+msgstr "Clip saved successfully as %(file)s in %(folder)s."
+
+msgid "Clip saved successfully as %(file)s in %(folder)s. It is copied to the clipboard."
+msgstr "Clip saved successfully as %(file)s in %(folder)s. It is copied to the clipboard."
+
+msgid "Clip saved successfully as %s in the downloads folder."
+msgstr "Clip saved successfully as %s in the downloads folder."
+
+msgid "Clip saved successfully as %s in the downloads folder. It is copied to the clipboard."
+msgstr "Clip saved successfully as %s in the downloads folder. It is copied to the clipboard."
+
+msgid "Close / quit media player completely."
+msgstr "Close / quit media player completely."
+
+msgid "Close Player (Quit)"
+msgstr "Close Player (Quit)"
+
+msgid "Connecting to download server..."
+msgstr "Connecting to download server..."
+
+msgid "Convert audio to a story video (MP4 with animated &waveform)"
+msgstr "Convert audio to a story video (MP4 with animated &waveform)"
+
+msgid "Cookies files (*.txt)|*.txt|All files (*.*)|*.*"
+msgstr "Cookies files (*.txt)|*.txt|All files (*.*)|*.*"
+
+msgid "Cookies Verification"
+msgstr "Cookies Verification"
+
+msgid "Copy Current Track Link / Path to Clipboard"
+msgstr "Copy Current Track Link / Path to Clipboard"
+
+msgid "Copy Direct Audio Link of Current Stream"
+msgstr "Copy Direct Audio Link of Current Stream"
+
+msgid "Copy the current track's link (or file path) to the clipboard."
+msgstr "Copy the current track's link (or file path) to the clipboard."
+
+msgid "Copy the direct audio media link of the playing YouTube item."
+msgstr "Copy the direct audio media link of the playing YouTube item."
+
+msgid ""
+"Could not check for add-on updates.\n"
+"Please check your internet connection and try again.\n"
+"\n"
+"Details: %s"
+msgstr ""
+"Could not check for add-on updates.\n"
+"Please check your internet connection and try again.\n"
+"\n"
+"Details: %s"
+
+msgid "Could not copy to clipboard."
+msgstr "Could not copy to clipboard."
+
+msgid "Could not load this item. Check your connection or update yt-dlp from settings."
+msgstr "Could not load this item. Check your connection or update yt-dlp from settings."
+
+msgid "Could not play this stream. Check your internet connection, or update yt-dlp from HeadlessPlayer settings."
+msgstr "Could not play this stream. Check your internet connection, or update yt-dlp from HeadlessPlayer settings."
+
+msgid "Could not read sign-in cookies from your browser. Set a manual cookies.txt file in HeadlessPlayer settings instead."
+msgstr "Could not read sign-in cookies from your browser. Set a manual cookies.txt file in HeadlessPlayer settings instead."
+
+msgid ""
+"Could not update the streaming engine.\n"
+"Check your internet connection and try again.\n"
+"\n"
+"Details: %s"
+msgstr ""
+"Could not update the streaming engine.\n"
+"Check your internet connection and try again.\n"
+"\n"
+"Details: %s"
+
+msgid "Current assigned key: %s"
+msgstr "Current assigned key: %s"
 
 msgid "Customize Player Mode &Shortcuts..."
 msgstr "Customize Player Mode &Shortcuts..."
@@ -428,355 +440,911 @@ msgstr "Customize Player Mode &Shortcuts..."
 msgid "Customize Player Mode Shortcuts"
 msgstr "Customize Player Mode Shortcuts"
 
-msgid "Select an action and enter your preferred key or key combination (e.g. space, control, pagedown, s, m, home, end, alt+right):"
-msgstr "Select an action and enter your preferred key or key combination (e.g. space, control, pagedown, s, m, home, end, alt+right):"
+msgid "Cycle Audio Track / Languages"
+msgstr "Cycle Audio Track / Languages"
 
-msgid "&Player Action:"
-msgstr "&Player Action:"
+msgid "Cycle audio tracks / languages in video files."
+msgstr "Cycle audio tracks / languages in video files."
 
-msgid "Assigned &Shortcut Key:"
-msgstr "Assigned &Shortcut Key:"
+msgid "Cycle preset speeds (1.0x, 1.5x, 1.75x, 2.0x, 2.5x, 3.0x)."
+msgstr "Cycle preset speeds (1.0x, 1.5x, 1.75x, 2.0x, 2.5x, 3.0x)."
 
-msgid "&Reset to Defaults"
-msgstr "&Reset to Defaults"
+msgid "D: export the A-B selection (or the whole item) as MP3, M4A or MP4 video; if only point A is set, the current position becomes point B. Shift+D: quick export with the settings remembered from the last dialog. Shift+V: copy the direct audio link of the playing YouTube item. Conversion is done by the bundled mpv encoder."
+msgstr "D: export the A-B selection (or the whole item) as MP3, M4A or MP4 video; if only point A is set, the current position becomes point B. Shift+D: quick export with the settings remembered from the last dialog. Shift+V: copy the direct audio link of the playing YouTube item. Conversion is done by the bundled mpv encoder."
 
-msgid "Player Mode shortcuts have been reset to factory defaults."
-msgstr "Player Mode shortcuts have been reset to factory defaults."
+msgid "Default &quality:"
+msgstr "Default &quality:"
 
-msgid "Shortcuts Reset"
-msgstr "Shortcuts Reset"
+msgid "Default &repeat mode:"
+msgstr "Default &repeat mode:"
 
-msgid "Play / Pause toggle"
-msgstr "Play / Pause toggle"
+msgid "Default download &folder (empty = Downloads\\HeadlessPlayer):"
+msgstr "Default download &folder (empty = Downloads\\HeadlessPlayer):"
 
-msgid "Stop and rewind to beginning"
-msgstr "Stop and rewind to beginning"
+msgid "Default export f&ormat:"
+msgstr "Default export f&ormat:"
 
-msgid "Mute / Unmute audio"
-msgstr "Mute / Unmute audio"
+msgid "Default playback s&peed:"
+msgstr "Default playback s&peed:"
 
-msgid "Volume Up (+5%)"
-msgstr "Volume Up (+5%)"
+msgid "Default Test Media"
+msgstr "Default Test Media"
 
-msgid "Volume Down (-5%)"
-msgstr "Volume Down (-5%)"
+msgid "Direct audio link copied to clipboard."
+msgstr "Direct audio link copied to clipboard."
 
-msgid "Normal Seek Forward (Right Arrow)"
-msgstr "Normal Seek Forward (Right Arrow)"
+msgid "Directly load and play focused/selected media from Explorer/Desktop without entering Player Mode."
+msgstr "Directly load and play focused/selected media from Explorer/Desktop without entering Player Mode."
 
-msgid "Normal Seek Backward (Left Arrow)"
-msgstr "Normal Seek Backward (Left Arrow)"
+msgid "Directly loads and plays selected or focused media files/folders from Windows Explorer."
+msgstr "Directly loads and plays selected or focused media files/folders from Windows Explorer."
 
-msgid "Slow / Precise Seek Forward (Alt+Right)"
-msgstr "Slow / Precise Seek Forward (Alt+Right)"
+msgid "Disabled (no sign-in)"
+msgstr "Disabled (no sign-in)"
 
-msgid "Slow / Precise Seek Backward (Alt+Left)"
-msgstr "Slow / Precise Seek Backward (Alt+Left)"
+msgid "Download / export whole item: %s"
+msgstr "Download / export whole item: %s"
 
-msgid "Fast Seek Forward (Ctrl+Right)"
-msgstr "Fast Seek Forward (Ctrl+Right)"
+msgid "Download complete! Launching add-on installation..."
+msgstr "Download complete! Launching add-on installation..."
 
-msgid "Fast Seek Backward (Ctrl+Left)"
-msgstr "Fast Seek Backward (Ctrl+Left)"
+msgid "Download Failed"
+msgstr "Download Failed"
 
-msgid "Ultrafast Seek Forward (Shift+Right)"
-msgstr "Ultrafast Seek Forward (Shift+Right)"
+msgid "Download failed: %s"
+msgstr "Download failed: %s"
 
-msgid "Ultrafast Seek Backward (Shift+Left)"
-msgstr "Ultrafast Seek Backward (Shift+Left)"
+msgid "Downloaded %.2f MB"
+msgstr "Downloaded %.2f MB"
 
-msgid "Fine Speed Up (+0.1x)"
-msgstr "Fine Speed Up (+0.1x)"
+msgid "Downloaded %.2f MB of %.2f MB (%d%%)"
+msgstr "Downloaded %.2f MB of %.2f MB (%d%%)"
 
-msgid "Fine Speed Down (-0.1x)"
-msgstr "Fine Speed Down (-0.1x)"
+msgid "Downloaded file is empty."
+msgstr "Downloaded file is empty."
 
-msgid "Next Preset Speed"
-msgstr "Next Preset Speed"
+msgid "Downloading and converting the whole item to %(fmt)s in the background..."
+msgstr "Downloading and converting the whole item to %(fmt)s in the background..."
 
-msgid "Previous Preset Speed"
-msgstr "Previous Preset Speed"
+msgid "Downloading update..."
+msgstr "Downloading update..."
 
-msgid "Next Track in Playlist"
-msgstr "Next Track in Playlist"
+msgid "Downloads & Clip Export"
+msgstr "Downloads & Clip Export"
 
-msgid "Previous Track in Playlist"
-msgstr "Previous Track in Playlist"
+msgid "Elapsed time: %s"
+msgstr "Elapsed time: %s"
 
-msgid "Mark A-B Loop Start (Point A)"
-msgstr "Mark A-B Loop Start (Point A)"
+msgid "Enable &SponsorBlock (Auto-skip YouTube sponsors, promos & intros)"
+msgstr "Enable &SponsorBlock (Auto-skip YouTube sponsors, promos & intros)"
 
-msgid "Mark A-B Loop End (Point B)"
-msgstr "Mark A-B Loop End (Point B)"
+msgid "End of media"
+msgstr "End of media"
 
-msgid "Toggle Repeat Mode"
-msgstr "Toggle Repeat Mode"
+msgid "End point set at the current position."
+msgstr "End point set at the current position."
 
-msgid "Clear A-B Loop Points"
-msgstr "Clear A-B Loop Points"
+msgid "English"
+msgstr "English"
 
-msgid "Open File Dialog"
-msgstr "Open File Dialog"
+msgid "English (UK)"
+msgstr "English (UK)"
 
-msgid "Open Folder Dialog"
-msgstr "Open Folder Dialog"
+msgid "English (US)"
+msgstr "English (US)"
 
-msgid "Load from Windows Explorer"
-msgstr "Load from Windows Explorer"
+msgid "Enter a URL (YouTube or any website) to play, or text to search YouTube:"
+msgstr "Enter a URL (YouTube or any website) to play, or text to search YouTube:"
 
-msgid "Toggle Auto-Next"
-msgstr "Toggle Auto-Next"
-
-msgid "Toggle Shuffle"
-msgstr "Toggle Shuffle"
-
-msgid "Speak Full Media Info"
-msgstr "Speak Full Media Info"
-
-msgid "Speak Remaining Time"
-msgstr "Speak Remaining Time"
-
-msgid "Speak Elapsed Time"
-msgstr "Speak Elapsed Time"
-
-msgid "Show Shortcuts Help Dialog"
-msgstr "Show Shortcuts Help Dialog"
+msgid "Enter or exit Headless Player Mode."
+msgstr "Enter or exit Headless Player Mode."
 
 msgid "Exit Player Mode"
 msgstr "Exit Player Mode"
 
-msgid "Select a player action, then choose or search a key from the suggestions list,\nor press the 'Capture Key Directly' button to assign by pressing any key on your keyboard."
-msgstr "Select a player action, then choose or search a key from the suggestions list,\nor press the 'Capture Key Directly' button to assign by pressing any key on your keyboard."
+msgid "Exit Player Mode and return to normal desktop keyboard control."
+msgstr "Exit Player Mode and return to normal desktop keyboard control."
 
-msgid "Current assigned key: %s"
-msgstr "Current assigned key: %s"
+msgid "Export &format:"
+msgstr "Export &format:"
 
-msgid "&Search Key Suggestions (type e.g. 'ta', 'control', 'page', 'arrow'):"
-msgstr "&Search Key Suggestions (type e.g. 'ta', 'control', 'page', 'arrow'):"
+msgid "Export / Download Clip (A-B selection or whole item)"
+msgstr "Export / Download Clip (A-B selection or whole item)"
 
-msgid "&Assign Selected Suggestion"
-msgstr "&Assign Selected Suggestion"
+msgid "Export clip: %(title)s (from %(a)s to %(b)s, %(d)d seconds)"
+msgstr "Export clip: %(title)s (from %(a)s to %(b)s, %(d)d seconds)"
 
-msgid "&Press Key on Keyboard Directly..."
-msgstr "&Press Key on Keyboard Directly..."
+msgid "Export Error"
+msgstr "Export Error"
 
-msgid "Assigned %s to %s"
-msgstr "Assigned %s to %s"
+msgid "Export failed: %s"
+msgstr "Export failed: %s"
+
+msgid "Export Shortcuts to JSON File"
+msgstr "Export Shortcuts to JSON File"
+
+msgid "Export Successful"
+msgstr "Export Successful"
+
+msgid "Export the A-B selection (or the whole item) as MP3, M4A or MP4 video; with only point A set, the current position becomes B."
+msgstr "Export the A-B selection (or the whole item) as MP3, M4A or MP4 video; with only point A set, the current position becomes B."
+
+msgid "Exporting %(fmt)s clip in the background..."
+msgstr "Exporting %(fmt)s clip in the background..."
+
+msgid ""
+"Failed to download the add-on update.\n"
+"\n"
+"Details: %s"
+msgstr ""
+"Failed to download the add-on update.\n"
+"\n"
+"Details: %s"
+
+msgid ""
+"Failed to export shortcuts:\n"
+"%s"
+msgstr ""
+"Failed to export shortcuts:\n"
+"%s"
+
+msgid ""
+"Failed to import shortcuts:\n"
+"%s"
+msgstr ""
+"Failed to import shortcuts:\n"
+"%s"
+
+msgid "Fast seek (+/- %s)."
+msgstr "Fast seek (+/- %s)."
+
+msgid "Fast Seek Backward (Ctrl+Left)"
+msgstr "Fast Seek Backward (Ctrl+Left)"
+
+msgid "Fast Seek Forward (Ctrl+Right)"
+msgstr "Fast Seek Forward (Ctrl+Right)"
+
+msgid "File &name:"
+msgstr "File &name:"
+
+msgid "File and path copied to clipboard."
+msgstr "File and path copied to clipboard."
+
+msgid "File does not exist on disk"
+msgstr "File does not exist on disk"
+
+msgid "Files, Streaming & Information"
+msgstr "Files, Streaming & Information"
+
+msgid "filler segment"
+msgstr "filler segment"
+
+msgid "Fine speed adjustment (+/- 0.1x)."
+msgstr "Fine speed adjustment (+/- 0.1x)."
+
+msgid "Fine Speed Down (-0.1x)"
+msgstr "Fine Speed Down (-0.1x)"
+
+msgid "Fine Speed Up (+0.1x)"
+msgstr "Fine Speed Up (+0.1x)"
+
+msgid "First Track in Playlist (Control+Home)"
+msgstr "First Track in Playlist (Control+Home)"
+
+msgid "Forward %s, position %s of %s"
+msgstr "Forward %s, position %s of %s"
+
+msgid "French"
+msgstr "French"
+
+msgid "General & Playback"
+msgstr "General & Playback"
+
+msgid "German"
+msgstr "German"
+
+msgid ""
+"GitHub API rate limit exceeded (maximum 60 requests per hour).\n"
+"Please wait a few minutes and try again."
+msgstr ""
+"GitHub API rate limit exceeded (maximum 60 requests per hour).\n"
+"Please wait a few minutes and try again."
+
+msgid "Headless Media Player"
+msgstr "Headless Media Player"
+
+msgid "Headless Media Player - Add-on Update Available"
+msgstr "Headless Media Player - Add-on Update Available"
+
+msgid "Headless Media Player - Shortcuts Help"
+msgstr "Headless Media Player - Shortcuts Help"
+
+msgid "Headless Media Player Add-on Updates"
+msgstr "Headless Media Player Add-on Updates"
+
+msgid "HEADLESS MEDIA PLAYER — KEYBOARD SHORTCUTS REFERENCE"
+msgstr "HEADLESS MEDIA PLAYER — KEYBOARD SHORTCUTS REFERENCE"
+
+msgid "High (Opus ~160 kbps - Best fidelity)"
+msgstr "High (Opus ~160 kbps - Best fidelity)"
+
+msgid "Highest quality"
+msgstr "Highest quality"
+
+msgid "Highest quality (original)"
+msgstr "Highest quality (original)"
+
+msgid "Hindi"
+msgstr "Hindi"
+
+msgid "Holding %s... Press a key to combine."
+msgstr "Holding %s... Press a key to combine."
+
+msgid "Import Error"
+msgstr "Import Error"
+
+msgid "Import Shortcuts from JSON File"
+msgstr "Import Shortcuts from JSON File"
+
+msgid "Import Successful"
+msgstr "Import Successful"
+
+msgid "In search results: Enter on a video plays it; Enter on a playlist or channel opens it; Tab reaches the Play Playlist button; Backspace goes back."
+msgstr "In search results: Enter on a video plays it; Enter on a playlist or channel opens it; Tab reaches the Play Playlist button; Backspace goes back."
+
+msgid "Installed add-on version: %s"
+msgstr "Installed add-on version: %s"
+
+msgid "Installing update..."
+msgstr "Installing update..."
+
+msgid "intro animation"
+msgstr "intro animation"
+
+msgid "Invalid shortcuts format: expected a JSON object."
+msgstr "Invalid shortcuts format: expected a JSON object."
+
+msgid "Italian"
+msgstr "Italian"
+
+msgid "Japanese"
+msgstr "Japanese"
+
+msgid "JSON Files (*.json)|*.json|All Files (*.*)|*.*"
+msgstr "JSON Files (*.json)|*.json|All Files (*.*)|*.*"
+
+msgid "Jump directly to 10% through 90% of file duration."
+msgstr "Jump directly to 10% through 90% of file duration."
+
+msgid "Jump to %d percent, position %s"
+msgstr "Jump to %d percent, position %s"
+
+msgid "Jump to end of current playing track."
+msgstr "Jump to end of current playing track."
+
+msgid "Jump to end of current track (End)"
+msgstr "Jump to end of current track (End)"
+
+msgid "Jump to first track in playlist."
+msgstr "Jump to first track in playlist."
+
+msgid "Jump to last track in playlist."
+msgstr "Jump to last track in playlist."
+
+msgid "Jump to oldest / newest recent playlist."
+msgstr "Jump to oldest / newest recent playlist."
+
+msgid "Jump to oldest / newest recent track."
+msgstr "Jump to oldest / newest recent track."
+
+msgid "Jump to Previous / Next chapter."
+msgstr "Jump to Previous / Next chapter."
+
+msgid "Jump to start of current playing track."
+msgstr "Jump to start of current playing track."
+
+msgid "Jump to start of current track (Home)"
+msgstr "Jump to start of current track (Home)"
+
+msgid "Keep recent &local files in history"
+msgstr "Keep recent &local files in history"
+
+msgid "Keep recent &playlists in history"
+msgstr "Keep recent &playlists in history"
+
+msgid "Keep recent local &folders in history"
+msgstr "Keep recent local &folders in history"
+
+msgid "Keep recent online &streams in history"
+msgstr "Keep recent online &streams in history"
+
+msgid "Korean"
+msgstr "Korean"
+
+msgid "Last Track in Playlist (Control+End)"
+msgstr "Last Track in Playlist (Control+End)"
+
+msgid "Latest videos from your subscriptions"
+msgstr "Latest videos from your subscriptions"
+
+msgid "Liked videos"
+msgstr "Liked videos"
+
+msgid "Link copied to clipboard."
+msgstr "Link copied to clipboard."
+
+msgid "Live"
+msgstr "Live"
+
+msgid "Live streams cannot be exported."
+msgstr "Live streams cannot be exported."
+
+msgid "Live streams of %s"
+msgstr "Live streams of %s"
+
+msgid "Load from Windows Explorer"
+msgstr "Load from Windows Explorer"
+
+msgid "Loaded %d files into playlist"
+msgstr "Loaded %d files into playlist"
+
+msgid "Loaded %d files into playlist, total duration: %s"
+msgstr "Loaded %d files into playlist, total duration: %s"
+
+msgid "Loading %s..."
+msgstr "Loading %s..."
+
+msgid "Loading more items, please wait..."
+msgstr "Loading more items, please wait..."
+
+msgid "Loading more items..."
+msgstr "Loading more items..."
+
+msgid "Loading playlist, please wait..."
+msgstr "Loading playlist, please wait..."
+
+msgid "Loading stream, please wait..."
+msgstr "Loading stream, please wait..."
+
+msgid "Loading URL, please wait..."
+msgstr "Loading URL, please wait..."
+
+msgid "Loading: %s"
+msgstr "Loading: %s"
+
+msgid "Low (~64 kbps - Data saver)"
+msgstr "Low (~64 kbps - Data saver)"
+
+msgid "Manual sign-in cookies &file (cookies.txt in Netscape format):"
+msgstr "Manual sign-in cookies &file (cookies.txt in Netscape format):"
+
+msgid "Mark A-B Loop End (Point B)"
+msgstr "Mark A-B Loop End (Point B)"
+
+msgid "Mark A-B Loop Start (Point A)"
+msgstr "Mark A-B Loop Start (Point A)"
+
+msgid "Mark end of loop (Point B)."
+msgstr "Mark end of loop (Point B)."
+
+msgid "Mark start of loop (Point A)."
+msgstr "Mark start of loop (Point A)."
+
+msgid "Medium (AAC ~128 kbps - Standard)"
+msgstr "Medium (AAC ~128 kbps - Standard)"
+
+msgid "MODE ACTIVATION, SETTINGS & EXIT:"
+msgstr "MODE ACTIVATION, SETTINGS & EXIT:"
+
+msgid "Mute / Unmute audio"
+msgstr "Mute / Unmute audio"
+
+msgid "Mute / Unmute audio."
+msgstr "Mute / Unmute audio."
+
+msgid "Muted"
+msgstr "Muted"
+
+msgid "Navigation & Chapters"
+msgstr "Navigation & Chapters"
+
+msgid "newest"
+msgstr "newest"
+
+msgid "Next Chapter (Ctrl+Shift+Right)"
+msgstr "Next Chapter (Ctrl+Shift+Right)"
+
+msgid "Next Preset Speed"
+msgstr "Next Preset Speed"
+
+msgid "Next Track in Playlist"
+msgstr "Next Track in Playlist"
+
+msgid "No A-B selection: the whole file will be converted. Press Escape and use [ and ] to select a part instead."
+msgstr "No A-B selection: the whole file will be converted. Press Escape and use [ and ] to select a part instead."
+
+msgid "No A-B selection: the whole item will be downloaded. Press Escape and use [ and ] to select a part instead."
+msgstr "No A-B selection: the whole item will be downloaded. Press Escape and use [ and ] to select a part instead."
+
+msgid "No changelog description provided."
+msgstr "No changelog description provided."
+
+msgid "No chapters available in media"
+msgstr "No chapters available in media"
+
+msgid "No items found."
+msgstr "No items found."
+
+msgid "No media files currently selected in Windows Explorer"
+msgstr "No media files currently selected in Windows Explorer"
+
+msgid "No media files found in selected folder"
+msgstr "No media files found in selected folder"
+
+msgid "No more items found."
+msgstr "No more items found."
+
+msgid "No more recent files or streams"
+msgstr "No more recent files or streams"
+
+msgid "No more recent folders or playlists"
+msgstr "No more recent folders or playlists"
+
+msgid "No online stream is playing."
+msgstr "No online stream is playing."
+
+msgid "No other audio tracks available in this media"
+msgstr "No other audio tracks available in this media"
+
+msgid "No playable items found."
+msgstr "No playable items found."
+
+msgid "No recent files or streams"
+msgstr "No recent files or streams"
+
+msgid "No recent folders or playlists"
+msgstr "No recent folders or playlists"
+
+msgid "No results found."
+msgstr "No results found."
+
+msgid "No search query entered."
+msgstr "No search query entered."
+
+msgid "No selection. Preparing to download the whole item; use [ and ] to select a part."
+msgstr "No selection. Preparing to download the whole item; use [ and ] to select a part."
+
+msgid "No selection. The whole file will be exported; use [ and ] to select a part."
+msgstr "No selection. The whole file will be exported; use [ and ] to select a part."
+
+msgid "No Update Needed"
+msgstr "No Update Needed"
+
+msgid "non-music section"
+msgstr "non-music section"
+
+msgid "Normal seek (+/- %s)."
+msgstr "Normal seek (+/- %s)."
+
+msgid "Normal Seek Backward (Left Arrow)"
+msgstr "Normal Seek Backward (Left Arrow)"
+
+msgid "Normal Seek Forward (Right Arrow)"
+msgstr "Normal Seek Forward (Right Arrow)"
+
+msgid "not installed"
+msgstr "not installed"
+
+msgid "Nothing is currently loaded."
+msgstr "Nothing is currently loaded."
+
+msgid ""
+"Notice: The selected cookies file does not appear to contain YouTube authentication tokens.\n"
+"\n"
+"For YouTube account feeds (Recommendations, Subscriptions, History) to work reliably, please export cookies while signed in to your YouTube account in your browser."
+msgstr ""
+"Notice: The selected cookies file does not appear to contain YouTube authentication tokens.\n"
+"\n"
+"For YouTube account feeds (Recommendations, Subscriptions, History) to work reliably, please export cookies while signed in to your YouTube account in your browser."
+
+msgid "Number of YouTube search &results:"
+msgstr "Number of YouTube search &results:"
+
+msgid "Off"
+msgstr "Off"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "oldest"
+msgstr "oldest"
+
+msgid "Online playlists behave exactly like local playlists (Next/Previous track, shuffle, repeat, resume)."
+msgstr "Online playlists behave exactly like local playlists (Next/Previous track, shuffle, repeat, resume)."
+
+msgid "Online Streaming & SponsorBlock"
+msgstr "Online Streaming & SponsorBlock"
+
+msgid "Online streaming is unavailable. It requires NVDA 2024.1 or later."
+msgstr "Online streaming is unavailable. It requires NVDA 2024.1 or later."
+
+msgid "Open File Dialog"
+msgstr "Open File Dialog"
+
+msgid "Open file dialog (select single media file)."
+msgstr "Open file dialog (select single media file)."
+
+msgid "Open Folder Dialog"
+msgstr "Open Folder Dialog"
+
+msgid "Open folder dialog (load entire folder as playlist)."
+msgstr "Open folder dialog (load entire folder as playlist)."
+
+msgid "Open HeadlessPlayer Settings Panel (Ctrl+Shift+S)"
+msgstr "Open HeadlessPlayer Settings Panel (Ctrl+Shift+S)"
+
+msgid "Open HeadlessPlayer Settings Panel in NVDA."
+msgstr "Open HeadlessPlayer Settings Panel in NVDA."
+
+msgid "Open URL / search box: paste a YouTube or website link to play it, or type text to search YouTube. Exits Player Mode automatically."
+msgstr "Open URL / search box: paste a YouTube or website link to play it, or type text to search YouTube. Exits Player Mode automatically."
+
+msgid "Open URL / YouTube Search Box"
+msgstr "Open URL / YouTube Search Box"
+
+msgid "Open YouTube Account & Feeds Browser"
+msgstr "Open YouTube Account & Feeds Browser"
+
+msgid "Open YouTube account & feeds browser (recommendations, subscriptions, watch later, liked, history, trending)."
+msgstr "Open YouTube account & feeds browser (recommendations, subscriptions, watch later, liked, history, trending)."
+
+msgid "Operation failed. Check your internet connection, or update yt-dlp from HeadlessPlayer settings."
+msgstr "Operation failed. Check your internet connection, or update yt-dlp from HeadlessPlayer settings."
+
+msgid "Original elapsed time: %s"
+msgstr "Original elapsed time: %s"
+
+msgid "Original remaining time: %s"
+msgstr "Original remaining time: %s"
+
+msgid "outro credits"
+msgstr "outro credits"
+
+msgid "Paused"
+msgstr "Paused"
+
+msgid "PITCH-PRESERVED SPEED CONTROLS:"
+msgstr "PITCH-PRESERVED SPEED CONTROLS:"
+
+msgid "Play &Playlist"
+msgstr "Play &Playlist"
+
+msgid "Play / Pause toggle"
+msgstr "Play / Pause toggle"
+
+msgid "Play / Pause toggle (or play focused recent item while browsing history)."
+msgstr "Play / Pause toggle (or play focused recent item while browsing history)."
+
+msgid "Play active selection directly from Windows Explorer / Desktop."
+msgstr "Play active selection directly from Windows Explorer / Desktop."
+
+msgid "Play focused recent item immediately (active within 6 seconds of browsing)."
+msgstr "Play focused recent item immediately (active within 6 seconds of browsing)."
+
+msgid "Play URL or Search YouTube"
+msgstr "Play URL or Search YouTube"
+
+msgid "Playback & Core Controls"
+msgstr "Playback & Core Controls"
+
+msgid "PLAYBACK & VOLUME CONTROLS:"
+msgstr "PLAYBACK & VOLUME CONTROLS:"
+
+msgid "Playback Defaults & Options"
+msgstr "Playback Defaults & Options"
+
+msgid "Playback engine failed to start."
+msgstr "Playback engine failed to start."
+
+msgid "Playback of this stream failed. Press Enter or Space to retry."
+msgstr "Playback of this stream failed. Press Enter or Space to retry."
+
+msgid "Playback resumed from %s"
+msgstr "Playback resumed from %s"
+
+msgid "Playback stopped."
+msgstr "Playback stopped."
+
+msgid "Player closed"
+msgstr "Player closed"
+
+msgid "Player Mode active"
+msgstr "Player Mode active"
+
+msgid "Player Mode exited"
+msgstr "Player Mode exited"
+
+msgid "Player Mode Keyboard Shortcuts"
+msgstr "Player Mode Keyboard Shortcuts"
+
+msgid "Player Mode shortcuts have been reset to factory defaults."
+msgstr "Player Mode shortcuts have been reset to factory defaults."
+
+msgid "Playing"
+msgstr "Playing"
+
+msgid "Playlist"
+msgstr "Playlist"
+
+msgid "Playlist empty"
+msgstr "Playlist empty"
+
+msgid "PLAYLIST, FOLDERS & WINDOWS EXPLORER:"
+msgstr "PLAYLIST, FOLDERS & WINDOWS EXPLORER:"
+
+msgid "Playlists of %s"
+msgstr "Playlists of %s"
+
+msgid "Plays or pauses Headless Media Player playback from anywhere."
+msgstr "Plays or pauses Headless Media Player playback from anywhere."
+
+msgid "Plays the next track in Headless Media Player playlist from anywhere."
+msgstr "Plays the next track in Headless Media Player playlist from anywhere."
+
+msgid "Plays the previous track in Headless Media Player playlist from anywhere."
+msgstr "Plays the previous track in Headless Media Player playlist from anywhere."
+
+msgid "Please select a key from the suggestions list."
+msgstr "Please select a key from the suggestions list."
+
+msgid "Portuguese"
+msgstr "Portuguese"
+
+msgid "Preparing export from %(a)s to %(b)s..."
+msgstr "Preparing export from %(a)s to %(b)s..."
+
+msgid ""
+"Press any key or key combination on your keyboard now to assign it.\n"
+"Press Escape to cancel."
+msgstr ""
+"Press any key or key combination on your keyboard now to assign it.\n"
+"Press Escape to cancel."
 
 msgid "Press Shortcut Key"
 msgstr "Press Shortcut Key"
 
-msgid "Press any key or key combination on your keyboard now to assign it.\nPress Escape to cancel."
-msgstr "Press any key or key combination on your keyboard now to assign it.\nPress Escape to cancel."
+msgid "pressed twice"
+msgstr "pressed twice"
 
-msgid "Waiting for key press..."
-msgstr "Waiting for key press..."
+msgid "preview recap"
+msgstr "preview recap"
 
-msgid "Captured: %s"
-msgstr "Captured: %s"
+msgid "Previous / Next track in playlist."
+msgstr "Previous / Next track in playlist."
 
-msgid "(Not Set)"
-msgstr "(Not Set)"
+msgid "Previous Chapter (Ctrl+Shift+Left)"
+msgstr "Previous Chapter (Ctrl+Shift+Left)"
 
-msgid "Space (مسافة)"
-msgstr "Space (مسافة)"
+msgid "Previous Preset Speed"
+msgstr "Previous Preset Speed"
 
-msgid "Control (كنترول)"
-msgstr "Control (كنترول)"
+msgid "Previous Track in Playlist"
+msgstr "Previous Track in Playlist"
 
-msgid "Shift (شفت)"
-msgstr "Shift (شفت)"
+msgid "Quick export failed: %s"
+msgstr "Quick export failed: %s"
 
-msgid "Alt (ألت)"
-msgstr "Alt (ألت)"
+msgid "Quick export in progress..."
+msgstr "Quick export in progress..."
 
-msgid "Tab (تاب)"
-msgstr "Tab (تاب)"
+msgid "Quick export of the A-B selection with the remembered settings, no dialog."
+msgstr "Quick export of the A-B selection with the remembered settings, no dialog."
 
-msgid "Escape (هروب)"
-msgstr "Escape (هروب)"
+msgid "Quick Export with remembered settings"
+msgstr "Quick Export with remembered settings"
 
-msgid "Enter / Return (إدخال)"
-msgstr "Enter / Return (إدخال)"
+msgid "Raise / lower bass (+/- 3 dB)."
+msgstr "Raise / lower bass (+/- 3 dB)."
 
-msgid "Backspace (مسافة للخلف)"
-msgstr "Backspace (مسافة للخلف)"
+msgid "Rate Limit Exceeded"
+msgstr "Rate Limit Exceeded"
 
-msgid "Page Down (صفحة لأسفل)"
-msgstr "Page Down (صفحة لأسفل)"
+msgid "Ready to download. Download size: %.2f MB"
+msgstr "Ready to download. Download size: %.2f MB"
 
-msgid "Page Up (صفحة لأعلى)"
-msgstr "Page Up (صفحة لأعلى)"
+msgid "Recent Playlists: Jump to Newest (Ctrl+Shift+.)"
+msgstr "Recent Playlists: Jump to Newest (Ctrl+Shift+.)"
 
-msgid "Home (بداية السطر)"
-msgstr "Home (بداية السطر)"
+msgid "Recent Playlists: Jump to Oldest (Ctrl+Shift+,)"
+msgstr "Recent Playlists: Jump to Oldest (Ctrl+Shift+,)"
 
-msgid "End (نهاية السطر)"
-msgstr "End (نهاية السطر)"
+msgid "Recent Playlists: Next / Newer (Ctrl+.)"
+msgstr "Recent Playlists: Next / Newer (Ctrl+.)"
 
-msgid "Insert (إدراج)"
-msgstr "Insert (إدراج)"
+msgid "Recent Playlists: Previous / Older (Ctrl+,)"
+msgstr "Recent Playlists: Previous / Older (Ctrl+,)"
 
-msgid "Delete (حذف)"
-msgstr "Delete (حذف)"
+msgid "Recent file (%s): %s (%d of %d)"
+msgstr "Recent file (%s): %s (%d of %d)"
 
-msgid "Left Arrow (سهم لليسار)"
-msgstr "Left Arrow (سهم لليسار)"
+msgid "Recent file: %s (%d of %d)"
+msgstr "Recent file: %s (%d of %d)"
 
-msgid "Right Arrow (سهم لليمين)"
-msgstr "Right Arrow (سهم لليمين)"
+msgid "Recent folder (%s): %s (%d of %d)"
+msgstr "Recent folder (%s): %s (%d of %d)"
 
-msgid "Up Arrow (سهم لأعلى)"
-msgstr "Up Arrow (سهم لأعلى)"
+msgid "Recent folder: %s (%d of %d)"
+msgstr "Recent folder: %s (%d of %d)"
 
-msgid "Down Arrow (سهم لأسفل)"
-msgstr "Down Arrow (سهم لأسفل)"
+msgid "RECENT MEDIA & BROWSING HISTORY:"
+msgstr "RECENT MEDIA & BROWSING HISTORY:"
 
-msgid "Alt + Left Arrow (Alt + سهم لليسار)"
-msgstr "Alt + Left Arrow (Alt + سهم لليسار)"
+msgid "Recent Media & History"
+msgstr "Recent Media & History"
 
-msgid "Alt + Right Arrow (Alt + سهم لليمين)"
-msgstr "Alt + Right Arrow (Alt + سهم لليمين)"
+msgid "Recent Media History"
+msgstr "Recent Media History"
 
-msgid "Alt + Up Arrow (Alt + سهم لأعلى)"
-msgstr "Alt + Up Arrow (Alt + سهم لأعلى)"
+msgid "Recent playlist (%s): %s (%d of %d)"
+msgstr "Recent playlist (%s): %s (%d of %d)"
 
-msgid "Alt + Down Arrow (Alt + سهم لأسفل)"
-msgstr "Alt + Down Arrow (Alt + سهم لأسفل)"
+msgid "Recent playlist: %s (%d of %d)"
+msgstr "Recent playlist: %s (%d of %d)"
 
-msgid "Control + Left Arrow (Ctrl + سهم لليسار)"
-msgstr "Control + Left Arrow (Ctrl + سهم لليسار)"
+msgid "Recent stream (%s): %s (%d of %d)"
+msgstr "Recent stream (%s): %s (%d of %d)"
 
-msgid "Control + Right Arrow (Ctrl + سهم لليمين)"
-msgstr "Control + Right Arrow (Ctrl + سهم لليمين)"
+msgid "Recent stream: %s (%d of %d)"
+msgstr "Recent stream: %s (%d of %d)"
 
-msgid "Control + Up Arrow (Ctrl + سهم لأعلى)"
-msgstr "Control + Up Arrow (Ctrl + سهم لأعلى)"
+msgid "Recent Tracks: Jump to Newest (Shift+.)"
+msgstr "Recent Tracks: Jump to Newest (Shift+.)"
 
-msgid "Control + Down Arrow (Ctrl + سهم لأسفل)"
-msgstr "Control + Down Arrow (Ctrl + سهم لأسفل)"
+msgid "Recent Tracks: Jump to Oldest (Shift+,)"
+msgstr "Recent Tracks: Jump to Oldest (Shift+,)"
 
-msgid "Shift + Left Arrow (Shift + سهم لليسار)"
-msgstr "Shift + Left Arrow (Shift + سهم لليسار)"
+msgid "Recent Tracks: Next / Newer (.)"
+msgstr "Recent Tracks: Next / Newer (.)"
 
-msgid "Shift + Right Arrow (Shift + سهم لليمين)"
-msgstr "Shift + Right Arrow (Shift + سهم لليمين)"
+msgid "Recent Tracks: Previous / Older (,)"
+msgstr "Recent Tracks: Previous / Older (,)"
 
-msgid "Shift + Up Arrow (Shift + سهم لأعلى)"
-msgstr "Shift + Up Arrow (Shift + سهم لأعلى)"
+msgid "Recommended for you (home feed)"
+msgstr "Recommended for you (home feed)"
 
-msgid "Shift + Down Arrow (Shift + سهم لأسفل)"
-msgstr "Shift + Down Arrow (Shift + سهم لأسفل)"
+msgid "Reconnecting..."
+msgstr "Reconnecting..."
 
-msgid "Control + Shift + Left Arrow (Ctrl+Shift+سهم لليسار)"
-msgstr "Control + Shift + Left Arrow (Ctrl+Shift+سهم لليسار)"
+msgid "Remaining time: %s"
+msgstr "Remaining time: %s"
 
-msgid "Control + Shift + Right Arrow (Ctrl+Shift+سهم لليمين)"
-msgstr "Control + Shift + Right Arrow (Ctrl+Shift+سهم لليمين)"
+msgid "Remember and &restore last playback session on reopening"
+msgstr "Remember and &restore last playback session on reopening"
 
-msgid "Control + I (Ctrl + i)"
-msgstr "Control + I (Ctrl + i)"
+msgid "Remember and &resume playback position for media"
+msgstr "Remember and &resume playback position for media"
 
-msgid "Shift + I (Shift + i)"
-msgstr "Shift + I (Shift + i)"
+msgid "Remove Focused Recent Item from History (Delete)"
+msgstr "Remove Focused Recent Item from History (Delete)"
 
-msgid "Control + A (Ctrl + a)"
-msgstr "Control + A (Ctrl + a)"
+msgid "Remove focused recent item from history database."
+msgstr "Remove focused recent item from history database."
 
-msgid "Control + S (Ctrl + s)"
-msgstr "Control + S (Ctrl + s)"
+msgid "Removed from recent history: %s"
+msgstr "Removed from recent history: %s"
 
-msgid "Control + Space (Ctrl + مسافة)"
-msgstr "Control + Space (Ctrl + مسافة)"
+msgid "Repeat Current Track"
+msgstr "Repeat Current Track"
 
-msgid "Shift + Space (Shift + مسافة)"
-msgstr "Shift + Space (Shift + مسافة)"
+msgid "Repeat disabled"
+msgstr "Repeat disabled"
 
-msgid "Alt + Space (Alt + مسافة)"
-msgstr "Alt + Space (Alt + مسافة)"
+msgid "Repeat Entire Playlist"
+msgstr "Repeat Entire Playlist"
 
-msgid "[ Bracket (قوس فتح / ج)"
-msgstr "[ Bracket (قوس فتح / ج)"
+msgid "Repeat Playlist enabled"
+msgstr "Repeat Playlist enabled"
 
-msgid "] Bracket (قوس إغلاق / د)"
-msgstr "] Bracket (قوس إغلاق / د)"
+msgid "Repeat Track enabled"
+msgstr "Repeat Track enabled"
 
-msgid "; Semicolon (فاصلة منقوطة / ك)"
-msgstr "; Semicolon (فاصلة منقوطة / ك)"
+msgid "Replaying from beginning"
+msgstr "Replaying from beginning"
 
-msgid "' Quote (علامة تنصيص / ط)"
-msgstr "' Quote (علامة تنصيص / ط)"
+msgid "Russian"
+msgstr "Russian"
 
-msgid ", Comma (فاصلة / و)"
-msgstr ", Comma (فاصلة / و)"
+msgid "Save &to folder:"
+msgstr "Save &to folder:"
 
-msgid ". Period (نقطة / ز)"
-msgstr ". Period (نقطة / ز)"
+msgid "Search Results & Streams"
+msgstr "Search Results & Streams"
 
-msgid "/ Slash (شرطة مائلة / ظ)"
-msgstr "/ Slash (شرطة مائلة / ظ)"
+msgid "Searching YouTube, please wait..."
+msgstr "Searching YouTube, please wait..."
 
-msgid "- Minus (ناقص)"
-msgstr "- Minus (ناقص)"
+msgid "Section"
+msgstr "Section"
 
-msgid "= Equals (يساوي)"
-msgstr "= Equals (يساوي)"
+msgid "Seek Jump Step Sizes (Seconds)"
+msgstr "Seek Jump Step Sizes (Seconds)"
 
+msgid "SEEKING & JUMPS:"
+msgstr "SEEKING & JUMPS:"
 
+msgid ""
+"Select a player action, then choose or search a key from the suggestions list,\n"
+"or press the 'Capture Key Directly' button to assign by pressing any key on your keyboard."
+msgstr ""
+"Select a player action, then choose or search a key from the suggestions list,\n"
+"or press the 'Capture Key Directly' button to assign by pressing any key on your keyboard."
 
+msgid "Select cookies.txt file"
+msgstr "Select cookies.txt file"
 
+msgid "Select download folder"
+msgstr "Select download folder"
 
+msgid "Select export folder"
+msgstr "Select export folder"
 
-msgid "Trending Shorts (popular in your region)"
-msgstr "Trending Shorts (popular in your region)"
+msgid "Select Folder to Play"
+msgstr "Select Folder to Play"
 
-msgid "Trending videos (popular in your region)"
-msgstr "Trending videos (popular in your region)"
+msgid "Select Media File"
+msgstr "Select Media File"
 
-msgid "New music releases & charts"
-msgstr "New music releases & charts"
+msgid "Select Media Files"
+msgstr "Select Media Files"
 
-msgid "Load more items..."
-msgstr "Load more items..."
+msgid "self-promotion"
+msgstr "self-promotion"
 
-msgid "— [Load more items...] —"
-msgstr "— [Load more items...] —"
+msgid "Set point A (and optionally B) first, then press Shift+D for quick export."
+msgstr "Set point A (and optionally B) first, then press Shift+D for quick export."
 
-msgid "Loading more items..."
-msgstr "Loading more items..."
+msgid "Shortcut Conflict"
+msgstr "Shortcut Conflict"
 
-msgid "%d more items loaded"
-msgstr "%d more items loaded"
+msgid "Shortcut deleted for %s"
+msgstr "Shortcut deleted for %s"
 
-msgid "No more items found."
-msgstr "No more items found."
+msgid "Shortcuts Reset"
+msgstr "Shortcuts Reset"
 
-msgid "%d more items loaded: %s"
-msgstr "%d more items loaded: %s"
-
-msgid "Loading more items, please wait..."
-msgstr "Loading more items, please wait..."
-
-msgid "&Category:"
-msgstr "&Category:"
-
-msgid "General & Playback"
-msgstr "General & Playback"
-
-msgid "Online Streaming & SponsorBlock"
-msgstr "Online Streaming & SponsorBlock"
+msgid ""
+"Shortcuts successfully exported to:\n"
+"%s"
+msgstr ""
+"Shortcuts successfully exported to:\n"
+"%s"
 
 msgid "Shortcuts, Updates & About"
 msgstr "Shortcuts, Updates & About"
 
-msgid "Calculate remaining &time based on current playback speed"
-msgstr "Calculate remaining &time based on current playback speed"
+msgid "Shorts"
+msgstr "Shorts"
 
-msgid "Original remaining time: %s"
-msgstr "Original remaining time: %s"
+msgid "Shorts from your subscriptions"
+msgstr "Shorts from your subscriptions"
 
-msgid "Skip &sponsors and paid advertisements"
-msgstr "Skip &sponsors and paid advertisements"
+msgid "Shorts of %s"
+msgstr "Shorts of %s"
+
+msgid "Show Shortcuts Help Dialog"
+msgstr "Show Shortcuts Help Dialog"
+
+msgid "Show this keyboard shortcuts help window."
+msgstr "Show this keyboard shortcuts help window."
+
+msgid "Shuffle disabled"
+msgstr "Shuffle disabled"
+
+msgid "Shuffle enabled"
+msgstr "Shuffle enabled"
+
+msgid "Silence speech immediately while in Player Mode."
+msgstr "Silence speech immediately while in Player Mode."
 
 msgid "Skip &intro animations and intermission breaks"
 msgstr "Skip &intro animations and intermission breaks"
@@ -784,200 +1352,11 @@ msgstr "Skip &intro animations and intermission breaks"
 msgid "Skip &outro credits and end cards"
 msgstr "Skip &outro credits and end cards"
 
-msgid "Skip self-&promotions and unpaid merchandise"
-msgid "Tab (تاب)"
-msgstr "Tab (تاب)"
-
-msgid "Escape (هروب)"
-msgstr "Escape (هروب)"
-
-msgid "Enter / Return (إدخال)"
-msgstr "Enter / Return (إدخال)"
-
-msgid "Backspace (مسافة للخلف)"
-msgstr "Backspace (مسافة للخلف)"
-
-msgid "Page Down (صفحة لأسفل)"
-msgstr "Page Down (صفحة لأسفل)"
-
-msgid "Page Up (صفحة لأعلى)"
-msgstr "Page Up (صفحة لأعلى)"
-
-msgid "Home (بداية السطر)"
-msgstr "Home (بداية السطر)"
-
-msgid "End (نهاية السطر)"
-msgstr "End (نهاية السطر)"
-
-msgid "Insert (إدراج)"
-msgstr "Insert (إدراج)"
-
-msgid "Delete (حذف)"
-msgstr "Delete (حذف)"
-
-msgid "Left Arrow (سهم لليسار)"
-msgstr "Left Arrow (سهم لليسار)"
-
-msgid "Right Arrow (سهم لليمين)"
-msgstr "Right Arrow (سهم لليمين)"
-
-msgid "Up Arrow (سهم لأعلى)"
-msgstr "Up Arrow (سهم لأعلى)"
-
-msgid "Down Arrow (سهم لأسفل)"
-msgstr "Down Arrow (سهم لأسفل)"
-
-msgid "Alt + Left Arrow (Alt + سهم لليسار)"
-msgstr "Alt + Left Arrow (Alt + سهم لليسار)"
-
-msgid "Alt + Right Arrow (Alt + سهم لليمين)"
-msgstr "Alt + Right Arrow (Alt + سهم لليمين)"
-
-msgid "Alt + Up Arrow (Alt + سهم لأعلى)"
-msgstr "Alt + Up Arrow (Alt + سهم لأعلى)"
-
-msgid "Alt + Down Arrow (Alt + سهم لأسفل)"
-msgstr "Alt + Down Arrow (Alt + سهم لأسفل)"
-
-msgid "Control + Left Arrow (Ctrl + سهم لليسار)"
-msgstr "Control + Left Arrow (Ctrl + سهم لليسار)"
-
-msgid "Control + Right Arrow (Ctrl + سهم لليمين)"
-msgstr "Control + Right Arrow (Ctrl + سهم لليمين)"
-
-msgid "Control + Up Arrow (Ctrl + سهم لأعلى)"
-msgstr "Control + Up Arrow (Ctrl + سهم لأعلى)"
-
-msgid "Control + Down Arrow (Ctrl + سهم لأسفل)"
-msgstr "Control + Down Arrow (Ctrl + سهم لأسفل)"
-
-msgid "Shift + Left Arrow (Shift + سهم لليسار)"
-msgstr "Shift + Left Arrow (Shift + سهم لليسار)"
-
-msgid "Shift + Right Arrow (Shift + سهم لليمين)"
-msgstr "Shift + Right Arrow (Shift + سهم لليمين)"
-
-msgid "Shift + Up Arrow (Shift + سهم لأعلى)"
-msgstr "Shift + Up Arrow (Shift + سهم لأعلى)"
-
-msgid "Shift + Down Arrow (Shift + سهم لأسفل)"
-msgstr "Shift + Down Arrow (Shift + سهم لأسفل)"
-
-msgid "Control + Shift + Left Arrow (Ctrl+Shift+سهم لليسار)"
-msgstr "Control + Shift + Left Arrow (Ctrl+Shift+سهم لليسار)"
-
-msgid "Control + Shift + Right Arrow (Ctrl+Shift+سهم لليمين)"
-msgstr "Control + Shift + Right Arrow (Ctrl+Shift+سهم لليمين)"
-
-msgid "Control + I (Ctrl + i)"
-msgstr "Control + I (Ctrl + i)"
-
-msgid "Shift + I (Shift + i)"
-msgstr "Shift + I (Shift + i)"
-
-msgid "Control + A (Ctrl + a)"
-msgstr "Control + A (Ctrl + a)"
-
-msgid "Control + S (Ctrl + s)"
-msgstr "Control + S (Ctrl + s)"
-
-msgid "Control + Space (Ctrl + مسافة)"
-msgstr "Control + Space (Ctrl + مسافة)"
-
-msgid "Shift + Space (Shift + مسافة)"
-msgstr "Shift + Space (Shift + مسافة)"
-
-msgid "Alt + Space (Alt + مسافة)"
-msgstr "Alt + Space (Alt + مسافة)"
-
-msgid "[ Bracket (قوس فتح / ج)"
-msgstr "[ Bracket (قوس فتح / ج)"
-
-msgid "] Bracket (قوس إغلاق / د)"
-msgstr "] Bracket (قوس إغلاق / د)"
-
-msgid "; Semicolon (فاصلة منقوطة / ك)"
-msgstr "; Semicolon (فاصلة منقوطة / ك)"
-
-msgid "' Quote (علامة تنصيص / ط)"
-msgstr "' Quote (علامة تنصيص / ط)"
-
-msgid ", Comma (فاصلة / و)"
-msgstr ", Comma (فاصلة / و)"
-
-msgid ". Period (نقطة / ز)"
-msgstr ". Period (نقطة / ز)"
-
-msgid "/ Slash (شرطة مائلة / ظ)"
-msgstr "/ Slash (شرطة مائلة / ظ)"
-
-msgid "- Minus (ناقص)"
-msgstr "- Minus (ناقص)"
-
-msgid "= Equals (يساوي)"
-msgstr "= Equals (يساوي)"
-
-
-
-
-
-
-msgid "Trending Shorts (popular in your region)"
-msgstr "Trending Shorts (popular in your region)"
-
-msgid "Trending videos (popular in your region)"
-msgstr "Trending videos (popular in your region)"
-
-msgid "New music releases & charts"
-msgstr "New music releases & charts"
-
-msgid "Load more items..."
-msgstr "Load more items..."
-
-msgid "— [Load more items...] —"
-msgstr "— [Load more items...] —"
-
-msgid "Loading more items..."
-msgstr "Loading more items..."
-
-msgid "%d more items loaded"
-msgstr "%d more items loaded"
-
-msgid "No more items found."
-msgstr "No more items found."
-
-msgid "%d more items loaded: %s"
-msgstr "%d more items loaded: %s"
-
-msgid "Loading more items, please wait..."
-msgstr "Loading more items, please wait..."
-
-msgid "&Category:"
-msgstr "&Category:"
-
-msgid "General & Playback"
-msgstr "General & Playback"
-
-msgid "Online Streaming & SponsorBlock"
-msgstr "Online Streaming & SponsorBlock"
-
-msgid "Shortcuts, Updates & About"
-msgstr "Shortcuts, Updates & About"
-
-msgid "Calculate remaining &time based on current playback speed"
-msgstr "Calculate remaining &time based on current playback speed"
-
-msgid "Original remaining time: %s"
-msgstr "Original remaining time: %s"
-
 msgid "Skip &sponsors and paid advertisements"
 msgstr "Skip &sponsors and paid advertisements"
 
-msgid "Skip &intro animations and intermission breaks"
-msgstr "Skip &intro animations and intermission breaks"
-
-msgid "Skip &outro credits and end cards"
-msgstr "Skip &outro credits and end cards"
+msgid "Skip non-&music sections in music videos"
+msgstr "Skip non-&music sections in music videos"
 
 msgid "Skip self-&promotions and unpaid merchandise"
 msgstr "Skip self-&promotions and unpaid merchandise"
@@ -985,268 +1364,270 @@ msgstr "Skip self-&promotions and unpaid merchandise"
 msgid "Skip subscribe and like inter&action reminders"
 msgstr "Skip subscribe and like inter&action reminders"
 
-msgid "Skip non-&music sections in music videos"
-msgstr "Skip non-&music sections in music videos"
+msgid "Skipped %s"
+msgstr "Skipped %s"
 
-msgid "Remember and &restore last playback session on reopening"
-msgstr "Remember and &restore last playback session on reopening"
+msgid "Slow & precise seek (+/- %s)."
+msgstr "Slow & precise seek (+/- %s)."
 
-msgid "Streaming audio &quality:"
-msgstr "Streaming audio &quality:"
+msgid "Slow / Precise Seek Backward (Alt+Left)"
+msgstr "Slow / Precise Seek Backward (Alt+Left)"
 
-msgid "High (Opus ~160 kbps - Best fidelity)"
-msgstr "High (Opus ~160 kbps - Best fidelity)"
+msgid "Slow / Precise Seek Forward (Alt+Right)"
+msgstr "Slow / Precise Seek Forward (Alt+Right)"
 
-msgid "Medium (AAC ~128 kbps - Standard)"
-msgstr "Medium (AAC ~128 kbps - Standard)"
+msgid "Spanish"
+msgstr "Spanish"
 
-msgid "Low (~64 kbps - Data saver)"
-msgstr "Low (~64 kbps - Data saver)"
+msgid "Speak elapsed playback time (accounts for playback speed)."
+msgstr "Speak elapsed playback time (accounts for playback speed)."
 
-msgid "All Actions"
-msgstr "All Actions"
+msgid "Speak Elapsed Time"
+msgstr "Speak Elapsed Time"
 
-msgid "Playback & Core Controls"
-msgstr "Playback & Core Controls"
+msgid "Speak Full Media Info"
+msgstr "Speak Full Media Info"
 
-msgid "Navigation & Chapters"
-msgstr "Navigation & Chapters"
+msgid "Speak full media information (title, duration, playlist index)."
+msgstr "Speak full media information (title, duration, playlist index)."
 
-msgid "Audio, Volume & Speed"
-msgstr "Audio, Volume & Speed"
-
-msgid "Files, Streaming & Information"
-msgstr "Files, Streaming & Information"
-
-msgid "&Filter Actions by Category:"
-msgstr "&Filter Actions by Category:"
-
-msgid "The shortcut '%s' is already assigned to '%s'.\n\nDo you want to reassign it to '%s' and remove it from '%s'?"
-msgstr "The shortcut '%s' is already assigned to '%s'.\n\nDo you want to reassign it to '%s' and remove it from '%s'?"
-
-msgid "Shortcut Conflict"
-msgstr "Shortcut Conflict"
-
-msgid "&Export Shortcuts (JSON)..."
-msgstr "&Export Shortcuts (JSON)..."
-
-msgid "&Import Shortcuts (JSON)..."
-msgstr "&Import Shortcuts (JSON)..."
-
-msgid "Export Shortcuts to JSON File"
-msgstr "Export Shortcuts to JSON File"
-
-msgid "Import Shortcuts from JSON File"
-msgstr "Import Shortcuts from JSON File"
-
-msgid "JSON Files (*.json)|*.json|All Files (*.*)|*.*"
-msgstr "JSON Files (*.json)|*.json|All Files (*.*)|*.*"
-
-msgid "Shortcuts successfully exported to:\n%s"
-msgstr "Shortcuts successfully exported to:\n%s"
-
-msgid "Export Successful"
-msgstr "Export Successful"
-
-msgid "Failed to export shortcuts:\n%s"
-msgstr "Failed to export shortcuts:\n%s"
-
-msgid "Export Error"
-msgstr "Export Error"
-
-msgid "Successfully imported %d shortcuts from:\n%s"
-msgstr "Successfully imported %d shortcuts from:\n%s"
-
-msgid "Import Successful"
-msgstr "Import Successful"
-
-msgid "Failed to import shortcuts:\n%s"
-msgstr "Failed to import shortcuts:\n%s"
-
-msgid "Import Error"
-msgstr "Import Error"
-
-msgid "Invalid shortcuts format: expected a JSON object."
-msgstr "Invalid shortcuts format: expected a JSON object."
-
-msgid "This is a 32-bit system; the bundled media player requires a 64-bit version of Windows."
-msgstr "This is a 32-bit system; the bundled media player requires a 64-bit version of Windows."
-
-msgid "pressed twice"
-msgstr "pressed twice"
-
-msgid "Speak remaining playback time (accounts for playback speed)."
-msgstr "Speak remaining playback time (accounts for playback speed)."
+msgid "Speak original elapsed playback time (unscaled by speed)."
+msgstr "Speak original elapsed playback time (unscaled by speed)."
 
 msgid "Speak original remaining playback time (unscaled by speed)."
 msgstr "Speak original remaining playback time (unscaled by speed)."
 
-msgid "Loading stream, please wait..."
-msgstr "Loading stream, please wait..."
+msgid "Speak remaining playback time (accounts for playback speed)."
+msgstr "Speak remaining playback time (accounts for playback speed)."
 
-msgid "Reconnecting..."
-msgstr "Reconnecting..."
+msgid "Speak Remaining Time"
+msgstr "Speak Remaining Time"
+
+msgid "Speech & Announcements"
+msgstr "Speech & Announcements"
+
+msgid "Speech Feedback & Announcements"
+msgstr "Speech Feedback & Announcements"
+
+msgid "SPEECH QUERIES:"
+msgstr "SPEECH QUERIES:"
+
+msgid "Speed %.2fx"
+msgstr "Speed %.2fx"
+
+msgid "Speed %.2fx (Preset)"
+msgstr "Speed %.2fx (Preset)"
+
+msgid "Speed reset to 1.0x"
+msgstr "Speed reset to 1.0x"
+
+msgid "sponsor segment"
+msgstr "sponsor segment"
+
+msgid "SponsorBlock (Auto-Skip YouTube Ads & Sponsors)"
+msgstr "SponsorBlock (Auto-Skip YouTube Ads & Sponsors)"
+
+msgid "Start of media"
+msgstr "Start of media"
 
 msgid "Still loading, please wait..."
 msgstr "Still loading, please wait..."
 
-msgid "YouTube requires sign-in verification for this content. Please configure valid sign-in cookies in HeadlessPlayer settings."
-msgstr "YouTube requires sign-in verification for this content. Please configure valid sign-in cookies in HeadlessPlayer settings."
+msgid "Stop and rewind to beginning"
+msgstr "Stop and rewind to beginning"
 
-msgid "No items found. Your YouTube cookies appear to be missing login credentials. Please export cookies from a standard browser window, not Incognito mode."
-msgstr "No items found. Your YouTube cookies appear to be missing login credentials. Please export cookies from a standard browser window, not Incognito mode."
+msgid "Stop playback and rewind to beginning."
+msgstr "Stop playback and rewind to beginning."
 
-msgid "No items found. Sign-in cookies may be invalid or expired. Please verify your cookies in settings."
-msgstr "No items found. Sign-in cookies may be invalid or expired. Please verify your cookies in settings."
+msgid "Stopped"
+msgstr "Stopped"
+
+msgid "Stops Headless Media Player playback from anywhere."
+msgstr "Stops Headless Media Player playback from anywhere."
+
+msgid "Story optimized (small file)"
+msgstr "Story optimized (small file)"
+
+msgid "Story optimized (small file, fast upload)"
+msgstr "Story optimized (small file, fast upload)"
+
+msgid "Streaming audio &quality:"
+msgstr "Streaming audio &quality:"
+
+msgid "Streaming engine (yt-dlp) version: %s"
+msgstr "Streaming engine (yt-dlp) version: %s"
+
+msgid "Streaming engine (yt-dlp) version: %s (restart NVDA to activate)"
+msgstr "Streaming engine (yt-dlp) version: %s (restart NVDA to activate)"
+
+msgid "subscribe reminder"
+msgstr "subscribe reminder"
+
+msgid "Subscribed channels"
+msgstr "Subscribed channels"
+
+msgid ""
+"Successfully imported %d shortcuts from:\n"
+"%s"
+msgstr ""
+"Successfully imported %d shortcuts from:\n"
+"%s"
+
+msgid "The direct audio link is not available yet."
+msgstr "The direct audio link is not available yet."
+
+msgid "The media player could not start because a required system library is missing on this computer."
+msgstr "The media player could not start because a required system library is missing on this computer."
+
+msgid ""
+"The shortcut '%s' is already assigned to '%s'.\n"
+"\n"
+"Do you want to reassign it to '%s' and remove it from '%s'?"
+msgstr ""
+"The shortcut '%s' is already assigned to '%s'.\n"
+"\n"
+"Do you want to reassign it to '%s' and remove it from '%s'?"
+
+msgid "The streaming engine failed to load. Try updating it from HeadlessPlayer settings."
+msgstr "The streaming engine failed to load. Try updating it from HeadlessPlayer settings."
+
+msgid "The streaming engine is already up to date (version %s)."
+msgstr "The streaming engine is already up to date (version %s)."
+
+msgid ""
+"The streaming engine was updated successfully to version %s.\n"
+"Please restart NVDA to start using the new version."
+msgstr ""
+"The streaming engine was updated successfully to version %s.\n"
+"Please restart NVDA to start using the new version."
+
+msgid "This is a 32-bit system; the bundled media player requires a 64-bit version of Windows."
+msgstr "This is a 32-bit system; the bundled media player requires a 64-bit version of Windows."
+
+msgid "This section requires YouTube sign-in. Enable sign-in cookies from your browser in HeadlessPlayer settings, then try again."
+msgstr "This section requires YouTube sign-in. Enable sign-in cookies from your browser in HeadlessPlayer settings, then try again."
 
 msgid "Tip: export cookies.txt while signed in to YouTube in a standard (non-incognito) browser window using an extension such as 'Get cookies.txt LOCALLY' (Chrome/Edge) or 'cookies.txt' (Firefox). Do not export from Incognito mode as private windows omit login session credentials. The manual file takes priority over the browser choice above."
 msgstr "Tip: export cookies.txt while signed in to YouTube in a standard (non-incognito) browser window using an extension such as 'Get cookies.txt LOCALLY' (Chrome/Edge) or 'cookies.txt' (Firefox). Do not export from Incognito mode as private windows omit login session credentials. The manual file takes priority over the browser choice above."
 
-msgid "Notice: The selected cookies file does not appear to contain YouTube authentication tokens.\n\nFor YouTube account feeds (Recommendations, Subscriptions, History) to work reliably, please export cookies while signed in to your YouTube account in your browser."
-msgstr "Notice: The selected cookies file does not appear to contain YouTube authentication tokens.\n\nFor YouTube account feeds (Recommendations, Subscriptions, History) to work reliably, please export cookies while signed in to your YouTube account in your browser."
+msgid "Title: %s, Duration: %s, Track %d of %d"
+msgstr "Title: %s, Duration: %s, Track %d of %d"
 
-msgid "Cookies Verification"
-msgstr "Cookies Verification"
+msgid "Toggle Auto-Next"
+msgstr "Toggle Auto-Next"
 
+msgid "Toggle Auto-Next track playback."
+msgstr "Toggle Auto-Next track playback."
 
+msgid "Toggle playlist shuffle / random mode."
+msgstr "Toggle playlist shuffle / random mode."
 
-msgid "Multi-language audio tracks are not available in InnerTube mode. Using original audio."
-msgstr "Multi-language audio tracks are not available in InnerTube mode. Using original audio."
+msgid "Toggle Repeat Mode"
+msgstr "Toggle Repeat Mode"
 
-msgid "InnerTube Direct API (Fast, Lightweight, Device Code)"
-msgstr "InnerTube Direct API (Fast, Lightweight, Device Code)"
+msgid "Toggle repeat: A-B loop (if marked) or cycle Single Track / Playlist / Off."
+msgstr "Toggle repeat: A-B loop (if marked) or cycle Single Track / Playlist / Off."
 
-msgid "yt-dlp Engine (Universal compatibility)"
-msgstr "yt-dlp Engine (Universal compatibility)"
+msgid "Toggle Shuffle"
+msgstr "Toggle Shuffle"
 
-msgid "Preferred YouTube streaming &engine:"
-msgstr "Preferred YouTube streaming &engine:"
+msgid "Toggles Headless Media Player keyboard capture mode."
+msgstr "Toggles Headless Media Player keyboard capture mode."
 
-msgid "Check for &Updates..."
-msgstr "Check for &Updates..."
+msgid "Track %d of %d: %s"
+msgstr "Track %d of %d: %s"
 
-msgid "&Test streaming engine now..."
-msgstr "&Test streaming engine now..."
+msgid "Track end"
+msgstr "Track end"
 
-msgid "YouTube Account (OAuth2 Device Code Sign-In)"
-msgstr "YouTube Account (OAuth2 Device Code Sign-In)"
+msgid "Trending music (Top 100 songs worldwide)"
+msgstr "Trending music (Top 100 songs worldwide)"
 
-msgid "Sign &in to YouTube (Device Code)..."
-msgstr "Sign &in to YouTube (Device Code)..."
+msgid "Turkish"
+msgstr "Turkish"
 
-msgid "Sign &out of YouTube"
-msgstr "Sign &out of YouTube"
+msgid "Ultrafast seek (+/- %s)."
+msgstr "Ultrafast seek (+/- %s)."
 
-msgid "Account status: Signed in to YouTube (Device Code)"
-msgstr "Account status: Signed in to YouTube (Device Code)"
+msgid "Ultrafast Seek Backward (Shift+Left)"
+msgstr "Ultrafast Seek Backward (Shift+Left)"
 
-msgid "Account status: Not signed in"
-msgstr "Account status: Not signed in"
+msgid "Ultrafast Seek Forward (Shift+Right)"
+msgstr "Ultrafast Seek Forward (Shift+Right)"
 
-msgid "The streaming engine is unavailable: curl.exe was not found on this computer."
-msgstr "The streaming engine is unavailable: curl.exe was not found on this computer."
+msgid "Unmuted"
+msgstr "Unmuted"
 
-msgid "Sign in to YouTube"
-msgstr "Sign in to YouTube"
+msgid "Update Check Failed"
+msgstr "Update Check Failed"
 
-msgid "Signed out of YouTube."
-msgstr "Signed out of YouTube."
+msgid "Update Failed"
+msgstr "Update Failed"
 
-msgid "Testing..."
-msgstr "Testing..."
+msgid "Update Installed"
+msgstr "Update Installed"
 
-msgid "Testing the streaming engine, please wait..."
-msgstr "Testing the streaming engine, please wait..."
+msgid "Use sign-in coo&kies from browser (for age-restricted or members-only content):"
+msgstr "Use sign-in coo&kies from browser (for age-restricted or members-only content):"
 
-msgid "Checking curl..."
-msgstr "Checking curl..."
+msgid "Video"
+msgstr "Video"
 
-msgid "Contacting YouTube..."
-msgstr "Contacting YouTube..."
+msgid "Video MP4"
+msgstr "Video MP4"
 
-msgid "Resolving a test stream..."
-msgstr "Resolving a test stream..."
+msgid "Video MP4 (H.264 + AAC, stories & chats)"
+msgstr "Video MP4 (H.264 + AAC, stories & chats)"
 
-msgid "The streaming engine is working properly.\n"
-"%s"
-msgstr "The streaming engine is working properly.\n"
-"%s"
+msgid "Videos of %s"
+msgstr "Videos of %s"
 
-msgid "Engine Test Succeeded"
-msgstr "Engine Test Succeeded"
+msgid "Volume %d percent"
+msgstr "Volume %d percent"
 
-msgid "The streaming engine test failed:\n"
-"%s"
-msgstr "The streaming engine test failed:\n"
-"%s"
+msgid "Volume Down (-5%)"
+msgstr "Volume Down (-5%)"
 
-msgid "Engine Test Failed"
-msgstr "Engine Test Failed"
+msgid "Volume Up (+5%)"
+msgstr "Volume Up (+5%)"
 
-msgid "Requesting a sign-in code from Google, please wait..."
-msgstr "Requesting a sign-in code from Google, please wait..."
+msgid "Waiting for key press..."
+msgstr "Waiting for key press..."
 
-msgid "Your sign-in &code:"
-msgstr "Your sign-in &code:"
+msgid "Watch history"
+msgstr "Watch history"
 
-msgid "Open this &address in any browser:"
-msgstr "Open this &address in any browser:"
+msgid "Watch Later playlist"
+msgstr "Watch Later playlist"
 
-msgid "&Open browser and copy code"
-msgstr "&Open browser and copy code"
+msgid "What's New in Version %s:"
+msgstr "What's New in Version %s:"
 
-msgid "Code %s copied to the clipboard. Paste it in the browser page and approve access, then return here."
-msgstr "Code %s copied to the clipboard. Paste it in the browser page and approve access, then return here."
+msgid "You are already using the latest version of Headless Media Player (version %s)."
+msgstr "You are already using the latest version of Headless Media Player (version %s)."
 
-msgid "Could not start the sign-in. Check your internet connection and try again."
-msgstr "Could not start the sign-in. Check your internet connection and try again."
+msgid "YouTube & Online Streaming (yt-dlp)"
+msgstr "YouTube & Online Streaming (yt-dlp)"
 
-msgid "Signed in to YouTube successfully."
-msgstr "Signed in to YouTube successfully."
+msgid "YOUTUBE & ONLINE STREAMING:"
+msgstr "YOUTUBE & ONLINE STREAMING:"
 
-msgid "The sign-in code expired. Please try again."
-msgstr "The sign-in code expired. Please try again."
+msgid "YouTube Account & Feeds"
+msgstr "YouTube Account & Feeds"
 
-msgid "Access was denied in the browser."
-msgstr "Access was denied in the browser."
+msgid "YouTube requires sign-in verification for this content. Please configure valid sign-in cookies in HeadlessPlayer settings."
+msgstr "YouTube requires sign-in verification for this content. Please configure valid sign-in cookies in HeadlessPlayer settings."
 
-msgid "Sign-in failed: %s"
-msgstr "Sign-in failed: %s"
+msgid "YouTube results for: %s"
+msgstr "YouTube results for: %s"
 
-msgid "Open the address below in any browser (on this or another device), sign in to your Google account and enter the code. This window signs you in automatically once you approve."
-msgstr "Open the address below in any browser (on this or another device), sign in to your Google account and enter the code. This window signs you in automatically once you approve."
+msgid "YouTube Search Results"
+msgstr "YouTube Search Results"
 
-msgid "Your code is %s. Press the Open browser button, then enter the code and approve access."
-msgstr "Your code is %s. Press the Open browser button, then enter the code and approve access."
+msgid "— [Load more items...] —"
+msgstr "— [Load more items...] —"
 
-msgid "yt-dlp Engine & Sign-In Cookies"
-msgstr "yt-dlp Engine & Sign-In Cookies"
-
-msgid "Checking yt-dlp engine..."
-msgstr "Checking yt-dlp engine..."
-
-msgid "Extracting test stream..."
-msgstr "Extracting test stream..."
-
-msgid "This section requires YouTube sign-in. Use Device Code sign-in in HeadlessPlayer settings, then try again."
-msgstr "This section requires YouTube sign-in. Use Device Code sign-in in HeadlessPlayer settings, then try again."
-
-msgid "Please complete YouTube sign-in in HeadlessPlayer settings."
-msgstr "Please complete YouTube sign-in in HeadlessPlayer settings."
-
-msgid "Could not connect to YouTube. Please check your internet connection or re-authenticate your YouTube account in HeadlessPlayer settings."
-msgstr "Could not connect to YouTube. Please check your internet connection or re-authenticate your YouTube account in HeadlessPlayer settings."
-
-msgid "Clip saved successfully as %s in the downloads folder. It is copied to the clipboard."
-msgstr "Clip saved successfully as %s in the downloads folder. It is copied to the clipboard."
-
-msgid "Clip saved successfully as %s in the downloads folder."
-msgstr "Clip saved successfully as %s in the downloads folder."
-
-msgid "Clip saved successfully as %(file)s in %(folder)s. It is copied to the clipboard."
-msgstr "Clip saved successfully as %(file)s in %(folder)s. It is copied to the clipboard."
-
-msgid "Clip saved successfully as %(file)s in %(folder)s."
-msgstr "Clip saved successfully as %(file)s in %(folder)s."
+msgid "Opens Headless Media Player Settings Panel in NVDA."
+msgstr "Opens Headless Media Player Settings Panel in NVDA."
 
 

@@ -11,7 +11,7 @@ import logging
 import sys
 import threading
 import time
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 # Attempt importing NVDA modules with robust fallback
 try:
@@ -49,6 +49,15 @@ try:
     from .utils import format_time, format_spoken_time
 except ImportError:
     from utils import format_time, format_spoken_time
+
+try:
+    from .sponsorblock import get_category_display_name
+except ImportError:
+    try:
+        from sponsorblock import get_category_display_name
+    except ImportError:
+        def get_category_display_name(cat: str) -> str:
+            return cat
 
 LANGUAGE_NAMES: Dict[str, str] = {
     "ar": _("Arabic"),
@@ -141,12 +150,11 @@ class SpeechFeedback:
             except Exception as e:
                 logger.debug("Failed to cancel speech: %s", e)
         else:
-            try:
-                import speech
-                if hasattr(speech, "cancelSpeech"):
+            if speech and hasattr(speech, "cancelSpeech"):
+                try:
                     speech.cancelSpeech()
-            except Exception:
-                pass
+                except Exception:
+                    pass
 
     # -------------------------------------------------------------------------
     # Configuration Verbosity Check
@@ -267,10 +275,14 @@ class SpeechFeedback:
     def speak_elapsed_time(
         self,
         elapsed_sec: Optional[float] = None,
-        is_loaded: bool = True
+        is_loaded: bool = True,
+        speed: float = 1.0,
+        is_raw: bool = False
     ) -> None:
         """
         Query 'Shift+i': Speaks elapsed playback timestamp.
+        Accounts for current playback speed (e.g. at 2.0x, elapsed listening time is halved).
+        If is_raw is True (e.g. double press), speaks unscaled track elapsed time.
         Format: 'Elapsed time: HH:MM:SS'
         """
         if not is_loaded:
@@ -278,8 +290,20 @@ class SpeechFeedback:
             return
 
         el_val = max(0.0, float(elapsed_sec)) if elapsed_sec is not None else 0.0
-        el_str = format_time(el_val)
-        msg = _("Elapsed time: %s") % el_str
+        cfg = getConfig()
+        account_for_speed = cfg.get("elapsedTimeAccountsForSpeed", True)
+
+        if not is_raw and account_for_speed and speed and speed > 0 and abs(speed - 1.0) >= 0.01:
+            effective_el = el_val / speed
+            el_str = format_time(effective_el)
+            msg = _("Elapsed time: %s") % el_str
+        elif is_raw and abs(speed - 1.0) >= 0.01:
+            el_str = format_time(el_val)
+            msg = _("Original elapsed time: %s") % el_str
+        else:
+            el_str = format_time(el_val)
+            msg = _("Elapsed time: %s") % el_str
+
         self.speak(msg)
 
     # -------------------------------------------------------------------------
@@ -520,7 +544,6 @@ class SpeechFeedback:
         """
         if not self.is_announcement_enabled("chapter"):
             return
-        from .utils import format_time
         time_str = format_time(start_time) if start_time is not None and start_time >= 0 else ""
         if title and time_str:
             msg = _("Chapter %d: %s, at %s") % (chapter_num, title, time_str)
@@ -627,7 +650,6 @@ class SpeechFeedback:
         """
         if not self.is_announcement_enabled("announceSponsorSkip"):
             return
-        from .sponsorblock import get_category_display_name
         cat_name = get_category_display_name(category)
         msg = _("Skipped %s") % cat_name
         self.speak(msg)

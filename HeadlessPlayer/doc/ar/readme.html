@@ -85,7 +85,7 @@
 </head>
 <body>
     <h1>دليل مستخدم إضافة Headless Media Player لقارئ الشاشة NVDA</h1>
-    <p><strong>الإصدار:</strong> 1.2.4 &nbsp;|&nbsp; <strong>المطور:</strong> محمود أبو الفتوح &lt;mahmoudaboelfotouh.20@gmail.com&gt; &nbsp;|&nbsp; <strong>التوافق:</strong> NVDA 2024.1 إلى 2026.1 وأحدث</p>
+    <p><strong>الإصدار:</strong> 1.3.0 &nbsp;|&nbsp; <strong>المطور:</strong> محمود أبو الفتوح &lt;mahmoudaboelfotouh.20@gmail.com&gt; &nbsp;|&nbsp; <strong>التوافق:</strong> NVDA 2024.1 إلى 2026.2 وأحدث</p>
     <p><strong>المستودع الرسمي:</strong> <a href="https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer">https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer</a></p>
     <hr>
 
@@ -182,13 +182,32 @@
         </tbody>
     </table>
 
-    <h3>3.6. الاستعلامات الصوتية والمساعدة</h3>
+    <h3>3.6. استعراض الوسائط الأخيرة وسجل التشغيل</h3>
+    <table>
+        <thead><tr><th>المفتاح</th><th>الإجراء</th><th>الوصف</th></tr></thead>
+        <tbody>
+            <tr><td><kbd>Ctrl + .</kbd> / <kbd>Ctrl + ز</kbd></td><td>الحاوية التالية / الأحدث</td><td>التنقل للأمام بين المجلدات وقوائم التشغيل الأخيرة.</td></tr>
+            <tr><td><kbd>Ctrl + ,</kbd> / <kbd>Ctrl + و</kbd></td><td>الحاوية السابقة / الأقدم</td><td>التنقل للخلف بين المجلدات وقوائم التشغيل الأخيرة.</td></tr>
+            <tr><td><kbd>Ctrl + Shift + ,</kbd></td><td>أقدم حاوية</td><td>القفز مباشرة إلى أقدم مجلد أو قائمة تشغيل في السجل.</td></tr>
+            <tr><td><kbd>Ctrl + Shift + .</kbd></td><td>أحدث حاوية</td><td>القفز مباشرة إلى أحدث مجلد أو قائمة تشغيل في السجل.</td></tr>
+            <tr><td><kbd>.</kbd> / <kbd>ز</kbd></td><td>المقطع التالي / الأحدث</td><td>التنقل للأمام بين الملفات ومقاطع البث الأخيرة.</td></tr>
+            <tr><td><kbd>,</kbd> / <kbd>و</kbd></td><td>المقطع السابق / الأقدم</td><td>التنقل للخلف بين الملفات ومقاطع البث الأخيرة.</td></tr>
+            <tr><td><kbd>Shift + ,</kbd></td><td>أقدم مقطع</td><td>القفز مباشرة إلى أقدم ملف أو مقطع في السجل.</td></tr>
+            <tr><td><kbd>Shift + .</kbd></td><td>أحدث مقطع</td><td>القفز مباشرة إلى أحدث ملف أو مقطع في السجل.</td></tr>
+            <tr><td><kbd>Space</kbd></td><td>تشغيل العنصر الأخير المحدد</td><td>تشغيل المجلد أو الملف أو قائمة التشغيل المحددة حالياً فوراً (يعمل خلال 6 ثوانٍ من بدء الاستعراض).</td></tr>
+            <tr><td><kbd>Delete</kbd></td><td>حذف العنصر من السجل</td><td>حذف العنصر المحدد حالياً من قاعدة بيانات السجل دون المساس بالملف على القرص.</td></tr>
+            <tr><td><kbd>Escape</kbd></td><td>إلغاء وضع الاستعراض</td><td>الخروج من وضع استعراض السجل والعودة للتحكم العادي في المشغل دون مغادرة Player Mode.</td></tr>
+            <tr><td><kbd>Ctrl + Shift + S</kbd></td><td>فتح إعدادات المشغل</td><td>فتح لوحة إعدادات HeadlessPlayer مباشرة في تفضيلات NVDA.</td></tr>
+        </tbody>
+    </table>
+
+    <h3>3.7. الاستعلامات الصوتية والمساعدة</h3>
     <table>
         <thead><tr><th>المفتاح</th><th>الإجراء</th><th>الوصف</th></tr></thead>
         <tbody>
             <tr><td><kbd>i</kbd></td><td>نطق معلومات المقطع</td><td>نطق عنوان المقطع، والمدة الإجمالية، ورقم المقطع (مثال: <em>المقطع 3 من 15</em>).</td></tr>
-            <tr><td><kbd>Ctrl + i</kbd></td><td>نطق الوقت المتبقي</td><td>نطق الوقت المتبقي بالساعات والدقائق والثواني بدقة.</td></tr>
-            <tr><td><kbd>Shift + i</kbd></td><td>نطق الوقت المنقضي</td><td>نطق مدة التشغيل المنقضية منذ بداية المقطع.</td></tr>
+            <tr><td><kbd>Ctrl + i</kbd></td><td>نطق الوقت المتبقي</td><td>نطق الوقت المتبقي الفعلي بناءً على سرعة التشغيل الحالية. الضغط مرتين متتاليتين ينطق الوقت الأصلي غير المعدل.</td></tr>
+            <tr><td><kbd>Shift + i</kbd></td><td>نطق الوقت المنقضي</td><td>نطق مدة التشغيل المنقضية بناءً على سرعة التشغيل الحالية. الضغط مرتين متتاليتين ينطق الوقت الأصلي غير المعدل.</td></tr>
             <tr><td><kbd>h</kbd> / <kbd>ا</kbd></td><td>مساعدة الاختصارات</td><td>فتح نافذة مرجعية تفاعلية وسريعة لجميع الاختصارات داخل NVDA.</td></tr>
         </tbody>
     </table>

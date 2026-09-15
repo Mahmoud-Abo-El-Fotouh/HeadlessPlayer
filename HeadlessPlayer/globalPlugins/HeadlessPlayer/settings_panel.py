@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
 """
 HeadlessPlayer Settings Panel for NVDA Preferences -> Settings Dialog.
 Provides accessible wxPython configuration controls for speech feedback, seek step sizes, and playback defaults.
 """
 
+import json
 import logging
+import os
+import threading
 from typing import Any, Dict, List, Optional, Tuple
+import webbrowser
 
 logger = logging.getLogger("HeadlessPlayer.SettingsPanel")
 
@@ -40,16 +45,56 @@ except Exception:
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             pass
 
+try:
+    import ui
+except Exception:
+    ui = None
+
 from .config_spec import (
     getConfig,
     saveConfig,
     setConfigValue,
-    DEFAULT_CONFIG,
     DEFAULT_KEYMAP,
     getKeymap,
     setKeymap,
-    resetKeymap
 )
+
+try:
+    from . import stream_engine
+except Exception:
+    try:
+        import stream_engine
+    except Exception:
+        stream_engine = None
+
+try:
+    from . import addon_updater
+    from .addon_updater import AddonUpdateDialog
+except Exception:
+    try:
+        import addon_updater
+        from addon_updater import AddonUpdateDialog
+    except Exception:
+        addon_updater = None
+        AddonUpdateDialog = None
+
+try:
+    from .controller import get_controller
+except Exception:
+    def get_controller() -> Any:
+        return None
+
+try:
+    from .engine import get_engine
+except Exception:
+    def get_engine() -> Any:
+        return None
+
+try:
+    from .state_store import get_state_store
+except Exception:
+    def get_state_store() -> Any:
+        return None
 
 
 ACTION_DISPLAY_NAMES: List[Tuple[str, str]] = [
@@ -100,6 +145,16 @@ ACTION_DISPLAY_NAMES: List[Tuple[str, str]] = [
     ("copy_direct_url", _("Copy Direct Audio Link of Current Stream")),
     ("export_clip", _("Export / Download Clip (A-B selection or whole item)")),
     ("quick_export", _("Quick Export with remembered settings")),
+    ("recent_playlist_next", _("Recent Playlists: Next / Newer (Ctrl+.)")),
+    ("recent_playlist_prev", _("Recent Playlists: Previous / Older (Ctrl+,)")),
+    ("recent_playlist_first", _("Recent Playlists: Jump to Oldest (Ctrl+Shift+,)")),
+    ("recent_playlist_last", _("Recent Playlists: Jump to Newest (Ctrl+Shift+.)")),
+    ("recent_track_next", _("Recent Tracks: Next / Newer (.)")),
+    ("recent_track_prev", _("Recent Tracks: Previous / Older (,)")),
+    ("recent_track_first", _("Recent Tracks: Jump to Oldest (Shift+,)")),
+    ("recent_track_last", _("Recent Tracks: Jump to Newest (Shift+.)")),
+    ("recent_delete", _("Remove Focused Recent Item from History (Delete)")),
+    ("open_settings", _("Open HeadlessPlayer Settings Panel (Ctrl+Shift+S)")),
     ("close_player", _("Close Player (Quit)")),
     ("exit_mode", _("Exit Player Mode")),
 ]
@@ -108,6 +163,7 @@ ACTION_CATEGORIES: List[Tuple[str, str]] = [
     ("all", _("All Actions")),
     ("playback", _("Playback & Core Controls")),
     ("navigation", _("Navigation & Chapters")),
+    ("recents", _("Recent Media & History")),
     ("audio", _("Audio, Volume & Speed")),
     ("streaming", _("Files, Streaming & Information")),
 ]
@@ -116,6 +172,7 @@ ACTION_CATEGORY_MAP: Dict[str, str] = {
     "copy_direct_url": "streaming",
     "export_clip": "streaming",
     "quick_export": "streaming",
+    "open_settings": "streaming",
     "play_pause": "playback",
     "stop": "playback",
     "point_a": "playback",
@@ -144,6 +201,16 @@ ACTION_CATEGORY_MAP: Dict[str, str] = {
     "last_track": "navigation",
     "next_chapter": "navigation",
     "prev_chapter": "navigation",
+
+    "recent_playlist_next": "recents",
+    "recent_playlist_prev": "recents",
+    "recent_playlist_first": "recents",
+    "recent_playlist_last": "recents",
+    "recent_track_next": "recents",
+    "recent_track_prev": "recents",
+    "recent_track_first": "recents",
+    "recent_track_last": "recents",
+    "recent_delete": "recents",
 
     "mute": "audio",
     "vol_up": "audio",
@@ -245,6 +312,15 @@ def get_all_key_suggestions() -> List[Tuple[str, str]]:
         ("control+space", "Control + Space"),
         ("shift+space", "Shift + Space"),
         ("alt+space", "Alt + Space"),
+        (".", "."),
+        (",", ","),
+        ("shift+.", "Shift + ."),
+        ("shift+,", "Shift + ,"),
+        ("control+.", "Control + ."),
+        ("control+,", "Control + ,"),
+        ("control+shift+.", "Control + Shift + ."),
+        ("control+shift+,", "Control + Shift + ,"),
+        ("control+shift+s", "Control + Shift + S"),
         ("0", "0 (0%)"),
         ("1", "1 (10%)"),
         ("2", "2 (20%)"),
@@ -697,11 +773,11 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
                 sel = 0
                 self.suggestionsList.SetSelection(0)
             else:
-                try:
-                    import ui
-                    ui.message(_("Please select a key from the suggestions list."))
-                except Exception:
-                    pass
+                if ui and hasattr(ui, "message"):
+                    try:
+                        ui.message(_("Please select a key from the suggestions list."))
+                    except Exception:
+                        pass
                 return
 
         if 0 <= sel < len(self.filtered_suggestions):
@@ -717,11 +793,11 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
                     _("Current assigned key: %s") % self._format_key_display(assigned_str)
                 )
                 self._refresh_action_choice(action_sel)
-                try:
-                    import ui
-                    ui.message(_("Assigned %s to %s") % (self._format_key_display(assigned_str), action_name))
-                except Exception:
-                    pass
+                if ui and hasattr(ui, "message"):
+                    try:
+                        ui.message(_("Assigned %s to %s") % (self._format_key_display(assigned_str), action_name))
+                    except Exception:
+                        pass
 
     def onSuggestionDoubleClicked(self, evt: Any) -> None:
         self._do_assign_current_suggestion()
@@ -745,11 +821,11 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
                 )
                 self._refresh_action_choice(action_sel)
                 self.searchCtrl.SetValue(captured)
-                try:
-                    import ui
-                    ui.message(_("Assigned %s to %s") % (self._format_key_display(self.current_keymap.get(action_id, "")), action_name))
-                except Exception:
-                    pass
+                if ui and hasattr(ui, "message"):
+                    try:
+                        ui.message(_("Assigned %s to %s") % (self._format_key_display(self.current_keymap.get(action_id, "")), action_name))
+                    except Exception:
+                        pass
         dlg.Destroy()
 
     def onDeleteShortcut(self, evt: Any) -> None:
@@ -762,11 +838,11 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
                 _("Current assigned key: %s") % self._format_key_display("")
             )
             self._refresh_action_choice(action_sel)
-            try:
-                import ui
-                ui.message(_("Shortcut deleted for %s") % action_name)
-            except Exception:
-                pass
+            if ui and hasattr(ui, "message"):
+                try:
+                    ui.message(_("Shortcut deleted for %s") % action_name)
+                except Exception:
+                    pass
 
     def onResetDefaults(self, evt: Any) -> None:
         self.current_keymap = dict(DEFAULT_KEYMAP)
@@ -790,7 +866,6 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
             if dlg.ShowModal() == wx.ID_OK:
                 path = dlg.GetPath()
                 try:
-                    import json
                     with open(path, "w", encoding="utf-8") as f:
                         json.dump(self.current_keymap, f, indent=2, ensure_ascii=False)
                     msg = _("Shortcuts successfully exported to:\n%s") % path
@@ -818,9 +893,8 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
             if dlg.ShowModal() == wx.ID_OK:
                 path = dlg.GetPath()
                 try:
-                    import json
-                    with open(path, "r", encoding="utf-8") as f:
-                        imported = json.load(f)
+                    with open(path, "r", encoding="utf-8") as src_f:
+                        imported = json.load(src_f)
                     if not isinstance(imported, dict):
                         raise ValueError(_("Invalid shortcuts format: expected a JSON object."))
                     valid_action_ids = set(a_id for a_id, _ in ACTION_DISPLAY_NAMES)
@@ -850,7 +924,6 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
         setKeymap(self.current_keymap)
         saveConfig()
         try:
-            from .controller import get_controller
             ctrl = get_controller()
             if ctrl:
                 if hasattr(ctrl, "on_config_updated"):
@@ -1044,6 +1117,49 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         )
 
         generalHelper.addItem(seekGroup.sizer)
+
+        # Section 1.3: Recent Media History
+        recentsGroupLabel = _("Recent Media History")
+        recentsBox = wx.StaticBox(self.panelGeneral, label=recentsGroupLabel)
+        recentsGroup = guiHelper.BoxSizerHelper(
+            self.panelGeneral,
+            sizer=wx.StaticBoxSizer(recentsBox, wx.VERTICAL)
+        )
+
+        self.recentsEnabledChk = recentsGroup.addItem(
+            wx.CheckBox(self.panelGeneral, label=_("&Enable recent media history tracking"))
+        )
+        self.recentsEnabledChk.SetValue(bool(cfg.get("recentsEnabled", True)))
+
+        self.recentsMaxEntriesCtrl = recentsGroup.addLabeledControl(
+            _("&Maximum recent entries per category:"),
+            wx.SpinCtrl,
+            min=5,
+            max=200,
+            initial=int(cfg.get("recentsMaxEntries", 30))
+        )
+
+        self.recentsKeepFilesChk = recentsGroup.addItem(
+            wx.CheckBox(self.panelGeneral, label=_("Keep recent &local files in history"))
+        )
+        self.recentsKeepFilesChk.SetValue(bool(cfg.get("recentsKeepFiles", True)))
+
+        self.recentsKeepFoldersChk = recentsGroup.addItem(
+            wx.CheckBox(self.panelGeneral, label=_("Keep recent local &folders in history"))
+        )
+        self.recentsKeepFoldersChk.SetValue(bool(cfg.get("recentsKeepFolders", True)))
+
+        self.recentsKeepPlaylistsChk = recentsGroup.addItem(
+            wx.CheckBox(self.panelGeneral, label=_("Keep recent &playlists in history"))
+        )
+        self.recentsKeepPlaylistsChk.SetValue(bool(cfg.get("recentsKeepPlaylists", True)))
+
+        self.recentsKeepStreamsChk = recentsGroup.addItem(
+            wx.CheckBox(self.panelGeneral, label=_("Keep recent online &streams in history"))
+        )
+        self.recentsKeepStreamsChk.SetValue(bool(cfg.get("recentsKeepStreams", True)))
+
+        generalHelper.addItem(recentsGroup.sizer)
         self.panelGeneral.SetSizer(sizerGeneral)
         helper.addItem(self.panelGeneral)
 
@@ -1105,6 +1221,11 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         )
         self.remainingTimeAccountsForSpeedChk.SetValue(bool(cfg.get("remainingTimeAccountsForSpeed", True)))
 
+        self.elapsedTimeAccountsForSpeedChk = speechGroup.addItem(
+            wx.CheckBox(self.panelSpeech, label=_("Calculate elapsed ti&me based on current playback speed"))
+        )
+        self.elapsedTimeAccountsForSpeedChk.SetValue(bool(cfg.get("elapsedTimeAccountsForSpeed", True)))
+
         speechHelper.addItem(speechGroup.sizer)
 
         self.panelSpeech.SetSizer(sizerSpeech)
@@ -1116,8 +1237,6 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         sizerStreaming = wx.BoxSizer(wx.VERTICAL)
         streamingHelper = guiHelper.BoxSizerHelper(self.panelStreaming, sizer=sizerStreaming)
 
-        from . import stream_engine
-
         streamGroupLabel = _("YouTube & Online Streaming (yt-dlp)")
         streamBox = wx.StaticBox(self.panelStreaming, label=streamGroupLabel)
         streamGroup = guiHelper.BoxSizerHelper(
@@ -1125,7 +1244,7 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
             sizer=wx.StaticBoxSizer(streamBox, wx.VERTICAL)
         )
 
-        ver = stream_engine.get_bundled_version() or _("not installed")
+        ver = (stream_engine.get_bundled_version() if stream_engine and hasattr(stream_engine, "get_bundled_version") else None) or _("not installed")
         self.ytdlpVersionText = streamGroup.addItem(
             wx.StaticText(self.panelStreaming, label=_("Streaming engine (yt-dlp) version: %s") % ver)
         )
@@ -1314,8 +1433,7 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
                 sizer=wx.StaticBoxSizer(addonUpdatesBox, wx.VERTICAL)
             )
 
-            from . import addon_updater
-            cur_ver_str = addon_updater.get_current_addon_version()
+            cur_ver_str = (addon_updater.get_current_addon_version() if addon_updater and hasattr(addon_updater, "get_current_addon_version") else "") or "1.0.0"
             self.addonVersionText = addonUpdatesGroup.addItem(
                 wx.StaticText(self.panelShortcuts, label=_("Installed add-on version: %s") % cur_ver_str)
             )
@@ -1412,7 +1530,6 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
 
     def onFollowDeveloper(self, evt: Any) -> None:
         """Opens developer's Telegram link in the default browser."""
-        import webbrowser
         try:
             webbrowser.open("https://t.me/mahmoud_EG_1")
         except Exception as e:
@@ -1422,7 +1539,6 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         """Opens a file picker for the manual cookies.txt file."""
         if not wx:
             return
-        import os
         current = self.cookiesFileCtrl.GetValue().strip()
         start_dir = os.path.dirname(current) if current else os.path.expanduser("~")
         dlg = wx.FileDialog(
@@ -1437,17 +1553,17 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
                 path = dlg.GetPath()
                 self.cookiesFileCtrl.SetValue(path)
                 try:
-                    from . import stream_engine
-                    valid, reason = stream_engine.check_youtube_cookies_validity(path)
-                    if not valid and reason == "missing_auth_tokens":
-                        import gui
-                        gui.messageBox(
-                            _("Notice: The selected cookies file does not appear to contain YouTube authentication tokens.\n\n"
-                              "For YouTube account feeds (Recommendations, Subscriptions, History) to work reliably, "
-                              "please export cookies while signed in to your YouTube account in your browser."),
-                            _("Cookies Verification"),
-                            wx.OK | wx.ICON_WARNING
-                        )
+                    if stream_engine and hasattr(stream_engine, "check_youtube_cookies_validity"):
+                        valid, reason = stream_engine.check_youtube_cookies_validity(path)
+                        if not valid and reason == "missing_auth_tokens":
+                            if gui and hasattr(gui, "messageBox"):
+                                gui.messageBox(
+                                    _("Notice: The selected cookies file does not appear to contain YouTube authentication tokens.\n\n"
+                                      "For YouTube account feeds (Recommendations, Subscriptions, History) to work reliably, "
+                                      "please export cookies while signed in to your YouTube account in your browser."),
+                                    _("Cookies Verification"),
+                                    wx.OK | wx.ICON_WARNING
+                                )
                 except Exception:
                     pass
 
@@ -1460,16 +1576,14 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         """
         if not wx:
             return
-        import threading
-        from . import stream_engine
 
         self.checkUpdatesBtn.Disable()
         self.checkUpdatesBtn.SetLabel(_("Checking for updates..."))
-        try:
-            import ui
-            ui.message(_("Checking for streaming engine updates, please wait..."))
-        except Exception:
-            pass
+        if ui and hasattr(ui, "message"):
+            try:
+                ui.message(_("Checking for streaming engine updates, please wait..."))
+            except Exception:
+                pass
 
         def report_progress(stage: str) -> None:
             labels = {
@@ -1531,11 +1645,11 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         if gui and hasattr(gui, "messageBox"):
             gui.messageBox(text, caption, wx.OK | icon)
         else:
-            try:
-                import ui
-                ui.message(text)
-            except Exception:
-                pass
+            if ui and hasattr(ui, "message"):
+                try:
+                    ui.message(text)
+                except Exception:
+                    pass
 
     def onCustomizeShortcuts(self, evt: Any) -> None:
         """Opens the accessible Player Mode shortcuts customization dialog."""
@@ -1552,20 +1666,21 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         """
         if not wx:
             return
-        import threading
-        from . import addon_updater
 
         self.checkAddonUpdatesBtn.Disable()
         self.checkAddonUpdatesBtn.SetLabel(_("Checking for add-on updates..."))
-        try:
-            import ui
-            ui.message(_("Checking for add-on updates, please wait..."))
-        except Exception:
-            pass
+        if ui and hasattr(ui, "message"):
+            try:
+                ui.message(_("Checking for add-on updates, please wait..."))
+            except Exception:
+                pass
 
         def worker() -> None:
             try:
-                available, info, status = addon_updater.check_for_addon_update()
+                if addon_updater and hasattr(addon_updater, "check_for_addon_update"):
+                    available, info, status = addon_updater.check_for_addon_update()
+                else:
+                    available, info, status = False, None, "addon_updater unavailable"
             except Exception as e:
                 available, info, status = False, None, f"error:{e}"
             wx.CallAfter(self._onAddonUpdateCheckFinished, available, info, status)
@@ -1585,8 +1700,7 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         except Exception:
             return
 
-        if available and info:
-            from .addon_updater import AddonUpdateDialog
+        if available and info and AddonUpdateDialog:
             dlg = AddonUpdateDialog(self, info)
             dlg.ShowModal()
             dlg.Destroy()
@@ -1596,9 +1710,8 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
             caption = _("No Update Needed")
             if gui and hasattr(gui, "messageBox"):
                 gui.messageBox(text, caption, wx.OK | wx.ICON_INFORMATION)
-            else:
+            elif ui and hasattr(ui, "message"):
                 try:
-                    import ui
                     ui.message(text)
                 except Exception:
                     pass
@@ -1610,9 +1723,8 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
             caption = _("Rate Limit Exceeded")
             if gui and hasattr(gui, "messageBox"):
                 gui.messageBox(text, caption, wx.OK | wx.ICON_WARNING)
-            else:
+            elif ui and hasattr(ui, "message"):
                 try:
-                    import ui
                     ui.message(text)
                 except Exception:
                     pass
@@ -1624,9 +1736,8 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
             caption = _("Update Check Failed")
             if gui and hasattr(gui, "messageBox"):
                 gui.messageBox(text, caption, wx.OK | wx.ICON_ERROR)
-            else:
+            elif ui and hasattr(ui, "message"):
                 try:
-                    import ui
                     ui.message(text)
                 except Exception:
                     pass
@@ -1634,7 +1745,6 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
     def onBrowseExportFolder(self, evt: Any) -> None:
         if not wx:
             return
-        import os
         current = self.exportFolderCtrl.GetValue().strip()
         start_dir = current if current and os.path.isdir(current) else os.path.join(os.path.expanduser("~"), "Downloads")
         dlg = wx.DirDialog(self, message=_("Select download folder"), defaultPath=start_dir, style=wx.DD_DEFAULT_STYLE)
@@ -1650,90 +1760,115 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         if wx is None:
             return
 
-        # Update speech announcement flags
-        if hasattr(self, "announceVolumeChk"):
-            setConfigValue("announceVolume", bool(self.announceVolumeChk.GetValue()))
-        if hasattr(self, "announceSeekChk"):
-            setConfigValue("announceSeek", bool(self.announceSeekChk.GetValue()))
-        if hasattr(self, "announceSpeedChk"):
-            setConfigValue("announceSpeed", bool(self.announceSpeedChk.GetValue()))
-        if hasattr(self, "announceTrackChk"):
-            setConfigValue("announceTrack", bool(self.announceTrackChk.GetValue()))
-        if hasattr(self, "announceLoopChk"):
-            setConfigValue("announceLoop", bool(self.announceLoopChk.GetValue()))
-        if hasattr(self, "announceChapterChk"):
-            setConfigValue("announceChapter", bool(self.announceChapterChk.GetValue()))
-        if hasattr(self, "announceChapterAutoChk"):
-            setConfigValue("announceChapterAuto", bool(self.announceChapterAutoChk.GetValue()))
-        if hasattr(self, "announcePlaylistTotalDurationChk"):
-            setConfigValue("announcePlaylistTotalDuration", bool(self.announcePlaylistTotalDurationChk.GetValue()))
-        if hasattr(self, "remainingTimeAccountsForSpeedChk"):
-            setConfigValue("remainingTimeAccountsForSpeed", bool(self.remainingTimeAccountsForSpeedChk.GetValue()))
+        # Playback & Announcement settings
+        for attr, key in (
+            ("announceVolChk", "announceVolume"),
+            ("announceSeekChk", "announceSeek"),
+            ("announceSpeedChk", "announceSpeed"),
+            ("announceTrackChk", "announceTrack"),
+            ("announceLoopChk", "announceLoop"),
+            ("announceChapterChk", "announceChapter"),
+            ("announceChapterAutoChk", "announceChapterAuto"),
+            ("announcePlaylistTotalDurationChk", "announcePlaylistTotalDuration"),
+            ("remainingAccountsSpeedChk", "remainingTimeAccountsForSpeed"),
+            ("elapsedAccountsSpeedChk", "elapsedTimeAccountsForSpeed"),
+        ):
+            if hasattr(self, attr):
+                try:
+                    setConfigValue(key, bool(getattr(self, attr).GetValue()))
+                except Exception:
+                    pass
 
-        # Update seek step sizes
+        # Seek steps
+        for attr, key in (
+            ("seekStepNormalCtrl", "seekStepNormal"),
+            ("seekStepSlowCtrl", "seekStepSlow"),
+            ("seekStepFastCtrl", "seekStepFast"),
+            ("seekStepUltrafastCtrl", "seekStepUltrafast"),
+        ):
+            if hasattr(self, attr):
+                try:
+                    setConfigValue(key, int(getattr(self, attr).GetValue()))
+                except Exception:
+                    pass
 
-        if hasattr(self, "seekStepNormalCtrl"):
-            try:
-                setConfigValue("seekStepNormal", int(self.seekStepNormalCtrl.GetValue()))
-            except Exception:
-                pass
-        if hasattr(self, "seekStepSlowCtrl"):
-            try:
-                setConfigValue("seekStepSlow", int(self.seekStepSlowCtrl.GetValue()))
-            except Exception:
-                pass
-        if hasattr(self, "seekStepFastCtrl"):
-            try:
-                setConfigValue("seekStepFast", int(self.seekStepFastCtrl.GetValue()))
-            except Exception:
-                pass
-        if hasattr(self, "seekStepUltrafastCtrl"):
-            try:
-                setConfigValue("seekStepUltrafast", int(self.seekStepUltrafastCtrl.GetValue()))
-            except Exception:
-                pass
-
-        # Update default speed
+        # Default Speed
         if hasattr(self, "defaultSpeedChoice"):
             try:
-                speedSel = self.defaultSpeedChoice.GetSelection()
-                if 0 <= speedSel < len(SPEED_CHOICES):
-                    setConfigValue("defaultSpeed", float(SPEED_CHOICES[speedSel][0]))
+                sel = self.defaultSpeedChoice.GetSelection()
+                if 0 <= sel < len(SPEED_CHOICES):
+                    spd_val = float(SPEED_CHOICES[sel][0])
+                    setConfigValue("defaultSpeed", spd_val)
             except Exception:
                 pass
 
-        # Update default repeat mode
-        if hasattr(self, "defaultRepeatChoice"):
+        # Default Repeat Mode
+        if hasattr(self, "defaultRepeatModeChoice"):
             try:
-                repeatSel = self.defaultRepeatChoice.GetSelection()
-                if 0 <= repeatSel < len(REPEAT_CHOICES):
-                    setConfigValue("defaultRepeatMode", REPEAT_CHOICES[repeatSel][0])
+                sel = self.defaultRepeatModeChoice.GetSelection()
+                if 0 <= sel < len(REPEAT_CHOICES):
+                    mode_val = REPEAT_CHOICES[sel][0]
+                    setConfigValue("defaultRepeatMode", mode_val)
             except Exception:
                 pass
 
-        # Update playback behavior options
         if hasattr(self, "autoNextChk"):
             try:
-                setConfigValue("defaultAutoNext", bool(self.autoNextChk.GetValue()))
+                setConfigValue("autoNext", bool(self.autoNextChk.GetValue()))
             except Exception:
                 pass
-        if hasattr(self, "resumePositionChk"):
+
+        if hasattr(self, "rememberPlaybackPositionChk"):
             try:
-                setConfigValue("resumePosition", bool(self.resumePositionChk.GetValue()))
+                setConfigValue("rememberPlaybackPosition", bool(self.rememberPlaybackPositionChk.GetValue()))
             except Exception:
                 pass
+
         if hasattr(self, "rememberPlaybackStateChk"):
             try:
                 val = bool(self.rememberPlaybackStateChk.GetValue())
                 setConfigValue("rememberPlaybackState", val)
                 if not val:
-                    from .state_store import get_state_store
-                    get_state_store().clear_last_session()
+                    store = get_state_store()
+                    if store and hasattr(store, "clear_last_session"):
+                        store.clear_last_session()
             except Exception:
                 pass
         if hasattr(self, "autoEnterPlayerModeChk"):
             try:
                 setConfigValue("autoEnterPlayerMode", bool(self.autoEnterPlayerModeChk.GetValue()))
+            except Exception:
+                pass
+
+        # Update recents history options
+        if hasattr(self, "recentsEnabledChk"):
+            try:
+                setConfigValue("recentsEnabled", bool(self.recentsEnabledChk.GetValue()))
+            except Exception:
+                pass
+        if hasattr(self, "recentsMaxEntriesCtrl"):
+            try:
+                setConfigValue("recentsMaxEntries", int(self.recentsMaxEntriesCtrl.GetValue()))
+            except Exception:
+                pass
+        if hasattr(self, "recentsKeepFilesChk"):
+            try:
+                setConfigValue("recentsKeepFiles", bool(self.recentsKeepFilesChk.GetValue()))
+            except Exception:
+                pass
+        if hasattr(self, "recentsKeepFoldersChk"):
+            try:
+                setConfigValue("recentsKeepFolders", bool(self.recentsKeepFoldersChk.GetValue()))
+            except Exception:
+                pass
+        if hasattr(self, "recentsKeepPlaylistsChk"):
+            try:
+                setConfigValue("recentsKeepPlaylists", bool(self.recentsKeepPlaylistsChk.GetValue()))
+            except Exception:
+                pass
+        if hasattr(self, "recentsKeepStreamsChk"):
+            try:
+                setConfigValue("recentsKeepStreams", bool(self.recentsKeepStreamsChk.GetValue()))
             except Exception:
                 pass
 
@@ -1746,8 +1881,8 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
                     old_qual = getConfigValue("streamAudioQuality", "high")
                     setConfigValue("streamAudioQuality", new_qual)
                     if new_qual != old_qual:
-                        from . import stream_engine
-                        stream_engine.clear_resolve_cache()
+                        if stream_engine and hasattr(stream_engine, "clear_resolve_cache"):
+                            stream_engine.clear_resolve_cache()
             except Exception:
                 pass
         if hasattr(self, "searchResultsCountCtrl"):
@@ -1807,8 +1942,7 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
                 cats.append("music_offtopic")
             setConfigValue("sponsorBlockCategories", ",".join(cats))
 
-        # Save to SQLite store
-
+        # Save to database store
         saveConfig()
 
         # Notify active player controller or engine of configuration update
@@ -1819,7 +1953,6 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         Dispatches updated configuration to running controller or engine instances.
         """
         try:
-            from .controller import get_controller
             ctrl = get_controller()
             if ctrl is not None:
                 if hasattr(ctrl, "on_config_updated"):
@@ -1830,7 +1963,6 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
             pass
 
         try:
-            from .engine import get_engine
             engine = get_engine()
             if engine is not None:
                 if hasattr(engine, "on_config_updated"):

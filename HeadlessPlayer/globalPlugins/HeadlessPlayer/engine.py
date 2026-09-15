@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
 """
 HeadlessPlayer Core Audio & Video Media Engine.
 Coordinates detached mpv subprocess lifecycle, pure ctypes Win32 Named Pipe IPC,
@@ -9,11 +10,16 @@ A-B segment repeat, chapter navigation, and audio stream switching.
 import logging
 import os
 import threading
+import time
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 from .ipc_client import WinNamedPipeClient
-from .mpv_process import DEFAULT_PIPE_NAME, MpvProcess, find_mpv_binary
-from .utils import log_debug, log_exception
+from .mpv_process import DEFAULT_PIPE_NAME, MpvProcess
+from .utils import log_debug
+try:
+    from .sponsorblock import merge_overlapping_segments
+except Exception:
+    merge_overlapping_segments = None
 
 logger = logging.getLogger("HeadlessPlayer.Engine")
 
@@ -257,7 +263,6 @@ class HeadlessEngine:
                     self.is_loaded = False
                     self.core_idle = True
                 if self.on_track_end:
-                    import time
                     now = time.time()
                     if now - getattr(self, "_last_eof_time", 0.0) > 0.8:
                         self._last_eof_time = now
@@ -301,7 +306,6 @@ class HeadlessEngine:
                     # preventing redundant double-seeks, audio stutter, and streaming buffer stalls.
                     if self.ab_loop_active and self.ab_loop_a is not None and self.ab_loop_b is not None:
                         if self.time_pos > (self.ab_loop_b + 1.2):
-                            import time
                             now = time.time()
                             if now - getattr(self, "_last_ab_seek_time", 0.0) > 1.0:
                                 self._last_ab_seek_time = now
@@ -1004,10 +1008,9 @@ class HeadlessEngine:
     def set_sponsor_segments(self, segments: List[Tuple[float, float, str]]) -> None:
         """Sets active SponsorBlock segments for the current media, merging overlapping intervals."""
         with self._lock:
-            try:
-                from .sponsorblock import merge_overlapping_segments
+            if callable(merge_overlapping_segments):
                 self.sponsor_segments = merge_overlapping_segments(segments)
-            except Exception:
+            else:
                 self.sponsor_segments = list(segments)
             self._last_skipped_segment = None
             logger.debug("Engine: set %d merged sponsor segments", len(self.sponsor_segments))

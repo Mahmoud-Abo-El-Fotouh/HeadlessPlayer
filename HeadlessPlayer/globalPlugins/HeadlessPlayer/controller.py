@@ -10,7 +10,7 @@ import logging
 import os
 import threading
 import time
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 try:
     from . import _  # type: ignore
@@ -20,7 +20,24 @@ except (ImportError, ValueError):
     except NameError:
         _ = lambda text: text
 
-from .engine import HeadlessEngine, SPEED_PRESETS
+import sys
+
+try:
+    import wx
+except Exception:
+    wx = None
+
+try:
+    import gui
+except Exception:
+    gui = None
+
+try:
+    import globalPluginHandler
+except Exception:
+    globalPluginHandler = None
+
+from .engine import HeadlessEngine
 from .playlist import Playlist, Track, RepeatMode
 from .state_store import StateStore, get_state_store
 from .speech_feedback import SpeechFeedback, get_speech_feedback
@@ -28,7 +45,14 @@ from .input_layer import ModalInputLayer
 from .config_spec import getConfig, getConfigValue, setConfigValue, saveConfig
 from .dialog_utils import prompt_open_file_dialog, prompt_open_folder_dialog, prompt_help_dialog
 from .explorer_utils import get_active_explorer_or_focus_paths
-from .utils import format_time, is_supported_media_file, log_debug, log_exception, log_info, log_error
+from .utils import format_time, copy_to_clipboard, log_debug, log_exception, log_info
+from .database import get_db_manager, disambiguate_recent_name
+from .sponsorblock import extract_youtube_id, fetch_sponsor_segments
+from . import stream_engine
+from .url_dialogs import prompt_url_input, show_results_dialog
+from .settings_panel import HeadlessPlayerSettingsPanel
+from .recents_manager import RecentsManager
+from .export_coordinator import ExportCoordinator
 
 logger = logging.getLogger("HeadlessPlayer.Controller")
 
@@ -98,6 +122,10 @@ class PlayerController:
         # Periodic session heartbeat auto-save tracking
         self._last_heartbeat_save_time: float = time.time()
 
+        # Modular Sub-Controllers
+        self.recents_manager = RecentsManager(self)
+        self.export_coordinator = ExportCoordinator(self)
+
         # Chapter transition tracking for automatic announcements and duplicate suppression
         self._active_native_chapter_idx: Optional[int] = None
         self._active_stream_chapter_idx: Optional[int] = None
@@ -106,6 +134,13 @@ class PlayerController:
         # Clip export and direct stream info state
         self._export_busy: bool = False
         self._current_stream_info: Optional[Dict[str, Any]] = None
+
+        # Recents navigation and focus state
+        self._recents_container_idx: int = 0
+        self._recents_track_idx: int = 0
+        self._recents_focus_active: bool = False
+        self._recents_focus_category: Optional[str] = None
+        self._recents_last_interaction: float = 0.0
 
         # Bind engine event callbacks
 
@@ -197,6 +232,66 @@ class PlayerController:
                 self.state_store.clear_last_session()
             self.save_current_position()
             self.engine.shutdown()
+
+    # -------------------------------------------------------------------------
+    # Recents & Export Properties (Delegated to Sub-Controllers)
+    # -------------------------------------------------------------------------
+
+    @property
+    def _recents_focus_active(self) -> bool:
+        return self.recents_manager.focus_active
+
+    @_recents_focus_active.setter
+    def _recents_focus_active(self, val: bool) -> None:
+        self.recents_manager.focus_active = val
+
+    @property
+    def _recents_focus_category(self) -> Optional[str]:
+        return self.recents_manager.focus_category
+
+    @_recents_focus_category.setter
+    def _recents_focus_category(self, val: Optional[str]) -> None:
+        self.recents_manager.focus_category = val
+
+    @property
+    def _recents_playlist_idx(self) -> int:
+        return self.recents_manager.playlist_idx
+
+    @_recents_playlist_idx.setter
+    def _recents_playlist_idx(self, val: int) -> None:
+        self.recents_manager.playlist_idx = val
+
+    @property
+    def _recents_container_idx(self) -> int:
+        return self.recents_manager.playlist_idx
+
+    @_recents_container_idx.setter
+    def _recents_container_idx(self, val: int) -> None:
+        self.recents_manager.playlist_idx = val
+
+    @property
+    def _recents_track_idx(self) -> int:
+        return self.recents_manager.track_idx
+
+    @_recents_track_idx.setter
+    def _recents_track_idx(self, val: int) -> None:
+        self.recents_manager.track_idx = val
+
+    @property
+    def _recents_last_interaction(self) -> float:
+        return self.recents_manager.last_interaction
+
+    @_recents_last_interaction.setter
+    def _recents_last_interaction(self, val: float) -> None:
+        self.recents_manager.last_interaction = val
+
+    @property
+    def _export_busy(self) -> bool:
+        return self.export_coordinator.is_busy
+
+    @_export_busy.setter
+    def _export_busy(self, val: bool) -> None:
+        self.export_coordinator.is_busy = val
 
     def terminate(self) -> None:
         """Full cleanup hook for plugin termination."""
@@ -885,12 +980,22 @@ class PlayerController:
 
 
     def speak_elapsed_time(self) -> None:
-        """Speaks elapsed playback time in formatted string."""
+        """Speaks elapsed playback time in formatted string with speed scaling."""
         with self._lock:
+            now = time.time()
+            is_double = (now - getattr(self, "_last_elapsed_time_press", 0.0)) < 0.6
+            self._last_elapsed_time_press = now
+
             el = self.engine.get_elapsed_time()
             dur = self.engine.get_duration()
+            speed = getattr(self.engine, "speed", 1.0)
             is_loaded = bool(self.engine.is_loaded or dur > 0)
-            self.speech.speak_elapsed_time(el, is_loaded=is_loaded)
+            self.speech.speak_elapsed_time(
+                el,
+                is_loaded=is_loaded,
+                speed=speed,
+                is_raw=is_double
+            )
 
     # -------------------------------------------------------------------------
     # Dialogs & Windows Explorer Integration
@@ -986,8 +1091,8 @@ class PlayerController:
     def get_toggle_gesture_display(self) -> str:
         """Retrieves active toggle shortcut string dynamically from NVDA."""
         try:
-            import globalPluginHandler
-            for plugin in getattr(globalPluginHandler, "runningPlugins", []):
+            gh = sys.modules.get("globalPluginHandler", globalPluginHandler)
+            for plugin in getattr(gh, "runningPlugins", []):
                 if plugin.__class__.__module__.endswith("HeadlessPlayer"):
                     if hasattr(plugin, "getGesturesForScript"):
                         script_func = getattr(plugin, "script_togglePlayerMode", None)
@@ -1014,6 +1119,139 @@ class PlayerController:
             resume_capture=self._resume_input,
             custom_toggle_gesture=toggle_str
         )
+
+    def open_settings(self) -> None:
+        """
+        Ctrl + Shift + S: Exits player mode and opens NVDA Settings dialog focused on HeadlessPlayer panel.
+        """
+        self._exit_player_mode_for_dialog()
+        def _do_open():
+            try:
+                gm = sys.modules.get("gui", gui)
+                if not gm or not hasattr(gm, "mainFrame") or not gm.mainFrame:
+                    return
+
+                # 1. Try standard NVDA popupSettingsDialog with initialCategory
+                popup_func = (
+                    getattr(gm.mainFrame, "popupSettingsDialog", None)
+                    or getattr(gm.mainFrame, "_popupSettingsDialog", None)
+                )
+                if popup_func and callable(popup_func):
+                    try:
+                        popup_func(initialCategory=HeadlessPlayerSettingsPanel)
+                        return
+                    except TypeError:
+                        try:
+                            popup_func(HeadlessPlayerSettingsPanel)
+                            return
+                        except TypeError:
+                            popup_func()
+                            return
+
+                # 2. Try onPreferencesSettingsCommand / onPreferenceSettings
+                pref_cmd = (
+                    getattr(gm.mainFrame, "onPreferencesSettingsCommand", None)
+                    or getattr(gm.mainFrame, "onPreferenceSettings", None)
+                )
+                if pref_cmd and callable(pref_cmd):
+                    try:
+                        pref_cmd(None)
+                        return
+                    except Exception:
+                        pass
+
+                # 3. Direct NVDASettingsDialog fallback
+                if hasattr(gm, "NVDASettingsDialog"):
+                    try:
+                        dlg = gm.NVDASettingsDialog(gm.mainFrame, initialCategory=HeadlessPlayerSettingsPanel)
+                        dlg.Show()
+                        return
+                    except Exception:
+                        pass
+            except Exception as e:
+                logger.debug("Failed to open HeadlessPlayer settings panel: %s", e)
+
+        wx_mod = sys.modules.get("wx", wx)
+        if wx_mod is not None and hasattr(wx_mod, "CallAfter"):
+            try:
+                wx_mod.CallAfter(_do_open)
+            except Exception:
+                _do_open()
+        else:
+            _do_open()
+
+    open_settings_dialog = open_settings
+
+    # -------------------------------------------------------------------------
+    # Recent Media History Navigation (Delegated to RecentsManager)
+    # -------------------------------------------------------------------------
+
+    def is_recents_focus_active(self) -> bool:
+        """Returns True if the user is currently actively browsing the recents list."""
+        return self.recents_manager.is_focus_active()
+
+    def cancel_recents_focus(self) -> None:
+        """Exits recents browsing mode."""
+        self.recents_manager.cancel_focus()
+
+    def clear_recents_focus(self) -> None:
+        """Exits recents browsing mode."""
+        self.recents_manager.clear_focus()
+
+    def recent_playlist_next(self) -> None:
+        """Ctrl + .: Move forward (towards newer / end) in recent playlists."""
+        self.recents_manager.playlist_next()
+
+    recent_container_next = recent_playlist_next
+
+    def recent_playlist_prev(self) -> None:
+        """Ctrl + ,: Move backward (towards older / start) in recent playlists."""
+        self.recents_manager.playlist_prev()
+
+    recent_container_prev = recent_playlist_prev
+
+    def recent_playlist_first(self) -> None:
+        """Ctrl + Shift + ,: Jump to first / oldest playlist in recent history."""
+        self.recents_manager.playlist_first()
+
+    recent_container_first = recent_playlist_first
+
+    def recent_playlist_last(self) -> None:
+        """Ctrl + Shift + .: Jump to last / newest playlist in recent history."""
+        self.recents_manager.playlist_last()
+
+    recent_container_last = recent_playlist_last
+
+    def recent_track_next(self) -> None:
+        """.: Move forward (towards newer / end) in recent tracks."""
+        self.recents_manager.track_next()
+
+    def recent_track_prev(self) -> None:
+        """,: Move backward (towards older / start) in recent tracks."""
+        self.recents_manager.track_prev()
+
+    def recent_track_first(self) -> None:
+        """Shift + ,: Jump to first / oldest track in recent history."""
+        self.recents_manager.track_first()
+
+    def recent_track_last(self) -> None:
+        """Shift + .: Jump to last / newest track in recent history."""
+        self.recents_manager.track_last()
+
+    def _navigate_recents(self, category: str, delta: int) -> None:
+        self.recents_manager.navigate(category, delta)
+
+    def _jump_recents(self, category: str, to_oldest: bool) -> None:
+        self.recents_manager.jump(category, to_oldest)
+
+    def recent_play_focused(self) -> bool:
+        """Plays the currently focused item from recents browsing."""
+        return self.recents_manager.play_focused()
+
+    def recent_delete_focused(self) -> bool:
+        """Removes the currently focused recent item from the database."""
+        return self.recents_manager.delete_focused()
+
 
     def close_player(self) -> None:
         """
@@ -1054,7 +1292,6 @@ class PlayerController:
         if not getConfigValue("sponsorBlockEnabled", True):
             return
 
-        from .sponsorblock import extract_youtube_id, fetch_sponsor_segments
         video_id = extract_youtube_id(url)
         if not video_id:
             return
@@ -1131,8 +1368,6 @@ class PlayerController:
 
     def _check_streaming_available(self) -> bool:
         """Verifies the yt-dlp engine is usable, speaking an accurate reason if not."""
-        import sys
-        from . import stream_engine
         if stream_engine.is_available():
             return True
         if sys.version_info < (3, 10):
@@ -1158,7 +1393,6 @@ class PlayerController:
 
         self._exit_player_mode_for_dialog()
 
-        from .url_dialogs import prompt_url_input
         prompt_url_input(
             on_submit=self._on_url_or_search_submitted,
             on_cancelled=None,
@@ -1183,7 +1417,6 @@ class PlayerController:
 
     def _copy_to_clipboard(self, target: str) -> bool:
         """Copies file (CF_HDROP + CF_UNICODETEXT) or URL to the Windows clipboard."""
-        from .utils import copy_to_clipboard
         return copy_to_clipboard(target)
 
     def copy_current_url(self) -> None:
@@ -1218,10 +1451,13 @@ class PlayerController:
             self.speech.speak(_("Could not copy to clipboard."))
 
     def _speak_async(self, text: str) -> None:
-        try:
-            import wx
-            wx.CallAfter(self.speech.speak, text)
-        except Exception:
+        wx_mod = sys.modules.get("wx", wx)
+        if wx_mod is not None and hasattr(wx_mod, "CallAfter"):
+            try:
+                wx_mod.CallAfter(self.speech.speak, text)
+            except Exception:
+                self.speech.speak(text)
+        else:
             self.speech.speak(text)
 
     def copy_direct_url(self) -> None:
@@ -1234,7 +1470,6 @@ class PlayerController:
         url = str(info.get("direct_url") or "")
         if not url or (info.get("webpage_url") and info.get("id") and info.get("id") not in cur.path):
             try:
-                from . import stream_engine
                 info = stream_engine.resolve_stream(cur.path)
                 url = str(info.get("direct_url") or "")
             except Exception as e:
@@ -1252,156 +1487,27 @@ class PlayerController:
         else:
             self.speech.speak(_("Could not copy to clipboard."))
 
+    # -------------------------------------------------------------------------
+    # Clip Exporter & Encoding (Delegated to ExportCoordinator)
+    # -------------------------------------------------------------------------
+
     def _export_range(self) -> Tuple[Optional[float], Optional[float], str]:
-        """
-        Returns (start, end, scenario): both points, A + current position as B,
-        or nothing selected.
-        """
-        a = self.engine.ab_loop_a
-        b = self.engine.ab_loop_b
-        if a is not None and b is not None and b > a:
-            return float(a), float(b), "ab"
-        if a is not None:
-            pos = float(self.engine.time_pos or 0.0)
-            if pos > float(a) + 0.5:
-                try:
-                    self.engine.set_ab_point_b(pos)
-                except Exception:
-                    pass
-                return float(a), pos, "a_auto"
-        return None, None, "none"
+        """Returns (start, end, scenario): both points, A + current position as B, or nothing selected."""
+        return self.export_coordinator.export_range()
 
     def _export_source(self, cur: Any) -> Any:
-        from . import clip_exporter
-        info = self._current_stream_info if (getattr(cur, "is_stream", False) and self._current_stream_info
-                                             and (self._current_stream_info.get("id") or "") in (cur.path or "")) else None
-        return clip_exporter.describe_source(cur.path, cur.display_name, info)
+        return self.export_coordinator.export_source(cur)
 
     def export_clip(self) -> None:
-        """
-        D key: opens the Clip Exporter for the A-B selection (or the whole
-        item) of the playing media.
-        """
-        cur = self.playlist.get_current_track()
-        if not cur or not cur.path:
-            self.speech.speak(_("Nothing is currently loaded."))
-            return
-        if self._export_busy:
-            self.speech.speak(_("An export is already in progress, please wait."))
-            return
-        if self._current_track_is_live_stream():
-            self.speech.speak(_("Live streams cannot be exported."))
-            return
-        start, end, scenario = self._export_range()
-        if scenario == "a_auto":
-            self.speech.speak(_("End point set at the current position."))
-        intro = ""
-        if scenario == "none":
-            if getattr(cur, "is_stream", False):
-                intro = _("No A-B selection: the whole item will be downloaded. Press Escape and use [ and ] to select a part instead.")
-                self.speech.speak(_("No selection. Preparing to download the whole item; use [ and ] to select a part."))
-            else:
-                intro = _("No A-B selection: the whole file will be converted. Press Escape and use [ and ] to select a part instead.")
-                self.speech.speak(_("No selection. The whole file will be exported; use [ and ] to select a part."))
-        else:
-            self.speech.speak(_("Preparing export from %(a)s to %(b)s...") % {"a": format_time(start), "b": format_time(end)})
-
-        def worker() -> None:
-            from . import clip_exporter
-            try:
-                source = self._export_source(cur)
-            except Exception as e:
-                if "LIVE" in str(e):
-                    self._speak_async(_("Live streams cannot be exported."))
-                else:
-                    logger.error("export source failed: %s", e, exc_info=True)
-                    self._speak_async(self._stream_error_message(e) if getattr(cur, "is_stream", False) else str(e))
-                return
-            defaults = clip_exporter.get_default_settings()
-
-            def on_submit(res: Dict[str, Any]) -> None:
-                if res.get("remember"):
-                    clip_exporter.remember_settings(res)
-                self._run_export(source, res, start, end, res.get("filename", ""), res.get("folder", ""))
-
-            self._exit_player_mode_for_dialog()
-            from .export_dialog import prompt_export_dialog
-            prompt_export_dialog(source, start, end, defaults, on_submit, None,
-                                 suspend_capture=self._suspend_input, resume_capture=self._resume_input,
-                                 intro_message=intro)
-
-        threading.Thread(target=worker, daemon=True, name="HeadlessPlayer-ExportPrep").start()
+        """D key: opens the Clip Exporter for the A-B selection or full item."""
+        self.export_coordinator.export_clip()
 
     def quick_export(self) -> None:
-        """Shift+D: exports the A-B selection immediately with the remembered settings."""
-        cur = self.playlist.get_current_track()
-        if not cur or not cur.path:
-            self.speech.speak(_("Nothing is currently loaded."))
-            return
-        if self._export_busy:
-            self.speech.speak(_("An export is already in progress, please wait."))
-            return
-        if self._current_track_is_live_stream():
-            self.speech.speak(_("Live streams cannot be exported."))
-            return
-        start, end, scenario = self._export_range()
-        if scenario == "none":
-            self.speech.speak(_("Set point A (and optionally B) first, then press Shift+D for quick export."))
-            return
-        self.speech.speak(_("Quick export in progress..."))
-
-        def worker() -> None:
-            from . import clip_exporter
-            try:
-                source = self._export_source(cur)
-            except Exception as e:
-                self._speak_async(_("Live streams cannot be exported.") if "LIVE" in str(e) else _("Quick export failed: %s") % str(e)[:100])
-                return
-            settings = clip_exporter.get_default_settings()
-            filename = clip_exporter.suggest_filename(source.title, start, end, settings["format"])
-            self._run_export(source, settings, start, end, filename, settings["folder"])
-
-        threading.Thread(target=worker, daemon=True, name="HeadlessPlayer-QuickExport").start()
+        """Shift+D: exports the A-B selection immediately with remembered settings."""
+        self.export_coordinator.quick_export()
 
     def _run_export(self, source: Any, settings: Dict[str, Any], start: Optional[float], end: Optional[float], filename: str, folder: str) -> None:
-        from . import clip_exporter
-        self._export_busy = True
-        fmt = str(settings.get("format", "mp3")).upper()
-        if start is not None:
-            self._speak_async(_("Exporting %(fmt)s clip in the background...") % {"fmt": fmt})
-        else:
-            self._speak_async(_("Downloading and converting the whole item to %(fmt)s in the background...") % {"fmt": fmt})
-
-        def on_done(path: Optional[str], err: Optional[Exception]) -> None:
-            self._export_busy = False
-            if err or not path:
-                self._speak_async(_("Export failed: %s") % (str(err)[:120] if err else ""))
-                return
-            fname = os.path.basename(path)
-            target_dir = os.path.dirname(path)
-            default_downloads = os.path.normcase(os.path.abspath(os.path.join(os.path.expanduser("~"), "Downloads")))
-            norm_target = os.path.normcase(os.path.abspath(target_dir))
-            is_downloads = (norm_target == default_downloads or norm_target.startswith(default_downloads + os.sep))
-
-            if is_downloads:
-                if copied:
-                    self._speak_async(_("Clip saved successfully as %s in the downloads folder. It is copied to the clipboard.") % fname)
-                else:
-                    self._speak_async(_("Clip saved successfully as %s in the downloads folder.") % fname)
-            else:
-                folder_name = os.path.basename(norm_target) or norm_target
-                if copied:
-                    self._speak_async(
-                        _("Clip saved successfully as %(file)s in %(folder)s. It is copied to the clipboard.")
-                        % {"file": fname, "folder": folder_name}
-                    )
-                else:
-                    self._speak_async(
-                        _("Clip saved successfully as %(file)s in %(folder)s.")
-                        % {"file": fname, "folder": folder_name}
-                    )
-
-        clip_exporter.export_async(source, settings, start, end, filename, folder, on_done)
+        self.export_coordinator.run_export(source, settings, start, end, filename, folder)
 
 
     def open_account_feed(self) -> None:
@@ -1415,9 +1521,6 @@ class PlayerController:
             return
 
         self._exit_player_mode_for_dialog()
-
-        from . import stream_engine
-        from .url_dialogs import show_results_dialog
 
         items = stream_engine.get_account_sections()
         show_results_dialog(
@@ -1439,9 +1542,6 @@ class PlayerController:
 
     def _handle_url_or_search(self, text: str) -> None:
         """Background worker: classifies the U-box input and acts on it."""
-        from . import stream_engine
-        from .url_dialogs import show_results_dialog
-
         cfg = getConfig()
         try:
             extracted_url = stream_engine.extract_url(text)
@@ -1502,7 +1602,6 @@ class PlayerController:
 
     def _stream_error_message(self, exc: Exception) -> str:
         """Builds an accurate spoken error message for a streaming failure."""
-        from . import stream_engine
         if stream_engine.is_cookie_error(str(exc)):
             return _(
                 "Could not read sign-in cookies from your browser. "
@@ -1527,8 +1626,6 @@ class PlayerController:
         Queues a sequence of online StreamItems as the active playlist
         (behaving exactly like a local folder queue) and starts playback.
         """
-        from . import stream_engine
-
         target = source_target or source_url
 
         playable_items = [
@@ -1580,6 +1677,17 @@ class PlayerController:
             self.speech.speak(_("No playable items found."))
             return False
 
+        if target and len(tracks) > 1:
+            try:
+                db = get_db_manager()
+                db.save_recent_container(
+                    path=target,
+                    title=listing_title or target,
+                    container_type="playlist"
+                )
+            except Exception as e:
+                logger.debug("Error saving recent playlist container: %s", e)
+
         if len(tracks) > 1:
             self.speech.announce_loaded_files(len(tracks), total_duration=self.playlist.total_duration)
         res = self.play_track(first)
@@ -1596,7 +1704,6 @@ class PlayerController:
         self.speech.speak(_("Loading playlist, please wait..."))
 
         def worker() -> None:
-            from . import stream_engine
             try:
                 cfg = getConfig()
                 limit = int(cfg.get("maxStreamPlaylistItems", 50))
@@ -1643,7 +1750,6 @@ class PlayerController:
 
         def worker() -> None:
             try:
-                from . import stream_engine
                 if stype == "search":
                     new_items = stream_engine.search_youtube(target, limit=bsize, start_index=start_idx)
                 else:
@@ -1737,7 +1843,6 @@ class PlayerController:
             if generation != self._stream_play_generation or self._is_terminating:
                 return
 
-        from . import stream_engine
         try:
             info = stream_engine.resolve_stream(track.path)
         except Exception as e:
@@ -1749,8 +1854,7 @@ class PlayerController:
                     self._resolving_track_path = None
             if not stale:
                 self.engine.stop()
-                from . import stream_engine as se
-                if se.is_cookie_error(str(e)):
+                if stream_engine.is_cookie_error(str(e)):
                     self.speech.speak(self._stream_error_message(e))
                 else:
                     self.speech.speak(_(
@@ -1787,6 +1891,7 @@ class PlayerController:
                 self.state_store.save_recent_file(track.path)
                 self._load_sponsor_segments_for_url(track.path or info.get("webpage_url") or info.get("id"))
 
+                self._current_stream_info = dict(info)
                 self._stream_audio_tracks = list(info.get("audio_tracks", []))
                 self._stream_audio_track_idx = 0
                 self.speech.announce_track(orig_idx, total, track.display_name)
@@ -1828,6 +1933,11 @@ class PlayerController:
         with self._lock:
             count = self.playlist.load_folder(folder_path, recursive=False, append=False)
             if count > 0:
+                try:
+                    db = get_db_manager()
+                    db.save_recent_playlist(path=folder_path, container_type="folder")
+                except Exception as e:
+                    logger.debug("Error saving recent folder playlist: %s", e)
                 self.speech.announce_loaded_files(count, total_duration=self.playlist.total_duration)
                 first_track = self.playlist.get_current_track()
                 if first_track:
@@ -1835,6 +1945,14 @@ class PlayerController:
                     self._check_auto_enter_player_mode()
             else:
                 self.speech.announce_no_media_in_folder()
+
+    def load_folder(self, folder_path: str) -> None:
+        """Loads and plays an entire folder."""
+        self._on_folder_selected(folder_path)
+
+    def load_file(self, file_path: str) -> None:
+        """Loads and plays a single media file."""
+        self._on_file_selected(file_path)
 
     def _suspend_input(self) -> None:
         if self.input_layer:
@@ -1984,6 +2102,26 @@ class PlayerController:
                 if dur and dur > 0:
                     cur.duration = dur
 
+            if cur and cur.path:
+                try:
+                    db = get_db_manager()
+                    is_stream = bool(getattr(cur, "is_stream", False) or cur.path.startswith(("http://", "https://", "youtube:", "ytdl://", "custom://")))
+                    parent_f = ""
+                    if not is_stream and os.path.exists(cur.path):
+                        parent_f = os.path.basename(os.path.dirname(os.path.abspath(cur.path)))
+                    channel_info = ""
+                    if hasattr(cur, "metadata") and isinstance(cur.metadata, dict):
+                        channel_info = cur.metadata.get("channel") or cur.metadata.get("uploader") or ""
+                    db.save_recent_track(
+                        path=cur.path,
+                        title=cur.title,
+                        track_type="stream" if is_stream else "file",
+                        parent_folder=parent_f,
+                        platform_or_channel=channel_info
+                    )
+                except Exception as e:
+                    logger.debug("Error saving recent track: %s", e)
+
             if self._pending_resume_pos is not None and self._pending_resume_pos >= 0.5:
                 target = self._pending_resume_pos
                 self._pending_resume_pos = None
@@ -2066,7 +2204,6 @@ class PlayerController:
                             )
                             # Invalidate cached stream URL to force re-resolution with fresh token
                             try:
-                                from . import stream_engine
                                 stream_engine.clear_resolve_cache()
                             except Exception:
                                 pass
@@ -2095,7 +2232,6 @@ class PlayerController:
                     # Drop the cached (bad/expired) stream URL so a retry
                     # performs a fresh extraction.
                     try:
-                        from . import stream_engine
                         stream_engine.clear_resolve_cache()
                     except Exception:
                         pass

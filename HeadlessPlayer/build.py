@@ -316,7 +316,7 @@ def package_addon(base_dir: str, output_dir: str, custom_label: str = None) -> s
 
     # Excluded files and directories
     EXCLUDE_DIRS = {".git", ".github", ".vscode", "__pycache__", ".agents", "tests", "dist"}
-    EXCLUDE_EXTS = {".pyc", ".pyo", ".gitattributes", ".gitignore", ".tmp"}
+    EXCLUDE_EXTS = {".pyc", ".pyo", ".gitattributes", ".gitignore", ".tmp", ".md"}
 
     # Guard: Ensure mpv.exe binary is present and not a tiny Git LFS text pointer
     mpv_binary_path = os.path.join(base_dir, "resources", "bin", "x64", "mpv.exe")
@@ -332,7 +332,7 @@ def package_addon(base_dir: str, output_dir: str, custom_label: str = None) -> s
     added_count = 0
     with zipfile.ZipFile(addon_filepath, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(base_dir):
-            dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS and not d.startswith(".")]
+            dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS and not d.startswith(".") and d != "__pycache__"]
 
             for file in files:
                 ext = os.path.splitext(file)[1].lower()

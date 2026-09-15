@@ -14,11 +14,22 @@ import logging
 import os
 import re
 import shutil
+import sys
 import tempfile
 import threading
 import time
 import zlib
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence
+
+try:
+    import globalVars
+except Exception:
+    globalVars = None
+
+try:
+    import config
+except Exception:
+    config = None
 
 logger = logging.getLogger("HeadlessPlayer.Database")
 
@@ -63,9 +74,9 @@ def get_default_db_path() -> str:
 
     # 2. NVDA globalVars configPath
     try:
-        import globalVars
-        if hasattr(globalVars, "appArgs") and hasattr(globalVars.appArgs, "configPath"):
-            config_path = globalVars.appArgs.configPath
+        gv = sys.modules.get("globalVars", globalVars)
+        if gv is not None and hasattr(gv, "appArgs") and hasattr(gv.appArgs, "configPath"):
+            config_path = gv.appArgs.configPath
             if config_path and os.path.isdir(config_path):
                 return os.path.join(config_path, DB_FILE_NAME)
     except Exception:
@@ -129,6 +140,31 @@ def normalize_file_path(file_path: str) -> str:
         return p.lower()
 
 
+def disambiguate_recent_name(item: Dict[str, Any], all_items: Sequence[Dict[str, Any]]) -> str:
+    """
+    Returns an accessible, disambiguated display title for a recent container or track.
+    - For local folders: If multiple folders have the same folder name, prepends parent folder (e.g. 'محمود - أغاني').
+    - For local files: If multiple files have the same filename, prepends parent folder.
+    - For online streams/playlists: If channel/platform is present and duplicates exist, prepends channel/platform.
+    """
+    title = str(item.get("title") or item.get("filename") or "").strip()
+    parent = str(item.get("parent_name") or item.get("parent_folder") or "").strip()
+    platform = str(item.get("platform_or_channel") or "").strip()
+
+    same_title_count = sum(
+        1 for it in all_items
+        if str(it.get("title") or it.get("filename") or "").strip().lower() == title.lower()
+    )
+
+    if same_title_count > 1:
+        if parent:
+            return f"{parent} - {title}"
+        elif platform:
+            return f"{platform} - {title}"
+
+    return title or str(item.get("path", ""))
+
+
 class DatabaseManager:
     """
     Thread-safe, crash-resilient Database Manager for HeadlessPlayer.
@@ -145,6 +181,9 @@ class DatabaseManager:
             "settings": {},
             "positions": {},
             "recent_media": [],
+            "recent_playlists": [],
+            "recent_containers": [],
+            "recent_tracks": [],
             "playlists_state": {}
         }
         self._init_database()
@@ -168,6 +207,10 @@ class DatabaseManager:
                         self._cache["settings"] = data.get("settings", {})
                         self._cache["positions"] = data.get("positions", {})
                         self._cache["recent_media"] = data.get("recent_media", [])
+                        rec_playlists = data.get("recent_playlists", data.get("recent_containers", []))
+                        self._cache["recent_playlists"] = rec_playlists
+                        self._cache["recent_containers"] = rec_playlists
+                        self._cache["recent_tracks"] = data.get("recent_tracks", [])
                         self._cache["playlists_state"] = data.get("playlists_state", {})
                         loaded = True
                 except Exception as e:
@@ -193,6 +236,10 @@ class DatabaseManager:
                                 self._cache["settings"] = b_data.get("settings", {})
                                 self._cache["positions"] = b_data.get("positions", {})
                                 self._cache["recent_media"] = b_data.get("recent_media", [])
+                                rec_playlists = b_data.get("recent_playlists", b_data.get("recent_containers", []))
+                                self._cache["recent_playlists"] = rec_playlists
+                                self._cache["recent_containers"] = rec_playlists
+                                self._cache["recent_tracks"] = b_data.get("recent_tracks", [])
                                 self._cache["playlists_state"] = b_data.get("playlists_state", {})
                                 loaded = True
                                 logger.info("Successfully recovered database from backup: %s", bak_file)
@@ -203,6 +250,25 @@ class DatabaseManager:
                                 break
                         except Exception as bak_err:
                             logger.warning("Failed to recover from %s: %s", bak_file, bak_err)
+
+            # Migrate legacy recent_media into recent_tracks if empty
+            if not self._cache.get("recent_tracks") and self._cache.get("recent_media"):
+                migrated = []
+                for m in self._cache["recent_media"]:
+                    fp = m.get("file_path", "")
+                    fn = m.get("filename", "")
+                    lp = m.get("last_played", time.time())
+                    is_stream = fp.startswith(("http://", "https://", "youtube:", "ytdl://", "custom://"))
+                    p_folder = os.path.basename(os.path.dirname(fp)) if not is_stream and os.path.exists(fp) else ""
+                    migrated.append({
+                        "path": fp,
+                        "title": fn,
+                        "type": "stream" if is_stream else "file",
+                        "parent_folder": p_folder,
+                        "platform_or_channel": "",
+                        "last_played": lp
+                    })
+                self._cache["recent_tracks"] = migrated
 
             # Migrate legacy state if present
             self._migrate_legacy_data()
@@ -363,9 +429,9 @@ class DatabaseManager:
 
             # 3. Migrate from nvda.ini [headlessPlayer]
             try:
-                import config
-                if hasattr(config, "conf") and "headlessPlayer" in config.conf:
-                    for k, v in config.conf["headlessPlayer"].items():
+                cfg = sys.modules.get("config", config)
+                if cfg is not None and hasattr(cfg, "conf") and "headlessPlayer" in cfg.conf:
+                    for k, v in cfg.conf["headlessPlayer"].items():
                         if k not in self._cache["settings"]:
                             self._cache["settings"][k] = v
                     self._save_to_disk()
@@ -460,21 +526,6 @@ class DatabaseManager:
                 del self._cache["settings"][key]
                 self._save_to_disk()
 
-    # -------------------------------------------------------------------------
-    # Keymap Shortcuts API
-    # -------------------------------------------------------------------------
-
-    def get_keymap(self) -> Dict[str, str]:
-        val = self.get_setting("customKeymap", None)
-        if isinstance(val, dict):
-            return dict(val)
-        return {}
-
-    def set_keymap(self, keymap: Dict[str, str]) -> None:
-        self.set_setting("customKeymap", dict(keymap))
-
-    def reset_keymap(self) -> None:
-        self.delete_setting("customKeymap")
 
     # -------------------------------------------------------------------------
     # Track Resume Position API
@@ -698,6 +749,216 @@ class DatabaseManager:
     def clear_recent_files(self) -> None:
         with self._lock:
             self._cache["recent_media"].clear()
+            self._save_to_disk()
+
+    # -------------------------------------------------------------------------
+    # Recents History Engine (Playlists & Tracks)
+    # -------------------------------------------------------------------------
+
+    def save_recent_playlist(
+        self,
+        path: str,
+        title: Optional[str] = None,
+        container_type: str = "folder",
+        parent_name: Optional[str] = None,
+        platform_or_channel: Optional[str] = None,
+        max_entries: Optional[int] = None
+    ) -> None:
+        """
+        Saves a local folder or playlist into the recent playlists collection.
+        Deduplicates by path, places at index 0 (newest), and trims to max limit.
+        """
+        if not path:
+            return
+        with self._lock:
+            cfg_enabled = self.get_setting("recentsEnabled")
+            if cfg_enabled is False:
+                return
+
+            if container_type == "folder":
+                if self.get_setting("recentsKeepFolders") is False:
+                    return
+            elif container_type in ("playlist", "container"):
+                if self.get_setting("recentsKeepPlaylists") is False:
+                    return
+
+            limit = max_entries or int(self.get_setting("recentsMaxEntries") or 30)
+
+            p_name = parent_name
+            if not p_name and not path.startswith(("http://", "https://", "youtube:", "ytdl://", "custom://")) and os.path.exists(path):
+                try:
+                    p_name = os.path.basename(os.path.dirname(os.path.abspath(path)))
+                except Exception:
+                    p_name = ""
+
+            t_name = title or (os.path.basename(os.path.normpath(path)) if not path.startswith("http") else path)
+
+            norm_key = normalize_file_path(path)
+            raw_items = self._cache.get("recent_playlists") or self._cache.get("recent_containers", [])
+            playlists = [
+                c for c in raw_items
+                if normalize_file_path(c.get("path", "")) != norm_key and c.get("path") != path
+            ]
+            record = {
+                "path": path,
+                "title": t_name,
+                "type": container_type,
+                "parent_name": p_name or "",
+                "platform_or_channel": platform_or_channel or "",
+                "last_played": time.time()
+            }
+            playlists.insert(0, record)
+            trimmed = playlists[:limit]
+            self._cache["recent_playlists"] = trimmed
+            self._cache["recent_containers"] = trimmed
+            self._save_to_disk()
+
+    save_recent_container = save_recent_playlist
+
+    def get_recent_playlists(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+        """Returns the list of recent playlists (folders & playlists), newest first."""
+        with self._lock:
+            cfg_enabled = self.get_setting("recentsEnabled")
+            if cfg_enabled is False:
+                return []
+            lim = limit or int(self.get_setting("recentsMaxEntries") or 30)
+            items = list(self._cache.get("recent_playlists") or self._cache.get("recent_containers", []))
+            keep_folders = self.get_setting("recentsKeepFolders") is not False
+            keep_playlists = self.get_setting("recentsKeepPlaylists") is not False
+            filtered = [
+                it for it in items
+                if (it.get("type") == "folder" and keep_folders) or (it.get("type") in ("playlist", "container") and keep_playlists)
+            ]
+            return filtered[:lim]
+
+    get_recent_containers = get_recent_playlists
+
+    def delete_recent_playlist(self, path: str) -> bool:
+        """Removes a playlist from recent history by path."""
+        if not path:
+            return False
+        with self._lock:
+            norm_key = normalize_file_path(path)
+            raw_items = self._cache.get("recent_playlists") or self._cache.get("recent_containers", [])
+            orig_len = len(raw_items)
+            filtered = [
+                c for c in raw_items
+                if normalize_file_path(c.get("path", "")) != norm_key and c.get("path") != path
+            ]
+            self._cache["recent_playlists"] = filtered
+            self._cache["recent_containers"] = filtered
+            if len(filtered) != orig_len:
+                self._save_to_disk()
+                return True
+            return False
+
+    delete_recent_container = delete_recent_playlist
+
+    def clear_recent_playlists(self) -> None:
+        with self._lock:
+            self._cache["recent_playlists"] = []
+            self._cache["recent_containers"] = []
+            self._save_to_disk()
+
+    clear_recent_containers = clear_recent_playlists
+
+    def save_recent_track(
+        self,
+        path: str,
+        title: Optional[str] = None,
+        track_type: str = "file",
+        parent_folder: Optional[str] = None,
+        platform_or_channel: Optional[str] = None,
+        max_entries: Optional[int] = None
+    ) -> None:
+        """
+        Saves a local file or online stream into the recent tracks collection.
+        Deduplicates by path, places at index 0 (newest), and trims to max limit.
+        """
+        if not path:
+            return
+        with self._lock:
+            cfg_enabled = self.get_setting("recentsEnabled")
+            if cfg_enabled is False:
+                return
+
+            if track_type == "file":
+                if self.get_setting("recentsKeepFiles") is False:
+                    return
+            elif track_type == "stream":
+                if self.get_setting("recentsKeepStreams") is False:
+                    return
+
+            limit = max_entries or int(self.get_setting("recentsMaxEntries") or 30)
+
+            p_folder = parent_folder
+            if not p_folder and not path.startswith(("http://", "https://", "youtube:", "ytdl://", "custom://")) and os.path.isfile(path):
+                try:
+                    p_folder = os.path.basename(os.path.dirname(os.path.abspath(path)))
+                except Exception:
+                    p_folder = ""
+
+            t_name = title or (os.path.basename(path) if not path.startswith("http") else path)
+
+            norm_key = normalize_file_path(path)
+            tracks = [
+                t for t in self._cache.get("recent_tracks", [])
+                if normalize_file_path(t.get("path", "")) != norm_key and t.get("path") != path
+            ]
+            record = {
+                "path": path,
+                "title": t_name,
+                "type": track_type,
+                "parent_folder": p_folder or "",
+                "platform_or_channel": platform_or_channel or "",
+                "last_played": time.time()
+            }
+            tracks.insert(0, record)
+            self._cache["recent_tracks"] = tracks[:limit]
+            # Synchronize legacy recent_media for backward compatibility
+            self.save_recent_file(path, filename=t_name, max_entries=limit)
+            self._save_to_disk()
+
+    def get_recent_tracks(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+        """Returns the list of recent tracks (files & streams), newest first."""
+        with self._lock:
+            cfg_enabled = self.get_setting("recentsEnabled")
+            if cfg_enabled is False:
+                return []
+            lim = limit or int(self.get_setting("recentsMaxEntries") or 30)
+            items = list(self._cache.get("recent_tracks", []))
+            keep_files = self.get_setting("recentsKeepFiles") is not False
+            keep_streams = self.get_setting("recentsKeepStreams") is not False
+            filtered = [
+                it for it in items
+                if (it.get("type") == "file" and keep_files) or (it.get("type") == "stream" and keep_streams)
+            ]
+            return filtered[:lim]
+
+    def delete_recent_track(self, path: str) -> bool:
+        """Removes a track from recent history by path."""
+        if not path:
+            return False
+        with self._lock:
+            norm_key = normalize_file_path(path)
+            orig_len = len(self._cache.get("recent_tracks", []))
+            self._cache["recent_tracks"] = [
+                t for t in self._cache.get("recent_tracks", [])
+                if normalize_file_path(t.get("path", "")) != norm_key and t.get("path") != path
+            ]
+            self._cache["recent_media"] = [
+                m for m in self._cache.get("recent_media", [])
+                if normalize_file_path(m.get("file_path", "")) != norm_key and m.get("file_path") != path
+            ]
+            if len(self._cache["recent_tracks"]) != orig_len:
+                self._save_to_disk()
+                return True
+            return False
+
+    def clear_recent_tracks(self) -> None:
+        with self._lock:
+            self._cache["recent_tracks"] = []
+            self._cache["recent_media"] = []
             self._save_to_disk()
 
     # -------------------------------------------------------------------------

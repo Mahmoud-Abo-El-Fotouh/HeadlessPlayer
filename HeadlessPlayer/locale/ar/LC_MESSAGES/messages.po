@@ -1,5 +1,5 @@
 # HeadlessPlayer Arabic Translation
-# Copyright (C) 2026 HeadlessPlayer Team
+# Copyright (C) 2026 Mahmoud Abo El Fotouh
 # This file is distributed under the same license as the HeadlessPlayer package.
 #
 msgid ""
@@ -8,7 +8,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-08-21 12:00+0300\n"
 "PO-Revision-Date: 2026-08-21 12:00+0300\n"
-"Last-Translator: HeadlessPlayer Team <headlessplayer@nvda-addon.org>\n"
+"Last-Translator: Mahmoud Abo El Fotouh <https://github.com/Mahmoud-Abo-El-Fotouh>\n"
 "Language-Team: Arabic\n"
 "Language: ar\n"
 "MIME-Version: 1.0\n"
@@ -16,186 +16,134 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5);\n"
 
-msgid "Headless Media Player"
-msgstr "مشغل الوسائط الخفي"
+msgid " and "
+msgstr " و "
 
-msgid "Completely headless, privacy-oriented media player for NVDA operated via modal keyboard capture."
-msgstr "مشغل وسائط خفي تماماً وموجه للخصوصية لبرنامج NVDA يعمل عبر وضع الالتقاط الحصري للوحة المفاتيح."
+msgid "%d items"
+msgstr "%d عنصر"
 
-msgid "Player Mode active"
-msgstr "تم تفعيل وضع المشغل"
+msgid "%d minutes"
+msgstr "%d دقيقة"
 
-msgid "Player Mode exited"
-msgstr "تم الخروج من وضع المشغل"
+msgid "%d more items loaded: %s"
+msgstr "تم تحميل %d عناصر إضافية: %s"
 
-msgid "Playing"
-msgstr "تشغيل"
+msgid "%d seconds"
+msgstr "%d ثانية"
 
-msgid "Paused"
-msgstr "إيقاف مؤقت"
+msgid "%s (video with audio)"
+msgstr "%s (فيديو مع الصوت)"
 
-msgid "Stopped"
-msgstr "تم الإيقاف"
+msgid "&Announce when a sponsor or promo segment is skipped"
+msgstr "&نطق إشعار عند تخطي إعلان راعي أو ترويج"
 
-msgid "Muted"
-msgstr "كتم الصوت"
+msgid "&Assign Selected Suggestion"
+msgstr "تعيين المفتاح المختار (&A)"
 
-msgid "Unmuted"
-msgstr "إلغاء كتم الصوت"
+msgid "&Back"
+msgstr "&رجوع"
 
-msgid "Volume %d percent"
-msgstr "مستوى الصوت %d بالمائة"
+msgid "&Browse for cookies file..."
+msgstr "ا&ستعراض لاختيار ملف الكوكيز..."
 
-msgid "Speed %.2fx"
-msgstr "السرعة %.2fx"
+msgid "&Browse for folder..."
+msgstr "ا&ستعراض لاختيار مجلد..."
 
-msgid "Speed %.2fx (Preset)"
-msgstr "السرعة %.2fx (إعداد مسبق)"
+msgid "&Browse..."
+msgstr "ا&ستعراض..."
 
-msgid "Speed reset to 1.0x"
-msgstr "تمت إعادة تعيين السرعة إلى 1.0x"
+msgid "&Category:"
+msgstr "&الفئة:"
 
-msgid "Forward %s, position %s of %s"
-msgstr "تقديم %s، الموضع %s من %s"
+msgid "&Close"
+msgstr "إ&غلاق"
 
-msgid "Backward %s, position %s of %s"
-msgstr "تأخير %s، الموضع %s من %s"
+msgid "&Delete Assigned Shortcut"
+msgstr "&حذف الاختصار المعين"
 
-msgid "Jump to %d percent, position %s"
-msgstr "انتقال إلى %d بالمائة، الموضع %s"
+msgid "&Download and Install Update"
+msgstr "&تنزيل وتثبيت التحديث"
 
-msgid "Start of media"
-msgstr "بداية الوسائط"
+msgid "&Enable recent media history tracking"
+msgstr "&تفعيل تتبع سجل الوسائط الأخيرة"
 
-msgid "End of media"
-msgstr "نهاية الوسائط"
+msgid "&Export"
+msgstr "&تصدير"
 
-msgid "A-B Repeat: Start point set at %s"
-msgstr "تكرار المقطع A-B: تم تحديد نقطة البداية عند %s"
-
-msgid "A-B Repeat: End point set at %s"
-msgstr "تكرار المقطع A-B: تم تحديد نقطة النهاية عند %s"
-
-msgid "A-B Looping active from %s to %s"
-msgstr "تكرار المقطع A-B نشط من %s إلى %s"
-
-msgid "A-B Repeat cleared"
-msgstr "تم مسح نقاط تكرار المقطع A-B"
-
-msgid "Repeat Track enabled"
-msgstr "تم تفعيل تكرار المسار الحالي"
-
-msgid "Repeat Playlist enabled"
-msgstr "تم تفعيل تكرار قائمة التشغيل"
-
-msgid "Repeat disabled"
-msgstr "تم تعطيل التكرار"
-
-msgid "Chapter %d: %s"
-msgstr "الفصل %d: %s"
-
-msgid "Chapter %d: %s, at %s"
-msgstr "الفصل %d: %s، عند %s"
-
-msgid "Chapter %d, at %s"
-msgstr "الفصل %d، عند %s"
-
-msgid "Chapter %d"
-msgstr "الفصل %d"
-
-msgid "No chapters available in media"
-msgstr "لا توجد فصول متوفرة في هذه الوسائط"
-
-msgid "Audio track %d: %s (%s)"
-msgstr "المسار الصوتي %d: %s (%s)"
-
-msgid "Audio track %d"
-msgstr "المسار الصوتي %d"
-
-msgid "Loaded %d files into playlist"
-msgstr "تم تحميل %d ملف في قائمة التشغيل"
-
-msgid "Loaded %d files into playlist, total duration: %s"
-msgstr "تم تحميل %d ملف في قائمة التشغيل، المدة الإجمالية: %s"
-
-msgid "Playlist empty"
-
-msgstr "قائمة التشغيل فارغة"
-
-msgid "Track %d of %d: %s"
-msgstr "المسار %d من %d: %s"
-
-msgid "Auto-next enabled"
-msgstr "تم تفعيل الانتقال التلقائي"
-
-msgid "Auto-next disabled"
-msgstr "تم تعطيل الانتقال التلقائي"
-
-msgid "Shuffle enabled"
-msgstr "تم تفعيل التشغيل العشوائي"
-
-msgid "Shuffle disabled"
-msgstr "تم تعطيل التشغيل العشوائي"
-
-msgid "Title: %s, Duration: %s, Track %d of %d"
-msgstr "العنوان: %s، المدة الإجمالية: %s، المسار %d من %d"
-
-msgid "Remaining time: %s"
-msgstr "الوقت المتبقي: %s"
-
-msgid "Elapsed time: %s"
-msgstr "الوقت المنقضي: %s"
-
-msgid "Speech Feedback & Announcements"
-msgstr "التغذية الصوتية والإعلانات المنطوقة"
-
-msgid "Announce &volume changes"
-msgstr "النطق عند تغيير مستوى ال&صوت"
-
-msgid "Announce &seek position and jump offsets"
-msgstr "النطق عند ال&تقديم والتأخير ومواضع الانتقال"
-
-msgid "Announce playback s&peed adjustments"
-msgstr "النطق عند تغيير س&رعة التشغيل"
-
-msgid "Announce &track titles and playlist navigation"
-msgstr "النطق عند التنقل بين ال&مسارات وقوائم التشغيل"
-
-msgid "Announce A-B &loop and segment markers"
-msgstr "النطق عند تحديد وتكرار م&قاطع A-B"
-
-msgid "Announce &chapter markers and names"
-msgstr "النطق عند التنقل بين ال&فصول وأسمائها"
-
-msgid "Announce chapter transitions &automatically during playback"
-msgstr "نطق الانتقال بين الفصول &تلقائياً أثناء التشغيل"
-
-msgid "Seek Jump Step Sizes (Seconds)"
-msgstr "قيم خطوات التقديم والتأخير (بالثواني)"
-
-msgid "&Normal seek jump (Left/Right arrows):"
-msgstr "خطوة التقديم والتأخير ال&عادية (السهمان يميناً/يساراً):"
-
-msgid "&Slow / precise seek jump (Alt + Left/Right):"
-msgstr "خطوة التقديم والتأخير ال&بطيئة / الدقيقة (Alt + يميناً/يساراً):"
+msgid "&Export Shortcuts (JSON)..."
+msgstr "&تصدير الاختصارات (JSON)..."
 
 msgid "&Fast seek jump (Ctrl + Left/Right):"
 msgstr "خطوة التقديم والتأخير ال&سريعة (Ctrl + يميناً/يساراً):"
 
+msgid "&Filter Actions by Category:"
+msgstr "&تصفية الإجراءات حسب الفئة:"
+
+msgid "&Follow Developer on Telegram (Mahmoud Abo El Fotouh)..."
+msgstr "&متابعة المطور على تيليجرام (محمود أبو الفتوح)..."
+
+msgid "&Import Shortcuts (JSON)..."
+msgstr "&استيراد الاختصارات (JSON)..."
+
+msgid "&Maximum items loaded from an online playlist or channel:"
+msgstr "ال&حد الأقصى للعناصر المحملة من قائمة تشغيل أو قناة عبر الإنترنت:"
+
+msgid "&Maximum recent entries per category:"
+msgstr "&أقصى عدد للعناصر الأخيرة في كل قسم:"
+
+msgid "&Normal seek jump (Left/Right arrows):"
+msgstr "خطوة التقديم والتأخير ال&عادية (السهمان يميناً/يساراً):"
+
+msgid "&Open"
+msgstr "&فتح"
+
+msgid "&Play"
+msgstr "&تشغيل"
+
+msgid "&Player Action:"
+msgstr "إجراء المشغل (&P):"
+
+msgid "&Press Key on Keyboard Directly..."
+msgstr "التقاط ضغطة المفتاح من الكيبورد مباشرة (&P)..."
+
+msgid "&Quality / size:"
+msgstr "ال&جودة / الحجم:"
+
+msgid "&Remember these settings for Quick Export (Shift+D)"
+msgstr "&تذكر هذه الإعدادات للتصدير السريع (Shift+D)"
+
+msgid "&Reset to Defaults"
+msgstr "إعادة ضبط المصنع (&R)"
+
+msgid "&Retry Download"
+msgstr "إعادة &المحاولة"
+
+msgid "&Search Key Suggestions (type e.g. 'ta', 'control', 'page', 'arrow'):"
+msgstr "البحث في اقتراحات المفاتيح (اكتب مثلاً 'ta' أو 'control' أو 'page' أو 'سهم') (&S):"
+
+msgid "&Slow / precise seek jump (Alt + Left/Right):"
+msgstr "خطوة التقديم والتأخير ال&بطيئة / الدقيقة (Alt + يميناً/يساراً):"
+
 msgid "&Ultrafast seek jump (Shift + Left/Right):"
-msgstr "خطوة التقديم والتأخير فائ&قة السرعة (Shift + يميناً/يساراً):"
+msgstr "خطوة التقديم والتأخير فائق السرعة (Shift + يميناً/يساراً):"
 
-msgid "Playback Defaults & Options"
-msgstr "الخيارات والافتراضيات العامة للتشغيل"
+msgid "&Video quality (YouTube):"
+msgstr "جودة ال&فيديو (يوتيوب):"
 
-msgid "Default playback s&peed:"
-msgstr "س&رعة التشغيل الافتراضية:"
+msgid "(Not Set)"
+msgstr "(غير محدد)"
 
 msgid "0.5x"
 msgstr "0.5x"
 
 msgid "0.75x"
 msgstr "0.75x"
+
+msgid "1 minute"
+msgstr "دقيقة واحدة"
+
+msgid "1 second"
+msgstr "ثانية واحدة"
 
 msgid "1.0x (Normal)"
 msgstr "1.0x (طبيعي)"
@@ -218,793 +166,116 @@ msgstr "2.5x"
 msgid "3.0x"
 msgstr "3.0x"
 
-msgid "Default &repeat mode:"
-msgstr "نمط ال&تكرار الافتراضي:"
+msgid "A new version (%s) of Headless Media Player is available! (Current version: %s)"
+msgstr "يتوفر إصدار جديد (%s) من إضافة المشغل الخفي! (الإصدار الحالي: %s)"
 
-msgid "Off"
-msgstr "معطل"
+msgid "A-B Looping active from %s to %s"
+msgstr "تكرار المقطع A-B نشط من %s إلى %s"
 
-msgid "Repeat Current Track"
-msgstr "تكرار المسار الحالي"
+msgid "A-B Repeat cleared"
+msgstr "تم مسح نقاط تكرار المقطع A-B"
 
-msgid "Repeat Entire Playlist"
-msgstr "تكرار قائمة التشغيل كاملة"
+msgid "A-B Repeat: End point set at %s"
+msgstr "تكرار المقطع A-B: تم تحديد نقطة النهاية عند %s"
 
-msgid "Auto-advance to &next track when media finishes"
-msgstr "الانتقال التلقائي إلى المسار ال&تالي عند انتهاء الملف"
-
-msgid "Remember and &resume playback position for media"
-msgstr "ت&ذكر واستئناف موضع التشغيل للملفات الطويلة"
-
-msgid "Play audio &earcons when entering/exiting Player Mode"
-msgstr "تشغيل &نغمات صوتية مميزة عند الدخول/الخروج من وضع المشغل"
-
-msgid "Automatically enter &Player Mode when loading new media"
-msgstr "الدخول &تلقائياً في وضع المشغل فور فتح وسائط جديدة"
-
-msgid "Media engine failed to start"
-msgstr "تعذر تشغيل محرك الوسائط"
-
-msgid "Media file not found: %s"
-msgstr "ملف الوسائط غير موجود: %s"
-
-msgid "Unsupported media format or corrupted file"
-msgstr "صيغة الوسائط غير مدعومة أو الملف تالف"
-
-msgid "Error communicating with media player pipe"
-msgstr "خطأ في الاتصال بقناة مشغل الوسائط"
-
-msgid "Select Media File"
-msgstr "اختيار ملف وسائط"
-
-msgid "Select Media Folder"
-msgstr "اختيار مجلد وسائط"
-
-msgid "Media Files"
-msgstr "ملفات الوسائط"
-
-msgid "All Files"
-msgstr "كافة الملفات"
-
-msgid "No media files found in selected folder"
-msgstr "لم يتم العثور على ملفات وسائط في المجلد المحدد"
-
-msgid "No media files currently selected in Windows Explorer"
-msgstr "لا توجد ملفات وسائط محددة حالياً في مستكشف Windows"
-
-msgid "Playback resumed from %s"
-msgstr "تم استئناف التشغيل من %s"
-
-msgid "Audio track %d: %s"
-msgstr "المسار الصوتي %d: %s"
-
-msgid "Default Test Media"
-msgstr "ملف وسائط تجريبي افتراضي"
-
-msgid "Select Media Files"
-msgstr "اختيار ملفات وسائط"
-
-msgid "Select Media Folder to Queue"
-msgstr "اختيار مجلد وسائط لإدراجه في قائمة التشغيل"
-
-msgid "Toggles Headless Media Player keyboard capture mode."
-msgstr "تبديل تشغيل وضع التقاط لوحة المفاتيح للمشغل الخفي."
-
-msgid "HEADLESS MEDIA PLAYER - KEYBOARD SHORTCUTS HELP"
-msgstr "دليل اختصارات لوحة المفاتيح لمشغل الوسائط الخفي"
-
-msgid "Headless Media Player - Shortcuts Help"
-msgstr "مشغل الوسائط الخفي - دليل الاختصارات"
-
-msgid "MODE TOGGLE & ESSENTIALS:"
-msgstr "تبديل الوضع والتحكم الأساسي:"
-
-msgid "Enter or exit Headless Player Mode."
-msgstr "الدخول إلى وضع المشغل أو الخروج منه."
-
-msgid "Exit Player Mode and return to normal desktop keyboard control."
-msgstr "الخروج من وضع المشغل والعودة للتحكم العادي بلوحة المفاتيح."
-
-msgid "Silence speech immediately while in Player Mode."
-msgstr "إسكات نطق NVDA فوراً أثناء التواجد في وضع المشغل."
-
-msgid "Show this keyboard shortcuts help window."
-msgstr "عرض نافذة المساعدة هذه بكافة الاختصارات."
-
-msgid "PLAYBACK & VOLUME CONTROLS:"
-msgstr "التشغيل ومستوى الصوت:"
-
-msgid "Play / Pause toggle."
-msgstr "تشغيل / إيقاف مؤقت."
-
-msgid "Stop playback and rewind to beginning."
-msgstr "إيقاف التشغيل وإرجاع المقطع إلى البداية."
-
-msgid "Mute / Unmute audio."
-msgstr "كتم / إلغاء كتم الصوت."
-
-msgid "Adjust volume (+/- 5%)."
-msgstr "تعديل مستوى الصوت (رفع أو خفض 5%)."
-
-msgid "SEEKING & JUMPS:"
-msgstr "التقديم والتأخير والقفز:"
-
-msgid "Normal seek (+/- 5 seconds)."
-msgstr "تقديم / تأخير عادي (5 ثوانٍ أو القيمة المخصصة)."
-
-msgid "Slow & precise seek (+/- 1 second)."
-msgstr "تقديم / تأخير بطيء ودقيق (ثانية واحدة)."
-
-msgid "Fast seek (+/- 30 seconds)."
-msgstr "تقديم / تأخير سريع (30 ثانية)."
-
-msgid "Ultrafast seek (+/- 5 minutes)."
-msgstr "تقديم / تأخير فائق السرعة (5 دقائق)."
-
-msgid "Number keys 1 to 9 (Top Row) : "
-msgstr "الأرقام من 1 إلى 9 (الصف العلوي) : "
-
-msgid "Jump directly to 10% through 90% of file duration."
-msgstr "القفز المباشر لنسبة من 10% إلى 90% من طول الملف."
-
-msgid "PITCH-PRESERVED SPEED CONTROLS:"
-msgstr "التحكم في السرعة مع الحفاظ على النبرة الصوتية:"
-
-msgid "Fine speed adjustment (+/- 0.1x)."
-msgstr "تعديل السرعة الدقيق بمقدار (+/- 0.1x)."
-
-msgid "Cycle preset speeds (1.0x, 1.5x, 1.75x, 2.0x, 2.5x, 3.0x)."
-msgstr "التبديل بين السرعات الجاهزة (1.0x, 1.5x, 1.75x, 2.0x, 2.5x, 3.0x)."
+msgid "A-B Repeat: Start point set at %s"
+msgstr "تكرار المقطع A-B: تم تحديد نقطة البداية عند %s"
 
 msgid "A-B SEGMENT LOOP & REPEAT MODES:"
 msgstr "تكرار المقاطع A-B وتكرار المسارات:"
 
-msgid "Mark start of loop (Point A)."
-msgstr "تحديد بداية المقطع (النقطة A)."
-
-msgid "Mark end of loop (Point B)."
-msgstr "تحديد نهاية المقطع (النقطة B)."
-
-msgid "Toggle repeat: A-B loop (if marked) or cycle Single Track / Playlist / Off."
-msgstr "التبديل بين تكرار المقطع A-B (إن وجد) أو تكرار المقطع الحالي / القائمة كاملة / إيقاف."
-
-msgid "Clear marked A-B loop points."
-msgstr "مسح نقاط المقطع A-B المحددة."
-
-msgid "PLAYLIST, FOLDERS & WINDOWS EXPLORER:"
-msgstr "قوائم التشغيل والمجلدات ومستكشف Windows:"
-
-msgid "Open file dialog (select single media file)."
-msgstr "فتح نافذة اختيار ملف وسائط منفصل."
-
-msgid "Open folder dialog (load entire folder as playlist)."
-msgstr "فتح نافذة اختيار مجلد كامل كقائمة تشغيل."
-
-msgid "Play active selection directly from Windows Explorer / Desktop."
-msgstr "تشغيل الملفات أو المجلدات المحددة مباشرة من مستكشف Windows أو سطح المكتب."
-
-msgid "Previous / Next track in playlist."
-msgstr "المقطع السابق / التالي في قائمة التشغيل."
-
-msgid "Toggle Auto-Next track playback."
-msgstr "التبديل بين تشغيل المقطع التالي تلقائياً أو إيقافه."
-
-msgid "Toggle playlist shuffle / random mode."
-msgstr "التبديل بين وضع التشغيل العشوائي والترتيبي."
-
-msgid "CHAPTERS & VIDEO AUDIO TRACKS:"
-msgstr "الفصول والمسارات الصوتية للفيديو:"
-
-msgid "Jump to Next / Previous chapter."
-msgstr "الانتقال إلى الفصل التالي / السابق."
-
-msgid "Cycle audio tracks / languages in video files."
-msgstr "التبديل بين المسارات الصوتية واللغات في ملفات الفيديو."
-
-msgid "SPEECH QUERIES:"
-msgstr "استعلامات النطق:"
-
-msgid "Speak full media information (title, duration, playlist index)."
-msgstr "نطق معلومات الوسائط كاملة (الاسم، المدة، ورقم المقطع)."
-
-msgid "Speak remaining playback time."
-msgstr "نطق الوقت المتبقي من المقطع."
-
-msgid "Speak elapsed playback time."
-msgstr "نطق الوقت المنقضي من المقطع."
-
-msgid "Directly loads and plays selected or focused media files/folders from Windows Explorer."
-msgstr "تشغيل الملفات أو المجلدات المحددة أو المفوكس عليها مباشرة من مستكشف Windows."
-
-msgid "Directly load and play focused/selected media from Explorer/Desktop without entering Player Mode."
-msgstr "تشغيل الملفات أو المجلدات المحددة أو المركز عليها مباشرة من مستكشف Windows أو سطح المكتب دون الحاجة للدخول في وضع المشغل."
-
-msgid "Player Mode Keyboard Shortcuts"
-msgstr "إيماءات واختصارات لوحة المفاتيح لوضع المشغل"
-
-msgid "Customize Player Mode &Shortcuts..."
-msgstr "تخصيص اختصارات وضع المشغل (&S)..."
-
-msgid "Customize Player Mode Shortcuts"
-msgstr "تخصيص اختصارات وضع المشغل"
-
-msgid "Select an action and enter your preferred key or key combination (e.g. space, control, pagedown, s, m, home, end, alt+right):"
-msgstr "اختر إجراءً واكتب المفتاح أو التركيبة المفضلة لديك (مثل: space, control, pagedown, s, m, home, end, alt+right):"
-
-msgid "&Player Action:"
-msgstr "إجراء المشغل (&P):"
-
-msgid "Assigned &Shortcut Key:"
-msgstr "المفتاح المخصص (&S):"
-
-msgid "&Reset to Defaults"
-msgstr "إعادة ضبط المصنع (&R)"
-
-msgid "Player Mode shortcuts have been reset to factory defaults."
-msgstr "تمت إعادة ضبط اختصارات وضع المشغل إلى الإعدادات الافتراضية."
-
-msgid "Shortcuts Reset"
-msgstr "إعادة تعيين الاختصارات"
-
-msgid "Play / Pause toggle"
-msgstr "التبديل بين التشغيل والإيقاف المؤقت"
-
-msgid "Stop and rewind to beginning"
-msgstr "إيقاف التشغيل والرجوع للبداية"
-
-msgid "Mute / Unmute audio"
-msgstr "كتم / تشغيل الصوت"
-
-msgid "Volume Up (+5%)"
-msgstr "رفع مستوى الصوت (+5%)"
-
-msgid "Volume Down (-5%)"
-msgstr "خفض مستوى الصوت (-5%)"
-
-msgid "Normal Seek Forward (Right Arrow)"
-msgstr "تقديم عادي (سهم يمين)"
-
-msgid "Normal Seek Backward (Left Arrow)"
-msgstr "تأخير عادي (سهم يسار)"
-
-msgid "Slow / Precise Seek Forward (Alt+Right)"
-msgstr "تقديم دقيق وبطيء (Alt + سهم يمين)"
-
-msgid "Slow / Precise Seek Backward (Alt+Left)"
-msgstr "تأخير دقيق وبطيء (Alt + سهم يسار)"
-
-msgid "Fast Seek Forward (Ctrl+Right)"
-msgstr "تقديم سريع (Ctrl + سهم يمين)"
-
-msgid "Fast Seek Backward (Ctrl+Left)"
-msgstr "تأخير سريع (Ctrl + سهم يسار)"
-
-msgid "Ultrafast Seek Forward (Shift+Right)"
-msgstr "تقديم فائق السرعة (Shift + سهم يمين)"
-
-msgid "Ultrafast Seek Backward (Shift+Left)"
-msgstr "تأخير فائق السرعة (Shift + سهم يسار)"
-
-msgid "Fine Speed Up (+0.1x)"
-msgstr "تسريع دقيق (+0.1x)"
-
-msgid "Fine Speed Down (-0.1x)"
-msgstr "تبطيء دقيق (-0.1x)"
-
-msgid "Next Preset Speed"
-msgstr "السرعة الجاهزة التالية"
-
-msgid "Previous Preset Speed"
-msgstr "السرعة الجاهزة السابقة"
-
-msgid "Next Track in Playlist"
-msgstr "المقطع التالي في قائمة التشغيل"
-
-msgid "Previous Track in Playlist"
-msgstr "المقطع السابق في قائمة التشغيل"
-
-msgid "Jump to start of current track (Home)"
-msgstr "الانتقال إلى بداية المقطع الحالي (Home)"
-
-msgid "Jump to end of current track (End)"
-msgstr "الانتقال إلى نهاية المقطع الحالي (End)"
-
-msgid "First Track in Playlist (Control+Home)"
-msgstr "المقطع الأول في قائمة التشغيل (Control + Home)"
-
-msgid "Last Track in Playlist (Control+End)"
-msgstr "المقطع الأخير في قائمة التشغيل (Control + End)"
-
-msgid "Jump to start of current playing track."
-msgstr "الانتقال إلى بداية المقطع الذي يعمل حالياً."
-
-msgid "Jump to end of current playing track."
-msgstr "الانتقال إلى نهاية المقطع الذي يعمل حالياً."
-
-msgid "Jump to first track in playlist."
-msgstr "الانتقال إلى المقطع الأول في قائمة التشغيل."
-
-msgid "Jump to last track in playlist."
-msgstr "الانتقال إلى المقطع الأخير في قائمة التشغيل."
-
-msgid "Track end"
-msgstr "نهاية المقطع"
-
-msgid "Mark A-B Loop Start (Point A)"
-msgstr "تحديد بداية المقطع A-B (النقطة A)"
-
-msgid "Mark A-B Loop End (Point B)"
-msgstr "تحديد نهاية المقطع A-B (النقطة B)"
-
-msgid "Toggle Repeat Mode"
-msgstr "تبديل وضع التكرار"
-
-msgid "Clear A-B Loop Points"
-msgstr "مسح نقاط المقطع A-B"
-
-msgid "Open File Dialog"
-msgstr "فتح نافذة اختيار ملف"
-
-msgid "Open Folder Dialog"
-msgstr "فتح نافذة اختيار مجلد"
-
-msgid "Load from Windows Explorer"
-msgstr "التشغيل المباشر من مستكشف Windows"
-
-msgid "Toggle Auto-Next"
-msgstr "تبديل التشغيل التلقائي للتالي"
-
-msgid "Toggle Shuffle"
-msgstr "تبديل الوضع العشوائي"
-
-msgid "Speak Full Media Info"
-msgstr "نطق معلومات الوسائط كاملة"
-
-msgid "Speak Remaining Time"
-msgstr "نطق الوقت المتبقي"
-
-msgid "Speak Elapsed Time"
-msgstr "نطق الوقت المنقضي"
-
-msgid "Show Shortcuts Help Dialog"
-msgstr "عرض نافذة مساعدة الاختصارات"
-
-msgid "Exit Player Mode"
-msgstr "الخروج من وضع المشغل"
-
-msgid "Select a player action, then choose or search a key from the suggestions list,\nor press the 'Capture Key Directly' button to assign by pressing any key on your keyboard."
-msgstr "اختر إجراء المشغل، ثم اختر أو ابحث عن المفتاح من قائمة الاقتراحات، أو اضغط زر 'التقاط ضغطة المفتاح مباشرة' لتعيينه بضغطة واحدة من الكيبورد."
-
-msgid "Current assigned key: %s"
-msgstr "المفتاح المخصص حالياً: %s"
-
-msgid "&Search Key Suggestions (type e.g. 'ta', 'control', 'page', 'arrow'):"
-msgstr "البحث في اقتراحات المفاتيح (اكتب مثلاً 'ta' أو 'control' أو 'page' أو 'سهم') (&S):"
-
-msgid "&Assign Selected Suggestion"
-msgstr "تعيين المفتاح المختار (&A)"
-
-msgid "&Press Key on Keyboard Directly..."
-msgstr "التقاط ضغطة المفتاح من الكيبورد مباشرة (&P)..."
-
-msgid "Assigned %s to %s"
-msgstr "تم تعيين %s للإجراء %s"
-
-msgid "Press Shortcut Key"
-msgstr "اضغط على مفتاح الاختصار"
-
-msgid "Press any key or key combination on your keyboard now to assign it.\nPress Escape to cancel."
-msgstr "اضغط على أي مفتاح أو تركيبة مفاتيح في الكيبورد الآن لتعيينها.\nاضغط Escape للإلغاء."
-
-msgid "Waiting for key press..."
-msgstr "في انتظار ضغطة المفتاح..."
-
-msgid "Captured: %s"
-msgstr "تم التقاط: %s"
-
-msgid "(Not Set)"
-msgstr "(غير محدد)"
-
-msgid "Space (مسافة)"
-msgstr "Space (مسافة)"
-
-msgid "Control (كنترول)"
-msgstr "Control (كنترول)"
-
-msgid "Shift (شفت)"
-msgstr "Shift (شفت)"
-
-msgid "Alt (ألت)"
-msgstr "Alt (ألت)"
-
-msgid "Tab (تاب)"
-msgstr "Tab (تاب)"
-
-msgid "Escape (هروب)"
-msgstr "Escape (هروب)"
-
-msgid "Enter / Return (إدخال)"
-msgstr "Enter / Return (إدخال)"
-
-msgid "Backspace (مسافة للخلف)"
-msgstr "Backspace (مسافة للخلف)"
-
-msgid "Page Down (صفحة لأسفل)"
-msgstr "Page Down (صفحة لأسفل)"
-
-msgid "Page Up (صفحة لأعلى)"
-msgstr "Page Up (صفحة لأعلى)"
-
-msgid "Home (بداية السطر)"
-msgstr "Home (بداية السطر)"
-
-msgid "End (نهاية السطر)"
-msgstr "End (نهاية السطر)"
-
-msgid "Insert (إدراج)"
-msgstr "Insert (إدراج)"
-
-msgid "Delete (حذف)"
-msgstr "Delete (حذف)"
-
-msgid "Left Arrow (سهم لليسار)"
-msgstr "Left Arrow (سهم لليسار)"
-
-msgid "Right Arrow (سهم لليمين)"
-msgstr "Right Arrow (سهم لليمين)"
-
-msgid "Up Arrow (سهم لأعلى)"
-msgstr "Up Arrow (سهم لأعلى)"
-
-msgid "Down Arrow (سهم لأسفل)"
-msgstr "Down Arrow (سهم لأسفل)"
-
-msgid "Alt + Left Arrow (Alt + سهم لليسار)"
-msgstr "Alt + Left Arrow (Alt + سهم لليسار)"
-
-msgid "Alt + Right Arrow (Alt + سهم لليمين)"
-msgstr "Alt + Right Arrow (Alt + سهم لليمين)"
-
-msgid "Alt + Up Arrow (Alt + سهم لأعلى)"
-msgstr "Alt + Up Arrow (Alt + سهم لأعلى)"
-
-msgid "Alt + Down Arrow (Alt + سهم لأسفل)"
-msgstr "Alt + Down Arrow (Alt + سهم لأسفل)"
-
-msgid "Control + Left Arrow (Ctrl + سهم لليسار)"
-msgstr "Control + Left Arrow (Ctrl + سهم لليسار)"
-
-msgid "Control + Right Arrow (Ctrl + سهم لليمين)"
-msgstr "Control + Right Arrow (Ctrl + سهم لليمين)"
-
-msgid "Control + Up Arrow (Ctrl + سهم لأعلى)"
-msgstr "Control + Up Arrow (Ctrl + سهم لأعلى)"
-
-msgid "Control + Down Arrow (Ctrl + سهم لأسفل)"
-msgstr "Control + Down Arrow (Ctrl + سهم لأسفل)"
-
-msgid "Shift + Left Arrow (Shift + سهم لليسار)"
-msgstr "Shift + Left Arrow (Shift + سهم لليسار)"
-
-msgid "Shift + Right Arrow (Shift + سهم لليمين)"
-msgstr "Shift + Right Arrow (Shift + سهم لليمين)"
-
-msgid "Shift + Up Arrow (Shift + سهم لأعلى)"
-msgstr "Shift + Up Arrow (Shift + سهم لأعلى)"
-
-msgid "Shift + Down Arrow (Shift + سهم لأسفل)"
-msgstr "Shift + Down Arrow (Shift + سهم لأسفل)"
-
-msgid "Control + Shift + Left Arrow (Ctrl+Shift+سهم لليسار)"
-msgstr "Control + Shift + Left Arrow (Ctrl+Shift+سهم لليسار)"
-
-msgid "Control + Shift + Right Arrow (Ctrl+Shift+سهم لليمين)"
-msgstr "Control + Shift + Right Arrow (Ctrl+Shift+سهم لليمين)"
-
-msgid "Control + I (Ctrl + i)"
-msgstr "Control + I (Ctrl + i)"
-
-msgid "Shift + I (Shift + i)"
-msgstr "Shift + I (Shift + i)"
-
-msgid "Control + A (Ctrl + a)"
-msgstr "Control + A (Ctrl + a)"
-
-msgid "Control + S (Ctrl + s)"
-msgstr "Control + S (Ctrl + s)"
-
-msgid "Control + Space (Ctrl + مسافة)"
-msgstr "Control + Space (Ctrl + مسافة)"
-
-msgid "Shift + Space (Shift + مسافة)"
-msgstr "Shift + Space (Shift + مسافة)"
-
-msgid "Alt + Space (Alt + مسافة)"
-msgstr "Alt + Space (Alt + مسافة)"
-
-msgid "[ Bracket (قوس فتح / ج)"
-msgstr "[ Bracket (قوس فتح / ج)"
-
-msgid "] Bracket (قوس إغلاق / د)"
-msgstr "] Bracket (قوس إغلاق / د)"
-
-msgid "; Semicolon (فاصلة منقوطة / ك)"
-msgstr "; Semicolon (فاصلة منقوطة / ك)"
-
-msgid "' Quote (علامة تنصيص / ط)"
-msgstr "' Quote (علامة تنصيص / ط)"
-
-msgid ", Comma (فاصلة / و)"
-msgstr ", Comma (فاصلة / و)"
-
-msgid ". Period (نقطة / ز)"
-msgstr ". Period (نقطة / ز)"
-
-msgid "/ Slash (شرطة مائلة / ظ)"
-msgstr "/ Slash (شرطة مائلة / ظ)"
-
-msgid "- Minus (ناقص)"
-msgstr "- Minus (ناقص)"
-
-msgid "= Equals (يساوي)"
-msgstr "= Equals (يساوي)"
-
-
-
-
-
-
-msgid "Enter a URL (YouTube or any website) to play, or text to search YouTube:"
-msgstr "أدخل رابطًا (يوتيوب أو أي موقع) لتشغيله، أو اكتب نصًا للبحث في يوتيوب:"
-
-msgid "Play URL or Search YouTube"
-msgstr "تشغيل رابط أو البحث في يوتيوب"
-
-msgid "Playlist"
-msgstr "قائمة تشغيل"
-
-msgid "Channel"
-msgstr "قناة"
-
-msgid "Section"
-msgstr "قسم"
-
-msgid "Live"
-msgstr "بث مباشر"
-
-msgid "Video"
-msgstr "فيديو"
-
-msgid "Videos of %s"
-msgstr "فيديوهات %s"
-
-msgid "Playlists of %s"
-msgstr "قوائم تشغيل %s"
-
-msgid "Live streams of %s"
-msgstr "البث المباشر لـ %s"
-
-msgid "YouTube Search Results"
-msgstr "نتائج البحث في يوتيوب"
-
-msgid "Play &Playlist"
-msgstr "تشغيل &قائمة التشغيل"
-
-msgid "&Play"
-msgstr "&تشغيل"
-
-msgid "&Open"
-msgstr "&فتح"
-
-msgid "&Back"
-msgstr "&رجوع"
-
-msgid "&Close"
-msgstr "إ&غلاق"
-
-msgid "Loading %s..."
-msgstr "جارٍ تحميل %s..."
-
-msgid "Could not load this item. Check your connection or update yt-dlp from settings."
-msgstr "تعذر تحميل هذا العنصر. تحقق من اتصالك بالإنترنت أو حدّث yt-dlp من الإعدادات."
-
-msgid "No items found."
-msgstr "لم يتم العثور على عناصر."
-
-msgid "%d items"
-msgstr "%d عنصر"
-
-msgid "Online streaming is unavailable. It requires NVDA 2024.1 or later."
-msgstr "البث عبر الإنترنت غير متاح. يتطلب NVDA إصدار 2024.1 أو أحدث."
-
-msgid "Loading URL, please wait..."
-msgstr "جارٍ تحميل الرابط، الرجاء الانتظار..."
-
-msgid "Searching YouTube, please wait..."
-msgstr "جارٍ البحث في يوتيوب، الرجاء الانتظار..."
-
-msgid "No results found."
-msgstr "لم يتم العثور على نتائج."
-
-msgid "YouTube results for: %s"
-msgstr "نتائج يوتيوب عن: %s"
-
-msgid "Operation failed. Check your internet connection, or update yt-dlp from HeadlessPlayer settings."
-msgstr "فشلت العملية. تحقق من اتصالك بالإنترنت، أو حدّث yt-dlp من إعدادات المشغل الخفي."
-
-msgid "No playable items found."
-msgstr "لم يتم العثور على عناصر قابلة للتشغيل."
-
-msgid "Loading playlist, please wait..."
-msgstr "جارٍ تحميل قائمة التشغيل، الرجاء الانتظار..."
-
-msgid "Could not load the playlist. Check your internet connection, or update yt-dlp from HeadlessPlayer settings."
-msgstr "تعذر تحميل قائمة التشغيل. تحقق من اتصالك بالإنترنت، أو حدّث yt-dlp من إعدادات المشغل الخفي."
-
-msgid "Loading: %s"
-msgstr "جارٍ التحميل: %s"
-
-msgid "Could not play this stream. Check your internet connection, or update yt-dlp from HeadlessPlayer settings."
-msgstr "تعذر تشغيل هذا البث. تحقق من اتصالك بالإنترنت، أو حدّث yt-dlp من إعدادات المشغل الخفي."
-
-msgid "Playback engine failed to start."
-msgstr "فشل بدء محرك التشغيل."
-
-msgid "Open URL / YouTube Search Box"
-msgstr "فتح مربع الرابط / البحث في يوتيوب"
+msgid "About & Developer"
+msgstr "عن الإضافة والمطور"
 
 msgid "Add as an a&dditional shortcut (keep the current one)"
 msgstr "إضافته كاختصار إ&ضافي (مع الاحتفاظ بالاختصار الحالي)"
 
-msgid " and "
-msgstr " و "
+msgid "Adjust volume (+/- 5%)."
+msgstr "تعديل مستوى الصوت (رفع أو خفض 5%)."
 
-msgid "YouTube & Online Streaming (yt-dlp)"
-msgstr "يوتيوب والبث عبر الإنترنت (yt-dlp)"
+msgid "All Actions"
+msgstr "كافة الإجراءات"
 
-msgid "not installed"
-msgstr "غير مثبت"
+msgid "An export is already in progress, please wait."
+msgstr "هناك عملية تصدير قيد التنفيذ بالفعل، الرجاء الانتظار."
 
-msgid "Streaming engine (yt-dlp) version: %s"
-msgstr "إصدار محرك البث (yt-dlp): %s"
+msgid "Announce &chapter markers and names"
+msgstr "النطق عند التنقل بين ال&فصول وأسمائها"
 
-msgid "Number of YouTube search &results:"
-msgstr "عدد &نتائج البحث في يوتيوب:"
+msgid "Announce &seek position and jump offsets"
+msgstr "النطق عند ال&تقديم والتأخير ومواضع الانتقال"
 
-msgid "&Maximum items loaded from an online playlist or channel:"
-msgstr "ال&حد الأقصى للعناصر المحملة من قائمة تشغيل أو قناة عبر الإنترنت:"
+msgid "Announce &track titles and playlist navigation"
+msgstr "النطق عند التنقل بين ال&مسارات وقوائم التشغيل"
 
-msgid "Disabled (no sign-in)"
-msgstr "معطل (بدون تسجيل دخول)"
+msgid "Announce &volume changes"
+msgstr "النطق عند تغيير مستوى ال&صوت"
 
-msgid "Use sign-in coo&kies from browser (for age-restricted or members-only content):"
-msgstr "استخدام &كوكيز تسجيل الدخول من المتصفح (للمحتوى المقيد بالعمر أو الخاص بالأعضاء):"
+msgid "Announce A-B &loop and segment markers"
+msgstr "النطق عند تحديد وتكرار م&قاطع A-B"
 
-msgid "Check for &Updates of the streaming engine now..."
-msgstr "التحقق من وجود &تحديثات لمحرك البث الآن..."
+msgid "Announce chapter transitions &automatically during playback"
+msgstr "نطق الانتقال بين الفصول &تلقائياً أثناء التشغيل"
 
-msgid "Checking for updates..."
-msgstr "جارٍ التحقق من التحديثات..."
+msgid "Announce playback s&peed adjustments"
+msgstr "النطق عند تغيير سرعة التشغيل"
 
-msgid "Checking for streaming engine updates, please wait..."
-msgstr "جارٍ التحقق من تحديثات محرك البث، الرجاء الانتظار..."
+msgid "Announce playlist &total duration when loaded"
+msgstr "إعلان &المدة الإجمالية لقائمة التشغيل عند التحميل"
 
-msgid "Downloading update..."
-msgstr "جارٍ تنزيل التحديث..."
+msgid "Arabic"
+msgstr "العربية"
 
-msgid "Installing update..."
-msgstr "جارٍ تثبيت التحديث..."
+msgid "Assigned %s to %s"
+msgstr "تم تعيين %s للإجراء %s"
 
-msgid "The streaming engine was updated successfully to version %s.\nPlease restart NVDA to start using the new version."
-msgstr "تم تحديث محرك البث بنجاح إلى الإصدار %s.\nالرجاء إعادة تشغيل NVDA لبدء استخدام الإصدار الجديد."
+msgid "Audio M4A / AAC"
+msgstr "صوت M4A / AAC"
 
-msgid "Update Installed"
-msgstr "تم تثبيت التحديث"
+msgid "Audio M4A / AAC (high purity)"
+msgstr "صوت M4A / AAC (نقاء عالٍ)"
 
-msgid "Streaming engine (yt-dlp) version: %s (restart NVDA to activate)"
-msgstr "إصدار محرك البث (yt-dlp): %s (أعد تشغيل NVDA للتفعيل)"
+msgid "Audio MP3"
+msgstr "صوت MP3"
 
-msgid "The streaming engine is already up to date (version %s)."
-msgstr "محرك البث محدّث بالفعل (الإصدار %s)."
+msgid "Audio MP3 (works everywhere)"
+msgstr "صوت MP3 (يعمل في كل مكان)"
 
-msgid "No Update Needed"
-msgstr "لا حاجة للتحديث"
+msgid "Audio track %d"
+msgstr "المسار الصوتي %d"
 
-msgid "Could not update the streaming engine.\nCheck your internet connection and try again.\n\nDetails: %s"
-msgstr "تعذر تحديث محرك البث.\nتحقق من اتصالك بالإنترنت وحاول مرة أخرى.\n\nالتفاصيل: %s"
+msgid "Audio track %d: %s"
+msgstr "المسار الصوتي %d: %s"
 
-msgid "Update Failed"
-msgstr "فشل التحديث"
+msgid "Audio track %d: %s (%s)"
+msgstr "المسار الصوتي %d: %s (%s)"
 
-msgid "YOUTUBE & ONLINE STREAMING:"
-msgstr "يوتيوب والبث عبر الإنترنت:"
+msgid "Audio, Volume & Speed"
+msgstr "الصوت ومستوى الصوت والسرعة"
 
-msgid "Open URL / search box: paste a YouTube or website link to play it, or type text to search YouTube."
-msgstr "فتح مربع الرابط / البحث: الصق رابط يوتيوب أو أي موقع لتشغيله، أو اكتب نصًا للبحث في يوتيوب."
+msgid "Auto-advance to &next track when media finishes"
+msgstr "الانتقال التلقائي إلى المسار ال&تالي عند انتهاء الملف"
 
-msgid "In search results: Enter on a video plays it; Enter on a playlist or channel opens it; Tab reaches the Play Playlist button; Backspace goes back."
-msgstr "في نتائج البحث: إدخال على فيديو يشغّله؛ إدخال على قائمة تشغيل أو قناة يفتحها؛ تاب يصل إلى زر تشغيل قائمة التشغيل؛ مسافة للخلف تعود خطوة."
+msgid "Auto-next disabled"
+msgstr "تم تعطيل الانتقال التلقائي"
 
-msgid "Online playlists behave exactly like local playlists (Next/Previous track, shuffle, repeat, resume)."
-msgstr "قوائم التشغيل عبر الإنترنت تعمل تمامًا مثل قوائم التشغيل المحلية (المقطع التالي/السابق، الخلط، التكرار، استئناف الموضع)."
+msgid "Auto-next enabled"
+msgstr "تم تفعيل الانتقال التلقائي"
 
-msgid "The streaming engine failed to load. Try updating it from HeadlessPlayer settings."
-msgstr "فشل تحميل محرك البث. جرّب تحديثه من إعدادات المشغل الخفي."
+msgid "Automatically &copy the saved file path to the clipboard"
+msgstr "&نسخ مسار الملف المحفوظ إلى الحافظة تلقائيًا"
 
-msgid "Nothing is currently loaded."
-msgstr "لا يوجد شيء محمّل حاليًا."
+msgid "Automatically enter &Player Mode when loading new media"
+msgstr "الدخول &تلقائياً في وضع المشغل فور فتح وسائط جديدة"
 
-msgid "Link copied to clipboard."
-msgstr "تم نسخ الرابط إلى الحافظة."
+msgid "Backward %s, position %s of %s"
+msgstr "تأخير %s، الموضع %s من %s"
 
-msgid "File path copied to clipboard."
-msgstr "تم نسخ مسار الملف إلى الحافظة."
+msgid "Bass Down (-3 dB)"
+msgstr "خفض البيز (-3 ديسيبل)"
 
-msgid "Could not copy to clipboard."
-msgstr "تعذر النسخ إلى الحافظة."
-
-msgid "YouTube Account & Feeds"
-msgstr "حساب يوتيوب والتغذيات"
-
-msgid "Recommended for you (home feed)"
-msgstr "مقترحات لك (الصفحة الرئيسية)"
-
-msgid "Latest videos from your subscriptions"
-msgstr "أحدث فيديوهات اشتراكاتك"
-
-msgid "Watch Later playlist"
-msgstr "قائمة المشاهدة لاحقًا"
-
-msgid "Liked videos"
-msgstr "الفيديوهات التي أعجبتك"
-
-msgid "Watch history"
-msgstr "سجل المشاهدة"
-
-msgid "Subscribed channels"
-msgstr "قنواتك المشترك فيها"
-
-msgid "This section requires YouTube sign-in. Enable sign-in cookies from your browser in HeadlessPlayer settings, then try again."
-msgstr "هذا القسم يتطلب تسجيل الدخول إلى يوتيوب. فعّل كوكيز تسجيل الدخول من متصفحك في إعدادات المشغل الخفي ثم حاول مجددًا."
-
-msgid "Copy Current Track Link / Path to Clipboard"
-msgstr "نسخ رابط / مسار المقطع الحالي إلى الحافظة"
-
-msgid "Open YouTube Account & Feeds Browser"
-msgstr "فتح متصفح حساب يوتيوب والتغذيات"
-
-msgid "Open URL / search box: paste a YouTube or website link to play it, or type text to search YouTube. Exits Player Mode automatically."
-msgstr "فتح مربع الرابط / البحث: الصق رابط يوتيوب أو أي موقع لتشغيله، أو اكتب نصًا للبحث في يوتيوب. يخرج من وضع المشغل تلقائيًا."
-
-msgid "Open YouTube account & feeds browser (recommendations, subscriptions, watch later, liked, history, trending)."
-msgstr "فتح متصفح حساب يوتيوب والتغذيات (المقترحات، الاشتراكات، المشاهدة لاحقًا، الإعجابات، السجل، الرائج)."
-
-msgid "Copy the current track's link (or file path) to the clipboard."
-msgstr "نسخ رابط المقطع الحالي (أو مسار الملف) إلى الحافظة."
-
-msgid "Trending music (Top 100 songs worldwide)"
-msgstr "الموسيقى الرائجة (أفضل 100 أغنية عالميًا)"
-
-msgid "Manual sign-in cookies &file (cookies.txt in Netscape format):"
-msgstr "&ملف كوكيز تسجيل الدخول اليدوي (cookies.txt بصيغة Netscape):"
-
-msgid "&Browse for cookies file..."
-msgstr "ا&ستعراض لاختيار ملف الكوكيز..."
-
-msgid "Tip: export cookies.txt while signed in to YouTube in a standard (non-incognito) browser window using an extension such as 'Get cookies.txt LOCALLY' (Chrome/Edge) or 'cookies.txt' (Firefox). Do not export from Incognito mode as private windows omit login session credentials. The manual file takes priority over the browser choice above."
-msgstr "نصيحة: صدّر ملف cookies.txt وأنت مسجل الدخول إلى يوتيوب في نافذة متصفح عادية (وليست مخفية) باستخدام إضافة مثل 'Get cookies.txt LOCALLY' (كروم/إيدج) أو 'cookies.txt' (فيرفكس). لا تقم بتصدير الكوكيز من وضع التصفح المخفي لأن النوافذ الخاصة تسقط بيانات تسجيل الدخول. الملف اليدوي له الأولوية على خيار المتصفح أعلاه."
-
-msgid "Select cookies.txt file"
-msgstr "اختر ملف cookies.txt"
-
-msgid "Cookies files (*.txt)|*.txt|All files (*.*)|*.*"
-msgstr "ملفات الكوكيز (*.txt)|*.txt|كل الملفات (*.*)|*.*"
-
-msgid "Could not read sign-in cookies from your browser. Set a manual cookies.txt file in HeadlessPlayer settings instead."
-msgstr "تعذرت قراءة كوكيز تسجيل الدخول من متصفحك. عيّن ملف cookies.txt يدويًا في إعدادات المشغل الخفي بدلًا من ذلك."
-
-msgid "Playback of this stream failed. Press Enter or Space to retry."
-msgstr "فشل تشغيل هذا البث. اضغط إدخال أو المسافة لإعادة المحاولة."
+msgid "Bass Up (+3 dB)"
+msgstr "رفع البيز (+3 ديسيبل)"
 
 msgid "Bass: %s dB"
 msgstr "البيز: %s ديسيبل"
@@ -1012,26 +283,807 @@ msgstr "البيز: %s ديسيبل"
 msgid "Bass: normal"
 msgstr "البيز: طبيعي"
 
-msgid "Bass Up (+3 dB)"
-msgstr "رفع البيز (+3 ديسيبل)"
+msgid "Browse recent playlists (folders & playlists) backward / forward."
+msgstr "استعراض قوائم التشغيل الأخيرة (المجلدات وقوائم التشغيل) للخلف / للأمام."
 
-msgid "Bass Down (-3 dB)"
-msgstr "خفض البيز (-3 ديسيبل)"
+msgid "Browse recent tracks (files & streams) backward / forward."
+msgstr "استعراض المقاطع الأخيرة (الملفات والبث) للخلف / للأمام."
 
-msgid "Raise / lower bass (+/- 3 dB)."
-msgstr "رفع / خفض البيز (+/- 3 ديسيبل)."
+msgid "Calculate elapsed ti&me based on current playback speed"
+msgstr "حساب الوقت &المنقضي بناءً على سرعة التشغيل الحالية"
+
+msgid "Calculate remaining &time based on current playback speed"
+msgstr "حساب الوقت المتبقي وفق سرعة التشغيل الحالية"
+
+msgid "Cancel"
+msgstr "إلغاء"
+
+msgid "Cancel recent browsing mode without leaving Player Mode."
+msgstr "إلغاء وضع استعراض السجل دون مغادرة نمط المشغل."
+
+msgid "Channel"
+msgstr "قناة"
+
+msgid "Chapter %d"
+msgstr "الفصل %d"
+
+msgid "Chapter %d, at %s"
+msgstr "الفصل %d، عند %s"
+
+msgid "Chapter %d: %s"
+msgstr "الفصل %d: %s"
+
+msgid "Chapter %d: %s, at %s"
+msgstr "الفصل %d: %s، عند %s"
+
+msgid "CHAPTERS & VIDEO AUDIO TRACKS:"
+msgstr "الفصول والمسارات الصوتية للفيديو:"
+
+msgid "Check for &Add-on Updates on GitHub..."
+msgstr "التحقق من &تحديثات الإضافة على GitHub..."
+
+msgid "Check for &Updates of the streaming engine now..."
+msgstr "التحقق من وجود &تحديثات لمحرك البث الآن..."
+
+msgid "Checking for add-on updates, please wait..."
+msgstr "جاري التحقق من تحديثات الإضافة، يرجى الانتظار..."
+
+msgid "Checking for add-on updates..."
+msgstr "جاري التحقق من تحديثات الإضافة..."
+
+msgid "Checking for streaming engine updates, please wait..."
+msgstr "جارٍ التحقق من تحديثات محرك البث، الرجاء الانتظار..."
+
+msgid "Checking for updates..."
+msgstr "جارٍ التحقق من التحديثات..."
+
+msgid "Chinese"
+msgstr "الصينية"
+
+msgid "Chinese (Simplified)"
+msgstr "الصينية (المبسطة)"
+
+msgid "Chinese (Traditional)"
+msgstr "الصينية (التقليدية)"
+
+msgid "Clear A-B Loop Points"
+msgstr "مسح نقاط المقطع A-B"
+
+msgid "Clear marked A-B loop points."
+msgstr "مسح نقاط المقطع A-B المحددة."
+
+msgid "Clip Export & Downloads (D / Shift+D)"
+msgstr "تصدير المقاطع والتحميل (D / Shift+D)"
+
+msgid "Clip saved successfully as %(file)s in %(folder)s."
+msgstr "تم حفظ المقطع بنجاح باسم %(file)s في مجلد %(folder)s."
+
+msgid "Clip saved successfully as %(file)s in %(folder)s. It is copied to the clipboard."
+msgstr "تم حفظ المقطع بنجاح باسم %(file)s في مجلد %(folder)s. تم نسخه إلى الحافظة."
+
+msgid "Clip saved successfully as %s in the downloads folder."
+msgstr "تم حفظ المقطع بنجاح باسم %s في مجلد التنزيلات."
+
+msgid "Clip saved successfully as %s in the downloads folder. It is copied to the clipboard."
+msgstr "تم حفظ المقطع بنجاح باسم %s في مجلد التنزيلات. تم نسخه إلى الحافظة."
+
+msgid "Close / quit media player completely."
+msgstr "إغلاق / إنهاء مشغل الوسائط بالكامل."
+
+msgid "Close Player (Quit)"
+msgstr "إغلاق المشغل بالكامل (إنهاء)"
+
+msgid "Connecting to download server..."
+msgstr "جاري الاتصال بخادم التنزيل..."
+
+msgid "Convert audio to a story video (MP4 with animated &waveform)"
+msgstr "تحويل الصوت إلى فيديو ستوري (MP4 مع &موجة صوتية متحركة)"
+
+msgid "Cookies files (*.txt)|*.txt|All files (*.*)|*.*"
+msgstr "ملفات الكوكيز (*.txt)|*.txt|كل الملفات (*.*)|*.*"
+
+msgid "Cookies Verification"
+msgstr "التحقق من الكوكيز"
+
+msgid "Copy Current Track Link / Path to Clipboard"
+msgstr "نسخ رابط / مسار المقطع الحالي إلى الحافظة"
+
+msgid "Copy Direct Audio Link of Current Stream"
+msgstr "نسخ الرابط المباشر لصوت البث الحالي"
+
+msgid "Copy the current track's link (or file path) to the clipboard."
+msgstr "نسخ رابط المقطع الحالي (أو مسار الملف) إلى الحافظة."
+
+msgid "Copy the direct audio media link of the playing YouTube item."
+msgstr "نسخ الرابط المباشر لملف الصوت لعنصر يوتيوب الذي يعمل."
+
+msgid ""
+"Could not check for add-on updates.\n"
+"Please check your internet connection and try again.\n"
+"\n"
+"Details: %s"
+msgstr ""
+"تعذر التحقق من تحديثات الإضافة.\n"
+"يرجى التحقق من اتصالك بالإنترنت والمحاولة مجدداً.\n"
+"\n"
+"التفاصيل: %s"
+
+msgid "Could not copy to clipboard."
+msgstr "تعذر النسخ إلى الحافظة."
+
+msgid "Could not load this item. Check your connection or update yt-dlp from settings."
+msgstr "تعذر تحميل هذا العنصر. تحقق من اتصالك بالإنترنت أو حدّث yt-dlp من الإعدادات."
+
+msgid "Could not play this stream. Check your internet connection, or update yt-dlp from HeadlessPlayer settings."
+msgstr "تعذر تشغيل هذا البث. تحقق من اتصالك بالإنترنت، أو حدّث yt-dlp من إعدادات المشغل الخفي."
+
+msgid "Could not read sign-in cookies from your browser. Set a manual cookies.txt file in HeadlessPlayer settings instead."
+msgstr "تعذرت قراءة كوكيز تسجيل الدخول من متصفحك. عيّن ملف cookies.txt يدويًا في إعدادات المشغل الخفي بدلًا من ذلك."
+
+msgid ""
+"Could not update the streaming engine.\n"
+"Check your internet connection and try again.\n"
+"\n"
+"Details: %s"
+msgstr ""
+"تعذر تحديث محرك البث.\n"
+"تحقق من اتصالك بالإنترنت وحاول مرة أخرى.\n"
+"\n"
+"التفاصيل: %s"
+
+msgid "Current assigned key: %s"
+msgstr "المفتاح المخصص حالياً: %s"
+
+msgid "Customize Player Mode &Shortcuts..."
+msgstr "تخصيص اختصارات وضع المشغل (&S)..."
+
+msgid "Customize Player Mode Shortcuts"
+msgstr "تخصيص اختصارات وضع المشغل"
+
+msgid "Cycle Audio Track / Languages"
+msgstr "تبديل المسار الصوتي / اللغات"
+
+msgid "Cycle audio tracks / languages in video files."
+msgstr "التبديل بين المسارات الصوتية واللغات في ملفات الفيديو."
+
+msgid "Cycle preset speeds (1.0x, 1.5x, 1.75x, 2.0x, 2.5x, 3.0x)."
+msgstr "التبديل بين السرعات الجاهزة (1.0x, 1.5x, 1.75x, 2.0x, 2.5x, 3.0x)."
+
+msgid "D: export the A-B selection (or the whole item) as MP3, M4A or MP4 video; if only point A is set, the current position becomes point B. Shift+D: quick export with the settings remembered from the last dialog. Shift+V: copy the direct audio link of the playing YouTube item. Conversion is done by the bundled mpv encoder."
+msgstr "D: تصدير التحديد بين A و B (أو العنصر كاملًا) بصيغة MP3 أو M4A أو فيديو MP4؛ وإن كانت النقطة A وحدها محددة يصبح الموضع الحالي هو النقطة B. Shift+D: تصدير سريع بالإعدادات المحفوظة من آخر نافذة. Shift+V: نسخ الرابط المباشر لصوت عنصر يوتيوب الذي يعمل. التحويل يتم عبر محرك الترميز في mpv المرفق."
+
+msgid "Default &quality:"
+msgstr "ال&جودة الافتراضية:"
+
+msgid "Default &repeat mode:"
+msgstr "نمط ال&تكرار الافتراضي:"
+
+msgid "Default download &folder (empty = Downloads\\HeadlessPlayer):"
+msgstr "&مجلد التنزيل الافتراضي (فارغ = Downloads\\HeadlessPlayer):"
+
+msgid "Default export f&ormat:"
+msgstr "&صيغة التصدير الافتراضية:"
+
+msgid "Default playback s&peed:"
+msgstr "س&رعة التشغيل الافتراضية:"
+
+msgid "Default Test Media"
+msgstr "ملف وسائط تجريبي افتراضي"
+
+msgid "Direct audio link copied to clipboard."
+msgstr "تم نسخ الرابط المباشر للصوت إلى الحافظة."
+
+msgid "Directly load and play focused/selected media from Explorer/Desktop without entering Player Mode."
+msgstr "تشغيل الملفات أو المجلدات المحددة أو المركز عليها مباشرة من مستكشف Windows أو سطح المكتب دون الحاجة للدخول في وضع المشغل."
+
+msgid "Directly loads and plays selected or focused media files/folders from Windows Explorer."
+msgstr "تشغيل الملفات أو المجلدات المحددة  عليها مباشرة من مستكشف Windows."
+
+msgid "Disabled (no sign-in)"
+msgstr "معطل (بدون تسجيل دخول)"
+
+msgid "Download / export whole item: %s"
+msgstr "تحميل / تصدير العنصر كاملًا: %s"
+
+msgid "Download complete! Launching add-on installation..."
+msgstr "اكتمل التنزيل بنجاح! جاري فتح نافذة تثبيت الإضافة..."
+
+msgid "Download Failed"
+msgstr "فشل التنزيل"
+
+msgid "Download failed: %s"
+msgstr "فشل التنزيل: %s"
+
+msgid "Downloaded %.2f MB"
+msgstr "تم تنزيل %.2f ميجابايت"
+
+msgid "Downloaded %.2f MB of %.2f MB (%d%%)"
+msgstr "تم تنزيل %.2f ميجابايت من %.2f ميجابايت (%d%%)"
+
+msgid "Downloaded file is empty."
+msgstr "الملف الذي تم تنزيله فارغ."
+
+msgid "Downloading and converting the whole item to %(fmt)s in the background..."
+msgstr "جارٍ تحميل العنصر كاملًا وتحويله إلى %(fmt)s في الخلفية..."
+
+msgid "Downloading update..."
+msgstr "جاري تنزيل التحديث..."
+
+msgid "Downloads & Clip Export"
+msgstr "التحميل وتصدير المقاطع"
+
+msgid "Elapsed time: %s"
+msgstr "الوقت المنقضي: %s"
+
+msgid "Enable &SponsorBlock (Auto-skip YouTube sponsors, promos & intros)"
+msgstr "تفعيل &SponsorBlock (تخطي إعلانات الرعاة والترويج والمقدمات في يوتيوب تلقائياً)"
+
+msgid "End of media"
+msgstr "نهاية الوسائط"
+
+msgid "End point set at the current position."
+msgstr "تم تثبيت نقطة النهاية عند الموضع الحالي."
+
+msgid "English"
+msgstr "الإنجليزية"
+
+msgid "English (UK)"
+msgstr "الإنجليزية (المملكة المتحدة)"
+
+msgid "English (US)"
+msgstr "الإنجليزية (الولايات المتحدة)"
+
+msgid "Enter a URL (YouTube or any website) to play, or text to search YouTube:"
+msgstr "أدخل رابطًا (يوتيوب أو أي موقع) لتشغيله، أو اكتب نصًا للبحث في يوتيوب:"
+
+msgid "Enter or exit Headless Player Mode."
+msgstr "الدخول إلى وضع المشغل أو الخروج منه."
+
+msgid "Exit Player Mode"
+msgstr "الخروج من وضع المشغل"
+
+msgid "Exit Player Mode and return to normal desktop keyboard control."
+msgstr "الخروج من وضع المشغل والعودة للتحكم العادي بلوحة المفاتيح."
+
+msgid "Export &format:"
+msgstr "&صيغة التصدير:"
+
+msgid "Export / Download Clip (A-B selection or whole item)"
+msgstr "تصدير / تحميل مقطع (التحديد بين A و B أو العنصر كاملًا)"
+
+msgid "Export clip: %(title)s (from %(a)s to %(b)s, %(d)d seconds)"
+msgstr "تصدير مقطع: %(title)s (من %(a)s إلى %(b)s، %(d)d ثانية)"
+
+msgid "Export Error"
+msgstr "خطأ في التصدير"
+
+msgid "Export failed: %s"
+msgstr "فشل التصدير: %s"
+
+msgid "Export Shortcuts to JSON File"
+msgstr "تصدير الاختصارات إلى ملف JSON"
+
+msgid "Export Successful"
+msgstr "نجح التصدير"
+
+msgid "Export the A-B selection (or the whole item) as MP3, M4A or MP4 video; with only point A set, the current position becomes B."
+msgstr "تصدير التحديد بين A و B (أو العنصر كاملًا) بصيغة MP3 أو M4A أو فيديو MP4؛ وإن كانت A وحدها محددة يصبح الموضع الحالي هو B."
+
+msgid "Exporting %(fmt)s clip in the background..."
+msgstr "جارٍ تصدير المقطع بصيغة %(fmt)s في الخلفية..."
+
+msgid ""
+"Failed to download the add-on update.\n"
+"\n"
+"Details: %s"
+msgstr ""
+"فشل تنزيل تحديث الإضافة.\n"
+"\n"
+"التفاصيل: %s"
+
+msgid ""
+"Failed to export shortcuts:\n"
+"%s"
+msgstr ""
+"فشل تصدير الاختصارات:\n"
+"%s"
+
+msgid ""
+"Failed to import shortcuts:\n"
+"%s"
+msgstr ""
+"فشل استيراد الاختصارات:\n"
+"%s"
+
+msgid "Fast seek (+/- %s)."
+msgstr "تقديم/ترجيع سريع (+/- %s)."
+
+msgid "Fast Seek Backward (Ctrl+Left)"
+msgstr "تأخير سريع (Ctrl + سهم يسار)"
+
+msgid "Fast Seek Forward (Ctrl+Right)"
+msgstr "تقديم سريع (Ctrl + سهم يمين)"
+
+msgid "File &name:"
+msgstr "ا&سم الملف:"
+
+msgid "File and path copied to clipboard."
+msgstr "تم نسخ الملف والمسار إلى الحافظة."
+
+msgid "File does not exist on disk"
+msgstr "الملف غير موجود على القرص"
+
+msgid "Files, Streaming & Information"
+msgstr "الملفات والبث والمعلومات"
+
+msgid "filler segment"
+msgstr "مقطع حشو"
+
+msgid "Fine speed adjustment (+/- 0.1x)."
+msgstr "تعديل السرعة الدقيق بمقدار (+/- 0.1x)."
+
+msgid "Fine Speed Down (-0.1x)"
+msgstr "تبطيء دقيق (-0.1x)"
+
+msgid "Fine Speed Up (+0.1x)"
+msgstr "تسريع دقيق (+0.1x)"
+
+msgid "First Track in Playlist (Control+Home)"
+msgstr "المقطع الأول في قائمة التشغيل (Control + Home)"
+
+msgid "Forward %s, position %s of %s"
+msgstr "تقديم %s، الموضع %s من %s"
+
+msgid "French"
+msgstr "الفرنسية"
+
+msgid "General & Playback"
+msgstr "الخيارات العامة والتشغيل"
+
+msgid "German"
+msgstr "الألمانية"
+
+msgid ""
+"GitHub API rate limit exceeded (maximum 60 requests per hour).\n"
+"Please wait a few minutes and try again."
+msgstr ""
+"تم تجاوز الحد المسموح لطلبات GitHub API (بحد أقصى 60 طلباً في الساعة).\n"
+"يرجى الانتظار بضع دقائق ثم المحاولة مجدداً."
+
+msgid "Headless Media Player"
+msgstr "مشغل الوسائط الخفي"
+
+msgid "Headless Media Player - Add-on Update Available"
+msgstr "المشغل الخفي - يتوفر تحديث جديد للإضافة"
+
+msgid "Headless Media Player - Shortcuts Help"
+msgstr "مشغل الوسائط الخفي - دليل الاختصارات"
+
+msgid "Headless Media Player Add-on Updates"
+msgstr "تحديثات إضافة المشغل الخفي (Headless Media Player)"
+
+msgid "HEADLESS MEDIA PLAYER — KEYBOARD SHORTCUTS REFERENCE"
+msgstr "مشغل الوسائط الخفي — مرجع اختصارات لوحة المفاتيح"
+
+msgid "High (Opus ~160 kbps - Best fidelity)"
+msgstr "عالي (Opus ~160 kbps - أعلى نقاء)"
+
+msgid "Highest quality"
+msgstr "أعلى جودة"
+
+msgid "Highest quality (original)"
+msgstr "أعلى جودة (الأصلية)"
+
+msgid "Hindi"
+msgstr "الهندية"
+
+msgid "Holding %s... Press a key to combine."
+msgstr "جاري الضغط على %s... اضغط على مفتاح آخر للدمج."
+
+msgid "Import Error"
+msgstr "خطأ في الاستيراد"
+
+msgid "Import Shortcuts from JSON File"
+msgstr "استيراد الاختصارات من ملف JSON"
+
+msgid "Import Successful"
+msgstr "نجح الاستيراد"
+
+msgid "In search results: Enter on a video plays it; Enter on a playlist or channel opens it; Tab reaches the Play Playlist button; Backspace goes back."
+msgstr "في نتائج البحث: إدخال على فيديو يشغّله؛ إدخال على قائمة تشغيل أو قناة يفتحها؛ تاب يصل إلى زر تشغيل قائمة التشغيل؛ مسافة للخلف تعود خطوة."
+
+msgid "Installed add-on version: %s"
+msgstr "إصدار الإضافة المثبت: %s"
+
+msgid "Installing update..."
+msgstr "جارٍ تثبيت التحديث..."
+
+msgid "intro animation"
+msgstr "مقدمة المقطع"
+
+msgid "Invalid shortcuts format: expected a JSON object."
+msgstr "تنسيق الاختصارات غير صالح: يُتوقع كائن JSON."
+
+msgid "Italian"
+msgstr "الإيطالية"
+
+msgid "Japanese"
+msgstr "اليابانية"
+
+msgid "JSON Files (*.json)|*.json|All Files (*.*)|*.*"
+msgstr "ملفات JSON (*.json)|*.json|كافة الملفات (*.*)|*.*"
+
+msgid "Jump directly to 10% through 90% of file duration."
+msgstr "القفز المباشر لنسبة من 10% إلى 90% من طول الملف."
+
+msgid "Jump to %d percent, position %s"
+msgstr "انتقال إلى %d بالمائة، الموضع %s"
+
+msgid "Jump to end of current playing track."
+msgstr "الانتقال إلى نهاية المقطع الذي يعمل حالياً."
+
+msgid "Jump to end of current track (End)"
+msgstr "الانتقال إلى نهاية المقطع الحالي (End)"
+
+msgid "Jump to first track in playlist."
+msgstr "الانتقال إلى المقطع الأول في قائمة التشغيل."
+
+msgid "Jump to last track in playlist."
+msgstr "الانتقال إلى المقطع الأخير في قائمة التشغيل."
+
+msgid "Jump to oldest / newest recent playlist."
+msgstr "القفز إلى أقدم / أحدث قائمة تشغيل أخيرة."
+
+msgid "Jump to oldest / newest recent track."
+msgstr "القفز إلى أقدم / أحدث مقطع أخير."
+
+msgid "Jump to Previous / Next chapter."
+msgstr "الانتقال إلى الفصل السابق / التالي."
+
+msgid "Jump to start of current playing track."
+msgstr "الانتقال إلى بداية المقطع الذي يعمل حالياً."
+
+msgid "Jump to start of current track (Home)"
+msgstr "الانتقال إلى بداية المقطع الحالي (Home)"
+
+msgid "Keep recent &local files in history"
+msgstr "الاحتفاظ بالملفات ال&محلية الأخيرة في السجل"
+
+msgid "Keep recent &playlists in history"
+msgstr "الاحتفاظ بقوائم ال&تشغيل الأخيرة في السجل"
+
+msgid "Keep recent local &folders in history"
+msgstr "الاحتفاظ بالمجلدات المحلية الأخيرة في ال&سجل"
+
+msgid "Keep recent online &streams in history"
+msgstr "الاحتفاظ بمقاطع ال&بث المباشر والإنترنت الأخيرة في السجل"
+
+msgid "Korean"
+msgstr "الكورية"
+
+msgid "Last Track in Playlist (Control+End)"
+msgstr "المقطع الأخير في قائمة التشغيل (Control + End)"
+
+msgid "Latest videos from your subscriptions"
+msgstr "أحدث فيديوهات اشتراكاتك"
+
+msgid "Liked videos"
+msgstr "الفيديوهات التي أعجبتك"
+
+msgid "Link copied to clipboard."
+msgstr "تم نسخ الرابط إلى الحافظة."
+
+msgid "Live"
+msgstr "بث مباشر"
+
+msgid "Live streams cannot be exported."
+msgstr "لا يمكن تصدير البث المباشر."
+
+msgid "Live streams of %s"
+msgstr "البث المباشر لـ %s"
+
+msgid "Load from Windows Explorer"
+msgstr "التشغيل المباشر من مستكشف Windows"
+
+msgid "Loaded %d files into playlist"
+msgstr "تم تحميل %d ملف في قائمة التشغيل"
+
+msgid "Loaded %d files into playlist, total duration: %s"
+msgstr "تم تحميل %d ملف في قائمة التشغيل، المدة الإجمالية: %s"
+
+msgid "Loading %s..."
+msgstr "جارٍ تحميل %s..."
+
+msgid "Loading more items, please wait..."
+msgstr "جاري تحميل المزيد من العناصر، يرجى الانتظار..."
+
+msgid "Loading more items..."
+msgstr "جاري تحميل المزيد من العناصر..."
+
+msgid "Loading playlist, please wait..."
+msgstr "جارٍ تحميل قائمة التشغيل، الرجاء الانتظار..."
+
+msgid "Loading stream, please wait..."
+msgstr "جاري تحميل البث، يرجى الانتظار..."
+
+msgid "Loading URL, please wait..."
+msgstr "جارٍ تحميل الرابط، الرجاء الانتظار..."
+
+msgid "Loading: %s"
+msgstr "جارٍ التحميل: %s"
+
+msgid "Low (~64 kbps - Data saver)"
+msgstr "منخفض (~64 kbps - موفر للبيانات)"
+
+msgid "Manual sign-in cookies &file (cookies.txt in Netscape format):"
+msgstr "&ملف كوكيز تسجيل الدخول اليدوي (cookies.txt بصيغة Netscape):"
+
+msgid "Mark A-B Loop End (Point B)"
+msgstr "تحديد نهاية المقطع A-B (النقطة B)"
+
+msgid "Mark A-B Loop Start (Point A)"
+msgstr "تحديد بداية المقطع A-B (النقطة A)"
+
+msgid "Mark end of loop (Point B)."
+msgstr "تحديد نهاية المقطع (النقطة B)."
+
+msgid "Mark start of loop (Point A)."
+msgstr "تحديد بداية المقطع (النقطة A)."
+
+msgid "Medium (AAC ~128 kbps - Standard)"
+msgstr "متوسط (AAC ~128 kbps - قياسي)"
+
+msgid "MODE ACTIVATION, SETTINGS & EXIT:"
+msgstr "تفعيل النمط، الإعدادات والخروج:"
+
+msgid "Mute / Unmute audio"
+msgstr "كتم / تشغيل الصوت"
+
+msgid "Mute / Unmute audio."
+msgstr "كتم / إلغاء كتم الصوت."
+
+msgid "Muted"
+msgstr "كتم الصوت"
+
+msgid "Navigation & Chapters"
+msgstr "التنقل والفصول"
+
+msgid "newest"
+msgstr "الأحدث"
 
 msgid "Next Chapter (Ctrl+Shift+Right)"
 msgstr "الفصل التالي (Ctrl+Shift+سهم يمين)"
 
-msgid "Previous Chapter (Ctrl+Shift+Left)"
-msgstr "الفصل السابق (Ctrl+Shift+سهم يسار)"
+msgid "Next Preset Speed"
+msgstr "السرعة الجاهزة التالية"
+
+msgid "Next Track in Playlist"
+msgstr "المقطع التالي في قائمة التشغيل"
+
+msgid "No A-B selection: the whole file will be converted. Press Escape and use [ and ] to select a part instead."
+msgstr "لا يوجد تحديد بين A و B: سيتم تحويل الملف كاملًا. اضغط Escape واستخدم [ و ] لتحديد جزء بدلًا من ذلك."
+
+msgid "No A-B selection: the whole item will be downloaded. Press Escape and use [ and ] to select a part instead."
+msgstr "لا يوجد تحديد بين A و B: سيتم تحميل العنصر كاملًا. اضغط Escape واستخدم [ و ] لتحديد جزء بدلًا من ذلك."
+
+msgid "No changelog description provided."
+msgstr "لا يوجد وصف لسجل التغييرات في هذا الإصدار."
+
+msgid "No chapters available in media"
+msgstr "لا توجد فصول متوفرة في هذه الوسائط"
+
+msgid "No items found."
+msgstr "لم يتم العثور على عناصر."
+
+msgid "No media files currently selected in Windows Explorer"
+msgstr "لا توجد ملفات وسائط محددة حالياً في مستكشف Windows"
+
+msgid "No media files found in selected folder"
+msgstr "لم يتم العثور على ملفات وسائط في المجلد المحدد"
+
+msgid "No more items found."
+msgstr "لا توجد عناصر إضافية."
+
+msgid "No more recent files or streams"
+msgstr "لا مزيد من الملفات أو مقاطع البث الأخيرة"
+
+msgid "No more recent folders or playlists"
+msgstr "لا مزيد من المجلدات أو قوائم التشغيل الأخيرة"
+
+msgid "No online stream is playing."
+msgstr "لا يوجد بث من الإنترنت قيد التشغيل."
 
 msgid "No other audio tracks available in this media"
 msgstr "لا توجد مسارات صوتية أخرى في هذا المقطع"
 
-msgid "Cycle Audio Track"
-msgstr "تبديل المسار الصوتي"
+msgid "No playable items found."
+msgstr "لم يتم العثور على عناصر قابلة للتشغيل."
+
+msgid "No recent files or streams"
+msgstr "لا توجد ملفات أو مقاطع بث أخيرة"
+
+msgid "No recent folders or playlists"
+msgstr "لا توجد مجلدات أو قوائم تشغيل أخيرة"
+
+msgid "No results found."
+msgstr "لم يتم العثور على نتائج."
+
+msgid "No search query entered."
+msgstr "لم يتم إدخال أي عبارة بحث."
+
+msgid "No selection. Preparing to download the whole item; use [ and ] to select a part."
+msgstr "لا يوجد تحديد. جارٍ التجهيز لتحميل العنصر كاملًا؛ استخدم [ و ] لتحديد جزء."
+
+msgid "No selection. The whole file will be exported; use [ and ] to select a part."
+msgstr "لا يوجد تحديد. سيتم تصدير الملف كاملًا؛ استخدم [ و ] لتحديد جزء."
+
+msgid "No Update Needed"
+msgstr "لا حاجة للتحديث"
+
+msgid "non-music section"
+msgstr "مقطع غير موسيقي"
+
+msgid "Normal seek (+/- %s)."
+msgstr "تقديم/ترجيع عادي (+/- %s)."
+
+msgid "Normal Seek Backward (Left Arrow)"
+msgstr "تأخير عادي (سهم يسار)"
+
+msgid "Normal Seek Forward (Right Arrow)"
+msgstr "تقديم عادي (سهم يمين)"
+
+msgid "not installed"
+msgstr "غير مثبت"
+
+msgid "Nothing is currently loaded."
+msgstr "لا يوجد شيء محمّل حاليًا."
+
+msgid ""
+"Notice: The selected cookies file does not appear to contain YouTube authentication tokens.\n"
+"\n"
+"For YouTube account feeds (Recommendations, Subscriptions, History) to work reliably, please export cookies while signed in to your YouTube account in your browser."
+msgstr ""
+"تنبيه: يبدو أن ملف الكوكيز المختار لا يحتوي على توكنات مصادقة يوتيوب.\n"
+"\n"
+"لكي تعمل خلاصات حساب يوتيوب (المقترحات، الاشتراكات، السجل) بثبات، يرجى تصدير الكوكيز بعد تسجيل الدخول إلى حسابك في المتصفح."
+
+msgid "Number of YouTube search &results:"
+msgstr "عدد &نتائج البحث في يوتيوب:"
+
+msgid "Off"
+msgstr "معطل"
+
+msgid "OK"
+msgstr "موافق"
+
+msgid "oldest"
+msgstr "الأقدم"
+
+msgid "Online playlists behave exactly like local playlists (Next/Previous track, shuffle, repeat, resume)."
+msgstr "قوائم التشغيل عبر الإنترنت تعمل تمامًا مثل قوائم التشغيل المحلية (المقطع التالي/السابق، الخلط، التكرار، استئناف الموضع)."
+
+msgid "Online Streaming & SponsorBlock"
+msgstr "البث عبر الإنترنت وتجاوز الإعلانات"
+
+msgid "Online streaming is unavailable. It requires NVDA 2024.1 or later."
+msgstr "البث عبر الإنترنت غير متاح. يتطلب NVDA إصدار 2024.1 أو أحدث."
+
+msgid "Open File Dialog"
+msgstr "فتح نافذة اختيار ملف"
+
+msgid "Open file dialog (select single media file)."
+msgstr "فتح نافذة اختيار ملف وسائط منفصل."
+
+msgid "Open Folder Dialog"
+msgstr "فتح نافذة اختيار مجلد"
+
+msgid "Open folder dialog (load entire folder as playlist)."
+msgstr "فتح نافذة اختيار مجلد كامل كقائمة تشغيل."
+
+msgid "Open HeadlessPlayer Settings Panel (Ctrl+Shift+S)"
+msgstr "فتح لوحة إعدادات HeadlessPlayer (Ctrl+Shift+S)"
+
+msgid "Open HeadlessPlayer Settings Panel in NVDA."
+msgstr "فتح لوحة إعدادات HeadlessPlayer في NVDA."
+
+msgid "Open URL / search box: paste a YouTube or website link to play it, or type text to search YouTube. Exits Player Mode automatically."
+msgstr "فتح مربع الرابط / البحث: الصق رابط يوتيوب أو أي موقع لتشغيله، أو اكتب نصًا للبحث في يوتيوب. يخرج من وضع المشغل تلقائيًا."
+
+msgid "Open URL / YouTube Search Box"
+msgstr "فتح مربع الرابط / البحث في يوتيوب"
+
+msgid "Open YouTube Account & Feeds Browser"
+msgstr "فتح متصفح حساب يوتيوب والموجز"
+
+msgid "Open YouTube account & feeds browser (recommendations, subscriptions, watch later, liked, history, trending)."
+msgstr "فتح متصفح حساب يوتيوب والموجز (المقترحات، الاشتراكات، المشاهدة لاحقًا، الإعجابات، السجل، الرائج)."
+
+msgid "Operation failed. Check your internet connection, or update yt-dlp from HeadlessPlayer settings."
+msgstr "فشلت العملية. تحقق من اتصالك بالإنترنت، أو حدّث yt-dlp من إعدادات المشغل الخفي."
+
+msgid "Original elapsed time: %s"
+msgstr "الوقت المنقضي الأصلي للمسار: %s"
+
+msgid "Original remaining time: %s"
+msgstr "الوقت المتبقي الأصلي للمسار: %s"
+
+msgid "outro credits"
+msgstr "خاتمة المقطع"
+
+msgid "Paused"
+msgstr "إيقاف مؤقت"
+
+msgid "PITCH-PRESERVED SPEED CONTROLS:"
+msgstr "التحكم في السرعة مع الحفاظ على النبرة الصوتية:"
+
+msgid "Play &Playlist"
+msgstr "تشغيل &قائمة التشغيل"
+
+msgid "Play / Pause toggle"
+msgstr "التبديل بين التشغيل والإيقاف المؤقت"
+
+msgid "Play / Pause toggle (or play focused recent item while browsing history)."
+msgstr "تبديل التشغيل/الإيقاف المؤقت (أو تشغيل العنصر الأخير المحدد أثناء استعراض السجل)."
+
+msgid "Play active selection directly from Windows Explorer / Desktop."
+msgstr "تشغيل الملفات أو المجلدات المحددة مباشرة من مستكشف Windows أو سطح المكتب."
+
+msgid "Play focused recent item immediately (active within 6 seconds of browsing)."
+msgstr "تشغيل العنصر الأخير المحدد فوراً (يعمل خلال 6 ثوانٍ من بدء الاستعراض)."
+
+msgid "Play URL or Search YouTube"
+msgstr "تشغيل رابط أو البحث في يوتيوب"
+
+msgid "Playback & Core Controls"
+msgstr "التشغيل والتحكم الأساسي"
+
+msgid "PLAYBACK & VOLUME CONTROLS:"
+msgstr "التشغيل ومستوى الصوت:"
+
+msgid "Playback Defaults & Options"
+msgstr "الخيارات الافتراضية العامة للتشغيل"
+
+msgid "Playback engine failed to start."
+msgstr "فشل بدء محرك التشغيل."
+
+msgid "Playback of this stream failed. Press Enter or Space to retry."
+msgstr "فشل تشغيل هذا البث. اضغط إدخال أو المسافة لإعادة المحاولة."
+
+msgid "Playback resumed from %s"
+msgstr "تم استئناف التشغيل من %s"
+
+msgid "Playback stopped."
+msgstr "تم إيقاف التشغيل."
+
+msgid "Player closed"
+msgstr "تم إغلاق المشغل"
+
+msgid "Player Mode active"
+msgstr "تم تفعيل وضع المشغل"
+
+msgid "Player Mode exited"
+msgstr "تم الخروج من وضع المشغل"
+
+msgid "Player Mode Keyboard Shortcuts"
+msgstr " اختصارات لوحة المفاتيح لوضع المشغل"
+
+msgid "Player Mode shortcuts have been reset to factory defaults."
+msgstr "تمت إعادة ضبط اختصارات وضع المشغل إلى الإعدادات الافتراضية."
+
+msgid "Playing"
+msgstr "تشغيل"
+
+msgid "Playlist"
+msgstr "قائمة تشغيل"
+
+msgid "Playlist empty"
+msgstr "قائمة التشغيل فارغة"
+
+msgid "PLAYLIST, FOLDERS & WINDOWS EXPLORER:"
+msgstr "قوائم التشغيل والمجلدات ومستكشف Windows:"
+
+msgid "Playlists of %s"
+msgstr "قوائم تشغيل %s"
 
 msgid "Plays or pauses Headless Media Player playback from anywhere."
 msgstr "تشغيل أو إيقاف تشغيل المشغل الخفي مؤقتاً من أي مكان في النظام."
@@ -1042,351 +1094,255 @@ msgstr "تشغيل المقطع التالي في المشغل الخفي من �
 msgid "Plays the previous track in Headless Media Player playlist from anywhere."
 msgstr "تشغيل المقطع السابق في المشغل الخفي من أي مكان في النظام."
 
-msgid "Stops Headless Media Player playback from anywhere."
-msgstr "إيقاف تشغيل المشغل الخفي من أي مكان في النظام."
+msgid "Please select a key from the suggestions list."
+msgstr "يرجى تحديد مفتاح من قائمة الاقتراحات."
 
-msgid "Player closed"
-msgstr "تم إغلاق المشغل"
+msgid "Portuguese"
+msgstr "البرتغالية"
 
-msgid "Close Player (Quit)"
-msgstr "إغلاق المشغل بالكامل (إنهاء)"
+msgid "Preparing export from %(a)s to %(b)s..."
+msgstr "جارٍ تجهيز التصدير من %(a)s إلى %(b)s..."
 
-msgid "Cycle Audio Track / Languages"
-msgstr "تبديل المسار الصوتي / اللغات"
+msgid ""
+"Press any key or key combination on your keyboard now to assign it.\n"
+"Press Escape to cancel."
+msgstr ""
+"اضغط على أي مفتاح أو تركيبة مفاتيح في الكيبورد الآن لتعيينها.\n"
+"اضغط Escape للإلغاء."
 
-msgid "Headless Media Player Add-on Updates"
-msgstr "تحديثات إضافة المشغل الخفي (Headless Media Player)"
+msgid "Press Shortcut Key"
+msgstr "اضغط على مفتاح الاختصار"
 
-msgid "Installed add-on version: %s"
-msgstr "إصدار الإضافة المثبت: %s"
-
-msgid "Check for &Add-on Updates on GitHub..."
-msgstr "التحقق من &تحديثات الإضافة على GitHub..."
-
-msgid "Checking for add-on updates..."
-msgstr "جاري التحقق من تحديثات الإضافة..."
-
-msgid "Checking for add-on updates, please wait..."
-msgstr "جاري التحقق من تحديثات الإضافة، يرجى الانتظار..."
-
-msgid "You are already using the latest version of Headless Media Player (version %s)."
-msgstr "أنت تستخدم بالفعل أحدث إصدار من إضافة المشغل الخفي (الإصدار %s)."
-
-msgid "Could not check for add-on updates.\nPlease check your internet connection and try again.\n\nDetails: %s"
-msgstr "تعذر التحقق من تحديثات الإضافة.\nيرجى التحقق من اتصالك بالإنترنت والمحاولة مجدداً.\n\nالتفاصيل: %s"
-
-msgid "Update Check Failed"
-msgstr "فشل التحقق من التحديثات"
-
-msgid "Headless Media Player - Add-on Update Available"
-msgstr "المشغل الخفي - يتوفر تحديث جديد للإضافة"
-
-msgid "A new version (%s) of Headless Media Player is available! (Current version: %s)"
-msgstr "يتوفر إصدار جديد (%s) من إضافة المشغل الخفي! (الإصدار الحالي: %s)"
-
-msgid "What's New in Version %s:"
-msgstr "ما الجديد في الإصدار %s:"
-
-msgid "Ready to download. Download size: %.2f MB"
-msgstr "جاهز للتنزيل. حجم التنزيل: %.2f ميجابايت"
-
-msgid "&Download and Install Update"
-msgstr "&تنزيل وتثبيت التحديث"
-
-msgid "Downloading update..."
-msgstr "جاري تنزيل التحديث..."
-
-msgid "Connecting to download server..."
-msgstr "جاري الاتصال بخادم التنزيل..."
-
-msgid "Downloaded %.2f MB of %.2f MB (%d%%)"
-msgstr "تم تنزيل %.2f ميجابايت من %.2f ميجابايت (%d%%)"
-
-msgid "Downloaded %.2f MB"
-msgstr "تم تنزيل %.2f ميجابايت"
-
-msgid "Download complete! Launching add-on installation..."
-msgstr "اكتمل التنزيل بنجاح! جاري فتح نافذة تثبيت الإضافة..."
-
-msgid "&Retry Download"
-msgstr "إعادة &المحاولة"
-
-msgid "Download failed: %s"
-msgstr "فشل التنزيل: %s"
-
-msgid "Failed to download the add-on update.\n\nDetails: %s"
-msgstr "فشل تنزيل تحديث الإضافة.\n\nالتفاصيل: %s"
-
-msgid "Download Failed"
-msgstr "فشل التنزيل"
-
-msgid "Cancel"
-msgstr "إلغاء"
-
-msgid "OK"
-msgstr "موافق"
-
-msgid "Downloaded file is empty."
-msgstr "الملف الذي تم تنزيله فارغ."
-
-msgid "HEADLESS MEDIA PLAYER — KEYBOARD SHORTCUTS REFERENCE"
-msgstr "مشغل الوسائط الخفي — مرجع اختصارات لوحة المفاتيح"
-
-msgid "MODE ACTIVATION & EXIT:"
-msgstr "تفعيل الوضع والخروج:"
-
-msgid "No changelog description provided."
-msgstr "لا يوجد وصف لسجل التغييرات في هذا الإصدار."
-
-msgid "Select Folder to Play"
-msgstr "تحديد مجلد لتشغيله"
-
-
-
-
-
-
-
-msgid "sponsor segment"
-msgstr "إعلان الراعي"
-
-msgid "self-promotion"
-msgstr "الترويج الذاتي"
-
-msgid "subscribe reminder"
-msgstr "تذكير الاشتراك والتفاعل"
-
-msgid "intro animation"
-msgstr "مقدمة المقطع"
-
-msgid "outro credits"
-msgstr "خاتمة المقطع"
-
-msgid "non-music section"
-msgstr "مقطع غير موسيقي"
+msgid "pressed twice"
+msgstr "مرتين متتاليتين"
 
 msgid "preview recap"
 msgstr "ملخص تمهيدي"
 
-msgid "filler segment"
-msgstr "مقطع حشو"
+msgid "Previous / Next track in playlist."
+msgstr "المقطع السابق / التالي في قائمة التشغيل."
 
-msgid "Skipped %s"
-msgstr "تم تخطي %s"
+msgid "Previous Chapter (Ctrl+Shift+Left)"
+msgstr "الفصل السابق (Ctrl+Shift+سهم يسار)"
 
-msgid "SponsorBlock (Auto-Skip YouTube Ads & Sponsors)"
-msgstr "SponsorBlock (تخطي إعلانات الرعاة والترويج في يوتيوب تلقائياً)"
+msgid "Previous Preset Speed"
+msgstr "السرعة الجاهزة السابقة"
 
-msgid "Enable &SponsorBlock (Auto-skip YouTube sponsors, promos & intros)"
-msgstr "تفعيل &SponsorBlock (تخطي إعلانات الرعاة والترويج والمقدمات في يوتيوب تلقائياً)"
+msgid "Previous Track in Playlist"
+msgstr "المقطع السابق في قائمة التشغيل"
 
-msgid "&Announce when a sponsor or promo segment is skipped"
-msgstr "&نطق إشعار عند تخطي إعلان راعي أو ترويج"
+msgid "Quick export failed: %s"
+msgstr "فشل التصدير السريع: %s"
 
-msgid "About & Developer"
-msgstr "عن الإضافة والمطور"
+msgid "Quick export in progress..."
+msgstr "جاري التصدير السريع..."
 
-msgid "&Follow Developer on Telegram (@mahmoud_EG_1)..."
-msgstr "&متابعة المطور على تيليجرام (@mahmoud_EG_1)..."
+msgid "Quick export of the A-B selection with the remembered settings, no dialog."
+msgstr "تصدير سريع للتحديد بين A و B بالإعدادات المحفوظة بدون نافذة."
 
-msgid "Arabic"
-msgstr "العربية"
+msgid "Quick Export with remembered settings"
+msgstr "تصدير سريع بالإعدادات المحفوظة"
 
-msgid "English"
-msgstr "الإنجليزية"
+msgid "Raise / lower bass (+/- 3 dB)."
+msgstr "رفع / خفض البيز (+/- 3 ديسيبل)."
 
-msgid "English (US)"
-msgstr "الإنجليزية (الولايات المتحدة)"
+msgid "Rate Limit Exceeded"
+msgstr "تم تجاوز الحد المسموح للطلبات"
 
-msgid "English (UK)"
-msgstr "الإنجليزية (المملكة المتحدة)"
+msgid "Ready to download. Download size: %.2f MB"
+msgstr "جاهز للتنزيل. حجم التنزيل: %.2f ميجابايت"
 
-msgid "French"
-msgstr "الفرنسية"
+msgid "Recent Playlists: Jump to Newest (Ctrl+Shift+.)"
+msgstr "قوائم التشغيل الأخيرة: الانتقال إلى الأحدث (Ctrl+Shift+.)"
 
-msgid "Spanish"
-msgstr "الإسبانية"
+msgid "Recent Playlists: Jump to Oldest (Ctrl+Shift+,)"
+msgstr "قوائم التشغيل الأخيرة: الانتقال إلى الأقدم (Ctrl+Shift+,)"
 
-msgid "German"
-msgstr "الألمانية"
+msgid "Recent Playlists: Next / Newer (Ctrl+.)"
+msgstr "قوائم التشغيل الأخيرة: التالي / الأحدث (Ctrl+.)"
 
-msgid "Italian"
-msgstr "الإيطالية"
+msgid "Recent Playlists: Previous / Older (Ctrl+,)"
+msgstr "قوائم التشغيل الأخيرة: السابق / الأقدم (Ctrl+,)"
 
-msgid "Portuguese"
-msgstr "البرتغالية"
+msgid "Recent file (%s): %s (%d of %d)"
+msgstr "ملف أخير (%s): %s (%d من %d)"
 
-msgid "Russian"
-msgstr "الروسية"
+msgid "Recent file: %s (%d of %d)"
+msgstr "ملف أخير: %s (%d من %d)"
 
-msgid "Japanese"
-msgstr "اليابانية"
+msgid "Recent folder (%s): %s (%d of %d)"
+msgstr "مجلد أخير (%s): %s (%d من %d)"
 
-msgid "Chinese"
-msgstr "الصينية"
+msgid "Recent folder: %s (%d of %d)"
+msgstr "مجلد أخير: %s (%d من %d)"
 
-msgid "Chinese (Simplified)"
-msgstr "الصينية (المبسطة)"
+msgid "RECENT MEDIA & BROWSING HISTORY:"
+msgstr "الوسائط الأخيرة وسجل الاستعراض:"
 
-msgid "Chinese (Traditional)"
-msgstr "الصينية (التقليدية)"
+msgid "Recent Media & History"
+msgstr "الوسائط الأخيرة وسجل التشغيل"
 
-msgid "Hindi"
-msgstr "الهندية"
+msgid "Recent Media History"
+msgstr "سجل الوسائط الأخيرة"
 
-msgid "Turkish"
-msgstr "التركية"
+msgid "Recent playlist (%s): %s (%d of %d)"
+msgstr "قائمة تشغيل أخيرة (%s): %s (%d من %d)"
 
-msgid "Korean"
-msgstr "الكورية"
+msgid "Recent playlist: %s (%d of %d)"
+msgstr "قائمة تشغيل أخيرة: %s (%d من %d)"
 
-msgid "&Follow Developer on Telegram (Mahmoud Abo El Fotouh)..."
-msgstr "&متابعة المطور على تيليجرام (محمود أبو الفتوح)..."
+msgid "Recent stream (%s): %s (%d of %d)"
+msgstr "مقطع بث أخير (%s): %s (%d من %d)"
 
-msgid "&Delete Assigned Shortcut"
-msgstr "&حذف الاختصار المعين"
+msgid "Recent stream: %s (%d of %d)"
+msgstr "مقطع بث أخير: %s (%d من %d)"
 
-msgid "Shortcut deleted for %s"
-msgstr "تم حذف الاختصار للإجراء %s"
+msgid "Recent Tracks: Jump to Newest (Shift+.)"
+msgstr "المقاطع الأخيرة: الانتقال إلى الأحدث (Shift+.)"
+
+msgid "Recent Tracks: Jump to Oldest (Shift+,)"
+msgstr "المقاطع الأخيرة: الانتقال إلى الأقدم (Shift+,)"
+
+msgid "Recent Tracks: Next / Newer (.)"
+msgstr "المقاطع الأخيرة: التالي / الأحدث (.)"
+
+msgid "Recent Tracks: Previous / Older (,)"
+msgstr "المقاطع الأخيرة: السابق / الأقدم (,)"
+
+msgid "Recommended for you (home feed)"
+msgstr "مقترحات لك (الصفحة الرئيسية)"
+
+msgid "Reconnecting..."
+msgstr "جاري إعادة الاتصال..."
+
+msgid "Remaining time: %s"
+msgstr "الوقت المتبقي: %s"
+
+msgid "Remember and &restore last playback session on reopening"
+msgstr "تذكر واستعادة &جلسة التشغيل الأخيرة عند إعادة الفتح"
+
+msgid "Remember and &resume playback position for media"
+msgstr "ت&ذكر واستئناف موضع التشغيل للملفات الطويلة"
+
+msgid "Remove Focused Recent Item from History (Delete)"
+msgstr "إزالة العنصر الأخير المحدد من السجل (Delete)"
+
+msgid "Remove focused recent item from history database."
+msgstr "إزالة العنصر الأخير المحدد من قاعدة بيانات السجل."
+
+msgid "Removed from recent history: %s"
+msgstr "تمت الإزالة من سجل الوسائط الأخيرة: %s"
+
+msgid "Repeat Current Track"
+msgstr "تكرار المسار الحالي"
+
+msgid "Repeat disabled"
+msgstr "تم تعطيل التكرار"
+
+msgid "Repeat Entire Playlist"
+msgstr "تكرار قائمة التشغيل كاملة"
+
+msgid "Repeat Playlist enabled"
+msgstr "تم تفعيل تكرار قائمة التشغيل"
+
+msgid "Repeat Track enabled"
+msgstr "تم تفعيل تكرار المسار الحالي"
 
 msgid "Replaying from beginning"
 msgstr "إعادة التشغيل من البداية"
 
-msgid "Shorts"
-msgstr "مقاطع Shorts"
+msgid "Russian"
+msgstr "الروسية"
 
-msgid "Shorts of %s"
-msgstr "مقاطع Shorts لقناة %s"
+msgid "Save &to folder:"
+msgstr "الحفظ &في المجلد:"
 
-msgid "Shorts from your subscriptions"
-msgstr "مقاطع Shorts من اشتراكاتي"
+msgid "Search Results & Streams"
+msgstr "نتائج البحث وروابط البث"
 
-msgid "Trending Shorts worldwide"
-msgstr "مقاطع Shorts الرائجة عالمياً"
+msgid "Searching YouTube, please wait..."
+msgstr "جارٍ البحث في يوتيوب، الرجاء الانتظار..."
 
-msgid "Sync YouTube &watch history and playback progress with your account"
-msgstr "مزامنة &سجل المشاهدة وتقدم التشغيل مع حساب يوتيوب"
+msgid "Section"
+msgstr "قسم"
 
-msgid "Trending Shorts (popular in your region)"
-msgstr "مقاطع Shorts الرائجة (الأكثر تداولاً في منطقتك)"
+msgid "Seek Jump Step Sizes (Seconds)"
+msgstr "قيم خطوات التقديم والتأخير (بالثواني)"
 
-msgid "Trending videos (popular in your region)"
-msgstr "الفيديوهات الرائجة (الأكثر تداولاً في منطقتك)"
-
-msgid "New music releases & charts"
-msgstr "أحدث الإصدارات الموسيقية والقوائم"
-
-msgid "Google YouTube Account - Read-Only"
-msgstr "حساب جوجل يوتيوب - قراءة فقط"
-
-msgid "Google YouTube Account &Sign In (Secure Read-Only)..."
-msgstr "تسجيل الدخول بحساب &جوجل يوتيوب (قراءة فقط آمنة)..."
-
-msgid "Sign In with Google (Browser)..."
-msgstr "تسجيل الدخول عبر جوجل (المتصفح)..."
-
-msgid "Sign Out"
-msgstr "تسجيل الخروج"
+msgid "SEEKING & JUMPS:"
+msgstr "التقديم والتأخير والقفز:"
 
 msgid ""
-"Security Notice:\n"
-"• Permission is strictly READ-ONLY (youtube.readonly).\n"
-"• Tokens are encrypted with Windows DPAPI and tied to your Windows account.\n"
-"• This add-on cannot upload, delete, or modify any of your YouTube content.\n"
-msgstr ""
-"تنبيه أمان:\n"
-"• الصلاحية محصورة في القراءة فقط (youtube.readonly).\n"
-"• التوكنات مشفرة بخوارزمية Windows DPAPI ومربوطة بحساب ويندوز الخاص بك.\n"
-"• لا تستطيع هذه الإضافة رفع أو حذف أو تعديل أي محتوى في حسابك.\n"
+"Select a player action, then choose or search a key from the suggestions list,\n"
+"or press the 'Capture Key Directly' button to assign by pressing any key on your keyboard."
+msgstr "اختر إجراء المشغل، ثم اختر أو ابحث عن المفتاح من قائمة الاقتراحات، أو اضغط زر 'التقاط ضغطة المفتاح مباشرة' لتعيينه بضغطة واحدة من الكيبورد."
 
-msgid "Status: Signed In as '%s' (Read-Only)"
-msgstr "الحالة: مسجل الدخول باسم '%s' (قراءة فقط)"
+msgid "Select cookies.txt file"
+msgstr "تحديد ملف cookies.txt"
 
-msgid "Status: Not Signed In"
-msgstr "الحالة: غير مسجل الدخول"
+msgid "Select download folder"
+msgstr "اختر مجلد التحميل"
 
-msgid "Opening browser... Please grant permission in your browser."
-msgstr "جاري فتح المتصفح... يرجى منح الإذن في المتصفح."
+msgid "Select export folder"
+msgstr "اختر مجلد التصدير"
 
-msgid "Opening browser for Google authorization, please grant permission..."
-msgstr "جاري فتح المتصفح لمصادقة جوجل، يرجى الموافقة على الإذن..."
+msgid "Select Folder to Play"
+msgstr "تحديد مجلد لتشغيله"
 
-msgid "Successfully signed in to YouTube as %s"
-msgstr "تم تسجيل الدخول إلى يوتيوب بنجاح باسم %s"
+msgid "Select Media File"
+msgstr "اختيار ملف وسائط"
 
-msgid "Successfully signed in to YouTube!"
-msgstr "تم تسجيل الدخول إلى يوتيوب بنجاح!"
+msgid "Select Media Files"
+msgstr "اختيار ملفات وسائط"
 
-msgid "Sign in failed: %s"
-msgstr "فشل تسجيل الدخول: %s"
+msgid "self-promotion"
+msgstr "الترويج الذاتي"
 
-msgid "Signed out and cleared credentials successfully."
-msgstr "تم تسجيل الخروج ومسح بيانات الاعتماد بنجاح."
+msgid "Set point A (and optionally B) first, then press Shift+D for quick export."
+msgstr "حدّد النقطة A (والنقطة B اختياريًا) أولًا، ثم اضغط Shift+D للتصدير السريع."
 
-msgid "My Playlists (Google Account)"
-msgstr "قوائم التشغيل الخاصة بي (حساب جوجل)"
+msgid "Shortcut Conflict"
+msgstr "تعارض في الاختصار"
 
-msgid "My Subscriptions (Google Account)"
-msgstr "اشتراكاتي (حساب جوجل)"
+msgid "Shortcut deleted for %s"
+msgstr "تم حذف الاختصار للإجراء %s"
 
-msgid "Liked Videos (Google Account)"
-msgstr "الفيديوهات المعجب بها (حساب جوجل)"
-
-msgid "This section requires YouTube sign-in. Sign in with Google or enable sign-in cookies in HeadlessPlayer settings, then try again."
-msgstr "يتطلب هذا القسم تسجيل الدخول إلى YouTube. سجل دخولك بحساب Google أو فعل الكوكيز في إعدادات المشغل ثم حاول مجدداً."
+msgid "Shortcuts Reset"
+msgstr "إعادة تعيين الاختصارات"
 
 msgid ""
-"Security Notice:\n"
-"• Permission is strictly READ-ONLY (youtube.readonly).\n"
-"• Tokens are encrypted with Windows DPAPI and tied to your Windows account.\n"
-"• This add-on cannot upload, delete, or modify any of your YouTube content.\n"
+"Shortcuts successfully exported to:\n"
+"%s"
 msgstr ""
-"تنبيه أمان:\n"
-"• الصلاحية محصورة في القراءة فقط (youtube.readonly).\n"
-"• التوكنات مشفرة بخوارزمية Windows DPAPI ومربوطة بحساب ويندوز الخاص بك.\n"
-"• لا تستطيع هذه الإضافة رفع أو حذف أو تعديل أي محتوى في حسابك.\n"
-
-msgid "Load more items..."
-msgstr "تحميل المزيد من العناصر..."
-
-msgid "— [Load more items...] —"
-msgstr "— [تحميل المزيد من العناصر...] —"
-
-msgid "Loading more items..."
-msgstr "جاري تحميل المزيد من العناصر..."
-
-msgid "%d more items loaded"
-msgstr "تم تحميل %d عناصر إضافية"
-
-msgid "No more items found."
-msgstr "لا توجد عناصر إضافية."
-
-msgid "%d more items loaded: %s"
-msgstr "تم تحميل %d عناصر إضافية: %s"
-
-msgid "Loading more items, please wait..."
-msgstr "جاري تحميل المزيد من العناصر، يرجى الانتظار..."
-
-msgid "&Category:"
-msgstr "&الفئة:"
-
-msgid "General & Playback"
-msgstr "الخيارات العامة والتشغيل"
-
-msgid "Online Streaming & SponsorBlock"
-msgstr "البث عبر الإنترنت وتجاوز الإعلانات"
+"تم تصدير الاختصارات بنجاح إلى:\n"
+"%s"
 
 msgid "Shortcuts, Updates & About"
 msgstr "اختصارات المفاتيح والتحديثات والمعلومات"
 
-msgid "Calculate remaining &time based on current playback speed"
-msgstr "حساب الوقت المتبقي وفق سرعة التشغيل الحالية"
+msgid "Shorts"
+msgstr "مقاطع Shorts"
 
-msgid "Original remaining time: %s"
-msgstr "الوقت المتبقي الأصلي للمسار: %s"
+msgid "Shorts from your subscriptions"
+msgstr "مقاطع Shorts من اشتراكاتي"
 
-msgid "Skip &sponsors and paid advertisements"
-msgstr "تخطي &الرعاة والإعلانات المدفوعة"
+msgid "Shorts of %s"
+msgstr "مقاطع Shorts لقناة %s"
+
+msgid "Show Shortcuts Help Dialog"
+msgstr "عرض نافذة مساعدة الاختصارات"
+
+msgid "Show this keyboard shortcuts help window."
+msgstr "عرض نافذة المساعدة هذه بكافة الاختصارات."
+
+msgid "Shuffle disabled"
+msgstr "تم تعطيل التشغيل العشوائي"
+
+msgid "Shuffle enabled"
+msgstr "تم تفعيل التشغيل العشوائي"
+
+msgid "Silence speech immediately while in Player Mode."
+msgstr "إسكات نطق NVDA فوراً أثناء التواجد في وضع المشغل."
 
 msgid "Skip &intro animations and intermission breaks"
 msgstr "تخطي شارات &البداية والمقدمات"
@@ -1394,199 +1350,11 @@ msgstr "تخطي شارات &البداية والمقدمات"
 msgid "Skip &outro credits and end cards"
 msgstr "تخطي شارات &النهاية والخاتمة"
 
-msgid "Skip self-&promotions and unpaid merchandise"
-msgid "French"
-msgstr "الفرنسية"
-
-msgid "Spanish"
-msgstr "الإسبانية"
-
-msgid "German"
-msgstr "الألمانية"
-
-msgid "Italian"
-msgstr "الإيطالية"
-
-msgid "Portuguese"
-msgstr "البرتغالية"
-
-msgid "Russian"
-msgstr "الروسية"
-
-msgid "Japanese"
-msgstr "اليابانية"
-
-msgid "Chinese"
-msgstr "الصينية"
-
-msgid "Chinese (Simplified)"
-msgstr "الصينية (المبسطة)"
-
-msgid "Chinese (Traditional)"
-msgstr "الصينية (التقليدية)"
-
-msgid "Hindi"
-msgstr "الهندية"
-
-msgid "Turkish"
-msgstr "التركية"
-
-msgid "Korean"
-msgstr "الكورية"
-
-msgid "&Follow Developer on Telegram (Mahmoud Abo El Fotouh)..."
-msgstr "&متابعة المطور على تيليجرام (محمود أبو الفتوح)..."
-
-msgid "&Delete Assigned Shortcut"
-msgstr "&حذف الاختصار المعين"
-
-msgid "Shortcut deleted for %s"
-msgstr "تم حذف الاختصار للإجراء %s"
-
-msgid "Replaying from beginning"
-msgstr "إعادة التشغيل من البداية"
-
-msgid "Shorts"
-msgstr "مقاطع Shorts"
-
-msgid "Shorts of %s"
-msgstr "مقاطع Shorts لقناة %s"
-
-msgid "Shorts from your subscriptions"
-msgstr "مقاطع Shorts من اشتراكاتي"
-
-msgid "Trending Shorts worldwide"
-msgstr "مقاطع Shorts الرائجة عالمياً"
-
-msgid "Sync YouTube &watch history and playback progress with your account"
-msgstr "مزامنة &سجل المشاهدة وتقدم التشغيل مع حساب يوتيوب"
-
-msgid "Trending Shorts (popular in your region)"
-msgstr "مقاطع Shorts الرائجة (الأكثر تداولاً في منطقتك)"
-
-msgid "Trending videos (popular in your region)"
-msgstr "الفيديوهات الرائجة (الأكثر تداولاً في منطقتك)"
-
-msgid "New music releases & charts"
-msgstr "أحدث الإصدارات الموسيقية والقوائم"
-
-msgid "Google YouTube Account - Read-Only"
-msgstr "حساب جوجل يوتيوب - قراءة فقط"
-
-msgid "Google YouTube Account &Sign In (Secure Read-Only)..."
-msgstr "تسجيل الدخول بحساب &جوجل يوتيوب (قراءة فقط آمنة)..."
-
-msgid "Sign In with Google (Browser)..."
-msgstr "تسجيل الدخول عبر جوجل (المتصفح)..."
-
-msgid "Sign Out"
-msgstr "تسجيل الخروج"
-
-msgid ""
-"Security Notice:\n"
-"• Permission is strictly READ-ONLY (youtube.readonly).\n"
-"• Tokens are encrypted with Windows DPAPI and tied to your Windows account.\n"
-"• This add-on cannot upload, delete, or modify any of your YouTube content.\n"
-msgstr ""
-"تنبيه أمان:\n"
-"• الصلاحية محصورة في القراءة فقط (youtube.readonly).\n"
-"• التوكنات مشفرة بخوارزمية Windows DPAPI ومربوطة بحساب ويندوز الخاص بك.\n"
-"• لا تستطيع هذه الإضافة رفع أو حذف أو تعديل أي محتوى في حسابك.\n"
-
-msgid "Status: Signed In as '%s' (Read-Only)"
-msgstr "الحالة: مسجل الدخول باسم '%s' (قراءة فقط)"
-
-msgid "Status: Not Signed In"
-msgstr "الحالة: غير مسجل الدخول"
-
-msgid "Opening browser... Please grant permission in your browser."
-msgstr "جاري فتح المتصفح... يرجى منح الإذن في المتصفح."
-
-msgid "Opening browser for Google authorization, please grant permission..."
-msgstr "جاري فتح المتصفح لمصادقة جوجل، يرجى الموافقة على الإذن..."
-
-msgid "Successfully signed in to YouTube as %s"
-msgstr "تم تسجيل الدخول إلى يوتيوب بنجاح باسم %s"
-
-msgid "Successfully signed in to YouTube!"
-msgstr "تم تسجيل الدخول إلى يوتيوب بنجاح!"
-
-msgid "Sign in failed: %s"
-msgstr "فشل تسجيل الدخول: %s"
-
-msgid "Signed out and cleared credentials successfully."
-msgstr "تم تسجيل الخروج ومسح بيانات الاعتماد بنجاح."
-
-msgid "My Playlists (Google Account)"
-msgstr "قوائم التشغيل الخاصة بي (حساب جوجل)"
-
-msgid "My Subscriptions (Google Account)"
-msgstr "اشتراكاتي (حساب جوجل)"
-
-msgid "Liked Videos (Google Account)"
-msgstr "الفيديوهات المعجب بها (حساب جوجل)"
-
-msgid "This section requires YouTube sign-in. Sign in with Google or enable sign-in cookies in HeadlessPlayer settings, then try again."
-msgstr "يتطلب هذا القسم تسجيل الدخول إلى YouTube. سجل دخولك بحساب Google أو فعل الكوكيز في إعدادات المشغل ثم حاول مجدداً."
-
-msgid ""
-"Security Notice:\n"
-"• Permission is strictly READ-ONLY (youtube.readonly).\n"
-"• Tokens are encrypted with Windows DPAPI and tied to your Windows account.\n"
-"• This add-on cannot upload, delete, or modify any of your YouTube content.\n"
-msgstr ""
-"تنبيه أمان:\n"
-"• الصلاحية محصورة في القراءة فقط (youtube.readonly).\n"
-"• التوكنات مشفرة بخوارزمية Windows DPAPI ومربوطة بحساب ويندوز الخاص بك.\n"
-"• لا تستطيع هذه الإضافة رفع أو حذف أو تعديل أي محتوى في حسابك.\n"
-
-msgid "Load more items..."
-msgstr "تحميل المزيد من العناصر..."
-
-msgid "— [Load more items...] —"
-msgstr "— [تحميل المزيد من العناصر...] —"
-
-msgid "Loading more items..."
-msgstr "جاري تحميل المزيد من العناصر..."
-
-msgid "%d more items loaded"
-msgstr "تم تحميل %d عناصر إضافية"
-
-msgid "No more items found."
-msgstr "لا توجد عناصر إضافية."
-
-msgid "%d more items loaded: %s"
-msgstr "تم تحميل %d عناصر إضافية: %s"
-
-msgid "Loading more items, please wait..."
-msgstr "جاري تحميل المزيد من العناصر، يرجى الانتظار..."
-
-msgid "&Category:"
-msgstr "&الفئة:"
-
-msgid "General & Playback"
-msgstr "الخيارات العامة والتشغيل"
-
-msgid "Online Streaming & SponsorBlock"
-msgstr "البث عبر الإنترنت وتجاوز الإعلانات"
-
-msgid "Shortcuts, Updates & About"
-msgstr "اختصارات المفاتيح والتحديثات والمعلومات"
-
-msgid "Calculate remaining &time based on current playback speed"
-msgstr "حساب الوقت المتبقي وفق سرعة التشغيل الحالية"
-
-msgid "Original remaining time: %s"
-msgstr "الوقت المتبقي الأصلي للمسار: %s"
-
 msgid "Skip &sponsors and paid advertisements"
 msgstr "تخطي &الرعاة والإعلانات المدفوعة"
 
-msgid "Skip &intro animations and intermission breaks"
-msgstr "تخطي شارات &البداية والمقدمات"
-
-msgid "Skip &outro credits and end cards"
-msgstr "تخطي شارات &النهاية والخاتمة"
+msgid "Skip non-&music sections in music videos"
+msgstr "تخطي المقاطع غير &الموسيقية في الأغاني"
 
 msgid "Skip self-&promotions and unpaid merchandise"
 msgstr "تخطي الترويج &الذاتي والمنتجات"
@@ -1594,429 +1362,270 @@ msgstr "تخطي الترويج &الذاتي والمنتجات"
 msgid "Skip subscribe and like inter&action reminders"
 msgstr "تخطي تذكيرات &التفاعل والاشتراك"
 
-msgid "Skip non-&music sections in music videos"
-msgstr "تخطي المقاطع غير &الموسيقية في الأغاني"
+msgid "Skipped %s"
+msgstr "تم تخطي %s"
 
-msgid "Remember and &restore last playback session on reopening"
-msgstr "تذكر واستعادة &جلسة التشغيل الأخيرة عند إعادة الفتح"
+msgid "Slow & precise seek (+/- %s)."
+msgstr "تقديم/ترجيع بطيء ودقيق (+/- %s)."
 
-msgid "Streaming audio &quality:"
-msgstr "&جودة صوت البث:"
+msgid "Slow / Precise Seek Backward (Alt+Left)"
+msgstr "تأخير دقيق وبطيء (Alt + سهم يسار)"
 
-msgid "High (Opus ~160 kbps - Best fidelity)"
-msgstr "عالي (Opus ~160 kbps - أعلى نقاء)"
+msgid "Slow / Precise Seek Forward (Alt+Right)"
+msgstr "تقديم دقيق وبطيء (Alt + سهم يمين)"
 
-msgid "Medium (AAC ~128 kbps - Standard)"
-msgstr "متوسط (AAC ~128 kbps - قياسي)"
+msgid "Spanish"
+msgstr "الإسبانية"
 
-msgid "Low (~64 kbps - Data saver)"
-msgstr "منخفض (~64 kbps - موفر للبيانات)"
+msgid "Speak elapsed playback time (accounts for playback speed)."
+msgstr "نطق الوقت المنقضي من التشغيل (يحسب بناءً على سرعة التشغيل)."
 
-msgid "All Actions"
-msgstr "كافة الإجراءات"
+msgid "Speak Elapsed Time"
+msgstr "نطق الوقت المنقضي"
 
-msgid "Playback & Core Controls"
-msgstr "التشغيل والتحكم الأساسي"
+msgid "Speak Full Media Info"
+msgstr "نطق معلومات الوسائط كاملة"
 
-msgid "Navigation & Chapters"
-msgstr "التنقل والفصول"
+msgid "Speak full media information (title, duration, playlist index)."
+msgstr "نطق معلومات الوسائط كاملة (الاسم، المدة، ورقم المقطع)."
 
-msgid "Audio, Volume & Speed"
-msgstr "الصوت ومستوى الصوت والسرعة"
-
-msgid "Files, Streaming & Information"
-msgstr "الملفات والبث والمعلومات"
-
-msgid "&Filter Actions by Category:"
-msgstr "&تصفية الإجراءات حسب الفئة:"
-
-msgid "The shortcut '%s' is already assigned to '%s'.\n\nDo you want to reassign it to '%s' and remove it from '%s'?"
-msgstr "الاختصار '%s' معين بالفعل للإجراء '%s'.\n\nهل تريد إعادة تعيينه للإجراء '%s' وإزالته من '%s'؟"
-
-msgid "Shortcut Conflict"
-msgstr "تعارض في الاختصار"
-
-msgid "&Export Shortcuts (JSON)..."
-msgstr "&تصدير الاختصارات (JSON)..."
-
-msgid "&Import Shortcuts (JSON)..."
-msgstr "&استيراد الاختصارات (JSON)..."
-
-msgid "Export Shortcuts to JSON File"
-msgstr "تصدير الاختصارات إلى ملف JSON"
-
-msgid "Import Shortcuts from JSON File"
-msgstr "استيراد الاختصارات من ملف JSON"
-
-msgid "JSON Files (*.json)|*.json|All Files (*.*)|*.*"
-msgstr "ملفات JSON (*.json)|*.json|كافة الملفات (*.*)|*.*"
-
-msgid "Shortcuts successfully exported to:\n%s"
-msgstr "تم تصدير الاختصارات بنجاح إلى:\n%s"
-
-msgid "Export Successful"
-msgstr "نجح التصدير"
-
-msgid "Failed to export shortcuts:\n%s"
-msgstr "فشل تصدير الاختصارات:\n%s"
-
-msgid "Export Error"
-msgstr "خطأ في التصدير"
-
-msgid "Successfully imported %d shortcuts from:\n%s"
-msgstr "تم استيراد %d اختصار بنجاح من:\n%s"
-
-msgid "Import Successful"
-msgstr "نجح الاستيراد"
-
-msgid "Failed to import shortcuts:\n%s"
-msgstr "فشل استيراد الاختصارات:\n%s"
-
-msgid "Import Error"
-msgstr "خطأ في الاستيراد"
-
-msgid "Invalid shortcuts format: expected a JSON object."
-msgstr "تنسيق الاختصارات غير صالح: يُتوقع كائن JSON."
-
-msgid "This is a 32-bit system; the bundled media player requires a 64-bit version of Windows."
-msgstr "هذا النظام 32 بت والمشغل المدمج يتطلب نظام تشغيل ويندوز 64 بت."
-
-msgid "pressed twice"
-msgstr "مرتين متتاليتين"
-
-msgid "Speak remaining playback time (accounts for playback speed)."
-msgstr "نطق الوقت المتبقي للتشغيل (مع حساب سرعة التشغيل)."
+msgid "Speak original elapsed playback time (unscaled by speed)."
+msgstr "نطق الوقت المنقضي الأصلي من التشغيل (بدون تعديل بالسرعة)."
 
 msgid "Speak original remaining playback time (unscaled by speed)."
 msgstr "نطق الوقت المتبقي الأصلي للتشغيل (بدون حساب السرعة)."
 
-msgid "Loading stream, please wait..."
-msgstr "جاري تحميل البث، يرجى الانتظار..."
+msgid "Speak remaining playback time (accounts for playback speed)."
+msgstr "نطق الوقت المتبقي للتشغيل (مع حساب سرعة التشغيل)."
 
-msgid "Reconnecting..."
-msgstr "جاري إعادة الاتصال..."
+msgid "Speak Remaining Time"
+msgstr "نطق الوقت المتبقي"
+
+msgid "Speech & Announcements"
+msgstr "النطق والإعلانات الصوتية"
+
+msgid "Speech Feedback & Announcements"
+msgstr "التغذية الصوتية والإعلانات المنطوقة"
+
+msgid "SPEECH QUERIES:"
+msgstr "استعلامات النطق:"
+
+msgid "Speed %.2fx"
+msgstr "السرعة %.2fx"
+
+msgid "Speed %.2fx (Preset)"
+msgstr "السرعة %.2fx (إعداد مسبق)"
+
+msgid "Speed reset to 1.0x"
+msgstr "تمت إعادة تعيين السرعة إلى 1.0x"
+
+msgid "sponsor segment"
+msgstr "إعلان الراعي"
+
+msgid "SponsorBlock (Auto-Skip YouTube Ads & Sponsors)"
+msgstr "SponsorBlock (تخطي إعلانات الرعاة والترويج في يوتيوب تلقائياً)"
+
+msgid "Start of media"
+msgstr "بداية الوسائط"
 
 msgid "Still loading, please wait..."
 msgstr "جاري التحميل، يرجى الانتظار..."
 
-msgid "YouTube requires sign-in verification for this content. Please configure valid sign-in cookies in HeadlessPlayer settings."
-msgstr "يتطلب يوتيوب التحقق من تسجيل الدخول لتشغيل هذا المحتوى. يرجى ضبط كوكيز تسجيل دخول صالحة في إعدادات المشغل الخفي."
+msgid "Stop and rewind to beginning"
+msgstr "إيقاف التشغيل والرجوع للبداية"
 
-msgid "No items found. Your YouTube cookies appear to be missing login credentials. Please export cookies from a standard browser window, not Incognito mode."
-msgstr "لم يتم العثور على أية عناصر. يبدو أن ملف كوكيز يوتيوب يفتقد إلى بيانات تسجيل الدخول. يرجى تصدير الكوكيز من نافذة متصفح عادية وليست مخفية."
+msgid "Stop playback and rewind to beginning."
+msgstr "إيقاف التشغيل وإرجاع المقطع إلى البداية."
 
-msgid "No items found. Sign-in cookies may be invalid or expired. Please verify your cookies in settings."
-msgstr "لم يتم العثور على أية عناصر. قد تكون كوكيز تسجيل الدخول غير صالحة أو منتهية. يرجى التحقق من الكوكيز في الإعدادات."
+msgid "Stopped"
+msgstr "تم الإيقاف"
 
-msgid "Notice: The selected cookies file does not appear to contain YouTube authentication tokens.\n\nFor YouTube account feeds (Recommendations, Subscriptions, History) to work reliably, please export cookies while signed in to your YouTube account in your browser."
-msgstr "تنبيه: يبدو أن ملف الكوكيز المختار لا يحتوي على توكنات مصادقة يوتيوب.\n\nلكي تعمل خلاصات حساب يوتيوب (المقترحات، الاشتراكات، السجل) بثبات، يرجى تصدير الكوكيز بعد تسجيل الدخول إلى حسابك في المتصفح."
-
-msgid "Cookies Verification"
-msgstr "التحقق من الكوكيز"
-
-
-
-msgid "Multi-language audio tracks are not available in InnerTube mode. Using original audio."
-msgstr "مسارات الصوت متعددة اللغات غير متاحة في وضع InnerTube. يتم استخدام مسار الصوت الأصلي."
-
-msgid "InnerTube Direct API (Fast, Lightweight, Device Code)"
-msgstr "محرك InnerTube المباشر (سريع، خفيف، ويدعم كود الجهاز)"
-
-msgid "yt-dlp Engine (Universal compatibility)"
-msgstr "محرك yt-dlp (توافقية شاملة)"
-
-msgid "Preferred YouTube streaming &engine:"
-msgstr "محرك بث يوتيوب ال&مفضل:"
-
-msgid "Check for &Updates..."
-msgstr "التحقق من الت&حديثات..."
-
-msgid "&Test streaming engine now..."
-msgstr "ا&ختبار محرك البث الآن..."
-
-msgid "YouTube Account (OAuth2 Device Code Sign-In)"
-msgstr "حساب يوتيوب (تسجيل الدخول برمز الجهاز OAuth2)"
-
-msgid "Sign &in to YouTube (Device Code)..."
-msgstr "تسجيل ال&دخول إلى يوتيوب (رمز الجهاز)..."
-
-msgid "Sign &out of YouTube"
-msgstr "تسجيل ال&خروج من يوتيوب"
-
-msgid "Account status: Signed in to YouTube (Device Code)"
-msgstr "حالة الحساب: تم تسجيل الدخول إلى يوتيوب (رمز الجهاز)"
-
-msgid "Account status: Not signed in"
-msgstr "حالة الحساب: غير مسجل الدخول"
-
-msgid "The streaming engine is unavailable: curl.exe was not found on this computer."
-msgstr "محرك البث غير متاح: لم يتم العثور على أداة curl.exe على هذا الكمبيوتر."
-
-msgid "Sign in to YouTube"
-msgstr "تسجيل الدخول إلى يوتيوب"
-
-msgid "Signed out of YouTube."
-msgstr "تم تسجيل الخروج من يوتيوب."
-
-msgid "Testing..."
-msgstr "جاري الاختبار..."
-
-msgid "Testing the streaming engine, please wait..."
-msgstr "جاري اختبار محرك البث، يرجى الانتظار..."
-
-msgid "Checking curl..."
-msgstr "التحقق من curl..."
-
-msgid "Contacting YouTube..."
-msgstr "الاتصال بيوتيوب..."
-
-msgid "Resolving a test stream..."
-msgstr "استخراج رابط بث تجريبي..."
-
-msgid "The streaming engine is working properly.\n"
-"%s"
-msgstr "محرك البث يعمل بشكل سليم.\n"
-"%s"
-
-msgid "Engine Test Succeeded"
-msgstr "نجح اختبار المحرك"
-
-msgid "The streaming engine test failed:\n"
-"%s"
-msgstr "فشل اختبار محرك البث:\n"
-"%s"
-
-msgid "Engine Test Failed"
-msgstr "فشل اختبار المحرك"
-
-msgid "Requesting a sign-in code from Google, please wait..."
-msgstr "جاري طلب رمز تسجيل الدخول من Google، يرجى الانتظار..."
-
-msgid "Your sign-in &code:"
-msgstr "ر&مز تسجيل الدخول الخاص بك:"
-
-msgid "Open this &address in any browser:"
-msgstr "افتح هذا ال&عنوان في أي متصفح:"
-
-msgid "&Open browser and copy code"
-msgstr "&فتح المتصفح ونسخ الرمز"
-
-msgid "Code %s copied to the clipboard. Paste it in the browser page and approve access, then return here."
-msgstr "تم نسخ الرمز %s إلى الحافظة. الصقه في صفحة المتصفح ووافق على الإذن، ثم عد إلى هنا."
-
-msgid "Could not start the sign-in. Check your internet connection and try again."
-msgstr "تعذر بدء تسجيل الدخول. تحقق من اتصالك بالإنترنت وحاول مرة أخرى."
-
-msgid "Signed in to YouTube successfully."
-msgstr "تم تسجيل الدخول إلى يوتيوب بنجاح."
-
-msgid "The sign-in code expired. Please try again."
-msgstr "انتهت صلاحية رمز تسجيل الدخول. يرجى المحاولة مرة أخرى."
-
-msgid "Access was denied in the browser."
-msgstr "تم رفض الوصول من خلال المتصفح."
-
-msgid "Sign-in failed: %s"
-msgstr "فشل تسجيل الدخول: %s"
-
-msgid "Open the address below in any browser (on this or another device), sign in to your Google account and enter the code. This window signs you in automatically once you approve."
-msgstr "افتح العنوان أدناه في أي متصفح (على هذا الجهاز أو جهاز آخر)، وسجل الدخول بحساب Google ثم أدخل الرمز. ستقوم هذه النافذة بتسجيل دخولك تلقائياً بمجرد الموافقة."
-
-msgid "Your code is %s. Press the Open browser button, then enter the code and approve access."
-msgstr "رمزك هو %s. اضغط على زر فتح المتصفح، ثم أدخل الرمز ووافق على الوصول."
-
-msgid "yt-dlp Engine & Sign-In Cookies"
-msgstr "محرك yt-dlp وكوكيز تسجيل الدخول"
-
-msgid "Checking yt-dlp engine..."
-msgstr "فحص محرك yt-dlp..."
-
-msgid "Extracting test stream..."
-msgstr "استخراج رابط بث تجريبي..."
-
-msgid "This section requires YouTube sign-in. Use Device Code sign-in in HeadlessPlayer settings, then try again."
-msgstr "يتطلب هذا القسم تسجيل الدخول إلى يوتيوب. استخدم تسجيل الدخول برمز الجهاز في إعدادات HeadlessPlayer، ثم حاول مرة أخرى."
-
-msgid "Please complete YouTube sign-in in HeadlessPlayer settings."
-msgstr "يرجى إكمال تسجيل الدخول إلى يوتيوب في إعدادات HeadlessPlayer."
-
-msgid "Could not connect to YouTube. Please check your internet connection or re-authenticate your YouTube account in HeadlessPlayer settings."
-msgstr "تعذر الاتصال بيوتيوب. يرجى التحقق من اتصال الإنترنت أو إعادة تسجيل الدخول لحساب يوتيوب في إعدادات HeadlessPlayer."
-
-msgid "Copy Direct Audio Link of Current Stream"
-msgstr "نسخ الرابط المباشر لصوت البث الحالي"
-
-msgid "Export / Download Clip (A-B selection or whole item)"
-msgstr "تصدير / تحميل مقطع (التحديد بين A و B أو العنصر كاملًا)"
-
-msgid "Quick Export with remembered settings"
-msgstr "تصدير سريع بالإعدادات المحفوظة"
-
-msgid "Downloads & Clip Export"
-msgstr "التحميل وتصدير المقاطع"
-
-msgid "Clip Export & Downloads (D / Shift+D)"
-msgstr "تصدير المقاطع والتحميل (D / Shift+D)"
-
-msgid "Default download &folder (empty = Downloads\\\\HeadlessPlayer):"
-msgstr "&مجلد التحميل الافتراضي (فارغ = Downloads\\\\HeadlessPlayer):"
-
-msgid "&Browse for folder..."
-msgstr "ا&ستعراض لاختيار مجلد..."
-
-msgid "Audio MP3"
-msgstr "صوت MP3"
-
-msgid "Audio M4A / AAC"
-msgstr "صوت M4A / AAC"
-
-msgid "Video MP4"
-msgstr "فيديو MP4"
-
-msgid "Default export f&ormat:"
-msgstr "&صيغة التصدير الافتراضية:"
-
-msgid "Highest quality"
-msgstr "أعلى جودة"
+msgid "Stops Headless Media Player playback from anywhere."
+msgstr "إيقاف تشغيل المشغل الخفي من أي مكان في النظام."
 
 msgid "Story optimized (small file)"
 msgstr "مناسب للستوري (حجم صغير)"
 
-msgid "Default &quality:"
-msgstr "ال&جودة الافتراضية:"
+msgid "Story optimized (small file, fast upload)"
+msgstr "مناسب للستوري (حجم صغير، رفع سريع)"
 
-msgid "Automatically &copy the saved file path to the clipboard"
-msgstr "&نسخ مسار الملف المحفوظ إلى الحافظة تلقائيًا"
+msgid "Streaming audio &quality:"
+msgstr "&جودة صوت البث:"
 
-msgid "D: export the A-B selection (or the whole item) as MP3, M4A or MP4 video; if only point A is set, the current position becomes point B. Shift+D: quick export with the settings remembered from the last dialog. Shift+V: copy the direct audio link of the playing YouTube item. Conversion is done by the bundled mpv encoder."
-msgstr "D: تصدير التحديد بين A و B (أو العنصر كاملًا) بصيغة MP3 أو M4A أو فيديو MP4؛ وإن كانت النقطة A وحدها محددة يصبح الموضع الحالي هو النقطة B. Shift+D: تصدير سريع بالإعدادات المحفوظة من آخر نافذة. Shift+V: نسخ الرابط المباشر لصوت عنصر يوتيوب الذي يعمل. التحويل يتم عبر محرك الترميز في mpv المرفق."
+msgid "Streaming engine (yt-dlp) version: %s"
+msgstr "إصدار محرك البث (yt-dlp): %s"
 
-msgid "Select download folder"
-msgstr "اختر مجلد التحميل"
+msgid "Streaming engine (yt-dlp) version: %s (restart NVDA to activate)"
+msgstr "إصدار محرك البث (yt-dlp): %s (أعد تشغيل NVDA للتفعيل)"
 
-msgid "Copy the direct audio media link of the playing YouTube item."
-msgstr "نسخ الرابط المباشر لملف الصوت لعنصر يوتيوب الذي يعمل."
+msgid "subscribe reminder"
+msgstr "تذكير الاشتراك والتفاعل"
 
-msgid "Export the A-B selection (or the whole item) as MP3, M4A or MP4 video; with only point A set, the current position becomes B."
-msgstr "تصدير التحديد بين A و B (أو العنصر كاملًا) بصيغة MP3 أو M4A أو فيديو MP4؛ وإن كانت A وحدها محددة يصبح الموضع الحالي هو B."
+msgid "Subscribed channels"
+msgstr "قنواتك المشترك فيها"
 
-msgid "Quick export of the A-B selection with the remembered settings, no dialog."
-msgstr "تصدير سريع للتحديد بين A و B بالإعدادات المحفوظة بدون نافذة."
-
-msgid "No online stream is playing."
-msgstr "لا يوجد بث من الإنترنت قيد التشغيل."
+msgid ""
+"Successfully imported %d shortcuts from:\n"
+"%s"
+msgstr ""
+"تم استيراد %d اختصار بنجاح من:\n"
+"%s"
 
 msgid "The direct audio link is not available yet."
 msgstr "الرابط المباشر للصوت غير متاح بعد."
 
-msgid "Direct audio link copied to clipboard."
-msgstr "تم نسخ الرابط المباشر للصوت إلى الحافظة."
+msgid "The media player could not start because a required system library is missing on this computer."
+msgstr "تعذر بدء تشغيل مشغل الوسائط بسبب فقدان مكتبة نظام مطلوبة على هذا الكمبيوتر."
 
-msgid "An export is already in progress, please wait."
-msgstr "هناك عملية تصدير قيد التنفيذ بالفعل، الرجاء الانتظار."
+msgid ""
+"The shortcut '%s' is already assigned to '%s'.\n"
+"\n"
+"Do you want to reassign it to '%s' and remove it from '%s'?"
+msgstr ""
+"الاختصار '%s' معين بالفعل للإجراء '%s'.\n"
+"\n"
+"هل تريد إعادة تعيينه للإجراء '%s' وإزالته من '%s'؟"
 
-msgid "Live streams cannot be exported."
-msgstr "لا يمكن تصدير البث المباشر."
+msgid "The streaming engine failed to load. Try updating it from HeadlessPlayer settings."
+msgstr "فشل تحميل محرك البث. جرّب تحديثه من إعدادات المشغل الخفي."
 
-msgid "End point set at the current position."
-msgstr "تم تثبيت نقطة النهاية عند الموضع الحالي."
+msgid "The streaming engine is already up to date (version %s)."
+msgstr "محرك البث محدّث بالفعل (الإصدار %s)."
 
-msgid "No A-B selection: the whole item will be downloaded. Press Escape and use [ and ] to select a part instead."
-msgstr "لا يوجد تحديد بين A و B: سيتم تحميل العنصر كاملًا. اضغط Escape واستخدم [ و ] لتحديد جزء بدلًا من ذلك."
+msgid ""
+"The streaming engine was updated successfully to version %s.\n"
+"Please restart NVDA to start using the new version."
+msgstr ""
+"تم تحديث محرك البث بنجاح إلى الإصدار %s.\n"
+"الرجاء إعادة تشغيل NVDA لبدء استخدام الإصدار الجديد."
 
-msgid "No selection. Preparing to download the whole item; use [ and ] to select a part."
-msgstr "لا يوجد تحديد. جارٍ التجهيز لتحميل العنصر كاملًا؛ استخدم [ و ] لتحديد جزء."
+msgid "This is a 32-bit system; the bundled media player requires a 64-bit version of Windows."
+msgstr "هذا النظام 32 بت والمشغل المدمج يتطلب نظام تشغيل ويندوز 64 بت."
 
-msgid "No A-B selection: the whole file will be converted. Press Escape and use [ and ] to select a part instead."
-msgstr "لا يوجد تحديد بين A و B: سيتم تحويل الملف كاملًا. اضغط Escape واستخدم [ و ] لتحديد جزء بدلًا من ذلك."
+msgid "This section requires YouTube sign-in. Enable sign-in cookies from your browser in HeadlessPlayer settings, then try again."
+msgstr "هذا القسم يتطلب تسجيل الدخول إلى يوتيوب. فعّل كوكيز تسجيل الدخول من متصفحك في إعدادات المشغل الخفي ثم حاول مجددًا."
 
-msgid "No selection. The whole file will be exported; use [ and ] to select a part."
-msgstr "لا يوجد تحديد. سيتم تصدير الملف كاملًا؛ استخدم [ و ] لتحديد جزء."
+msgid "Tip: export cookies.txt while signed in to YouTube in a standard (non-incognito) browser window using an extension such as 'Get cookies.txt LOCALLY' (Chrome/Edge) or 'cookies.txt' (Firefox). Do not export from Incognito mode as private windows omit login session credentials. The manual file takes priority over the browser choice above."
+msgstr "تلميح: قم بتصدير ملف cookies.txt أثناء تسجيل الدخول إلى YouTube في نافذة متصفح قياسية (غير متخفية) باستخدام إضافة مثل 'Get cookies.txt LOCALLY' (Chrome/Edge) أو 'cookies.txt' (Firefox). لا تقم بالتصدير من وضع التصفح المتخفي لأن النوافذ الخاصة تستبعد بيانات جلسة تسجيل الدخول. الملف اليدوي له الأولوية على خيار المتصفح أعلاه."
 
-msgid "Preparing export from %(a)s to %(b)s..."
-msgstr "جارٍ تجهيز التصدير من %(a)s إلى %(b)s..."
+msgid "Title: %s, Duration: %s, Track %d of %d"
+msgstr "العنوان: %s، المدة الإجمالية: %s، المسار %d من %d"
 
-msgid "Set point A (and optionally B) first, then press Shift+D for quick export."
-msgstr "حدّد النقطة A (والنقطة B اختياريًا) أولًا، ثم اضغط Shift+D للتصدير السريع."
+msgid "Toggle Auto-Next"
+msgstr "تبديل التشغيل التلقائي للتالي"
 
-msgid "Quick export in progress..."
-msgstr "جاري التصدير السريع..."
+msgid "Toggle Auto-Next track playback."
+msgstr "التبديل بين تشغيل المقطع التالي تلقائياً أو إيقافه."
 
-msgid "Quick export failed: %s"
-msgstr "فشل التصدير السريع: %s"
+msgid "Toggle playlist shuffle / random mode."
+msgstr "التبديل بين وضع التشغيل العشوائي والترتيبي."
 
-msgid "Exporting %(fmt)s clip in the background..."
-msgstr "جارٍ تصدير المقطع بصيغة %(fmt)s في الخلفية..."
+msgid "Toggle Repeat Mode"
+msgstr "تبديل وضع التكرار"
 
-msgid "Downloading and converting the whole item to %(fmt)s in the background..."
-msgstr "جارٍ تحميل العنصر كاملًا وتحويله إلى %(fmt)s في الخلفية..."
+msgid "Toggle repeat: A-B loop (if marked) or cycle Single Track / Playlist / Off."
+msgstr "التبديل بين تكرار المقطع A-B (إن وجد) أو تكرار المقطع الحالي / القائمة كاملة / إيقاف."
 
-msgid "Export failed: %s"
-msgstr "فشل التصدير: %s"
+msgid "Toggle Shuffle"
+msgstr "تبديل الوضع العشوائي"
 
-msgid "Clip saved successfully as %s in the downloads folder. It is copied to the clipboard."
-msgstr "تم حفظ المقطع بنجاح باسم %s في مجلد التنزيلات. تم نسخه إلى الحافظة."
+msgid "Toggles Headless Media Player keyboard capture mode."
+msgstr "تبديل تشغيل وضع التقاط لوحة المفاتيح للمشغل الخفي."
 
-msgid "Clip saved successfully as %s in the downloads folder."
-msgstr "تم حفظ المقطع بنجاح باسم %s في مجلد التنزيلات."
+msgid "Track %d of %d: %s"
+msgstr "المسار %d من %d: %s"
 
-msgid "Clip saved successfully as %(file)s in %(folder)s. It is copied to the clipboard."
-msgstr "تم حفظ المقطع بنجاح باسم %(file)s في مجلد %(folder)s. تم نسخه إلى الحافظة."
+msgid "Track end"
+msgstr "نهاية المقطع"
 
-msgid "Clip saved successfully as %(file)s in %(folder)s."
-msgstr "تم حفظ المقطع بنجاح باسم %(file)s في مجلد %(folder)s."
+msgid "Trending music (Top 100 songs worldwide)"
+msgstr "الموسيقى الرائجة (أفضل 100 أغنية عالميًا)"
 
-msgid "Audio MP3 (works everywhere)"
-msgstr "صوت MP3 (يعمل في كل مكان)"
+msgid "Turkish"
+msgstr "التركية"
 
-msgid "Audio M4A / AAC (high purity)"
-msgstr "صوت M4A / AAC (نقاء عالٍ)"
+msgid "Ultrafast seek (+/- %s)."
+msgstr "تقديم/ترجيع فائق السرعة (+/- %s)."
+
+msgid "Ultrafast Seek Backward (Shift+Left)"
+msgstr "تأخير فائق السرعة (Shift + سهم يسار)"
+
+msgid "Ultrafast Seek Forward (Shift+Right)"
+msgstr "تقديم فائق السرعة (Shift + سهم يمين)"
+
+msgid "Unmuted"
+msgstr "إلغاء كتم الصوت"
+
+msgid "Update Check Failed"
+msgstr "فشل التحقق من التحديثات"
+
+msgid "Update Failed"
+msgstr "فشل التحديث"
+
+msgid "Update Installed"
+msgstr "تم تثبيت التحديث"
+
+msgid "Use sign-in coo&kies from browser (for age-restricted or members-only content):"
+msgstr "استخدام &كوكيز تسجيل الدخول من المتصفح (للمحتوى المقيد بالعمر أو الخاص بالأعضاء):"
+
+msgid "Video"
+msgstr "فيديو"
+
+msgid "Video MP4"
+msgstr "فيديو MP4"
 
 msgid "Video MP4 (H.264 + AAC, stories & chats)"
 msgstr "فيديو MP4 (H.264 + AAC، للستوري والمحادثات)"
 
-msgid "Highest quality (original)"
-msgstr "أعلى جودة (الأصلية)"
+msgid "Videos of %s"
+msgstr "فيديوهات %s"
 
-msgid "Story optimized (small file, fast upload)"
-msgstr "مناسب للستوري (حجم صغير، رفع سريع)"
+msgid "Volume %d percent"
+msgstr "مستوى الصوت %d بالمائة"
 
-msgid "Export clip: %(title)s (from %(a)s to %(b)s, %(d)d seconds)"
-msgstr "تصدير مقطع: %(title)s (من %(a)s إلى %(b)s، %(d)d ثانية)"
+msgid "Volume Down (-5%)"
+msgstr "خفض مستوى الصوت (-5%)"
 
-msgid "Download / export whole item: %s"
-msgstr "تحميل / تصدير العنصر كاملًا: %s"
+msgid "Volume Up (+5%)"
+msgstr "رفع مستوى الصوت (+5%)"
 
-msgid "File &name:"
-msgstr "ا&سم الملف:"
+msgid "Waiting for key press..."
+msgstr "في انتظار ضغطة المفتاح..."
 
-msgid "Export &format:"
-msgstr "&صيغة التصدير:"
+msgid "Watch history"
+msgstr "سجل المشاهدة"
 
-msgid "&Quality / size:"
-msgstr "ال&جودة / الحجم:"
+msgid "Watch Later playlist"
+msgstr "قائمة المشاهدة لاحقًا"
 
-msgid "&Video quality (YouTube):"
-msgstr "جودة ال&فيديو (يوتيوب):"
+msgid "What's New in Version %s:"
+msgstr "ما الجديد في الإصدار %s:"
 
-msgid "Convert audio to a story video (MP4 with animated &waveform)"
-msgstr "تحويل الصوت إلى فيديو ستوري (MP4 مع &موجة صوتية متحركة)"
+msgid "You are already using the latest version of Headless Media Player (version %s)."
+msgstr "أنت تستخدم بالفعل أحدث إصدار من إضافة المشغل الخفي (الإصدار %s)."
 
-msgid "Save &to folder:"
-msgstr "الحفظ &في المجلد:"
+msgid "YouTube & Online Streaming (yt-dlp)"
+msgstr "يوتيوب والبث عبر الإنترنت (yt-dlp)"
 
-msgid "&Browse..."
-msgstr "ا&ستعراض..."
+msgid "YOUTUBE & ONLINE STREAMING:"
+msgstr "يوتيوب والبث عبر الإنترنت:"
 
-msgid "&Remember these settings for Quick Export (Shift+D)"
-msgstr "&تذكر هذه الإعدادات للتصدير السريع (Shift+D)"
+msgid "YouTube Account & Feeds"
+msgstr "حساب يوتيوب والموجز"
 
-msgid "Select export folder"
-msgstr "اختر مجلد التصدير"
+msgid "YouTube requires sign-in verification for this content. Please configure valid sign-in cookies in HeadlessPlayer settings."
+msgstr "يتطلب يوتيوب التحقق من تسجيل الدخول لتشغيل هذا المحتوى. يرجى ضبط كوكيز تسجيل دخول صالحة في إعدادات المشغل الخفي."
 
-msgid "&Export"
-msgstr "&تصدير"
+msgid "YouTube results for: %s"
+msgstr "نتائج يوتيوب عن: %s"
 
-msgid "%s (video with audio)"
-msgstr "%s (فيديو مع الصوت)"
+msgid "YouTube Search Results"
+msgstr "نتائج البحث في يوتيوب"
+
+msgid "— [Load more items...] —"
+msgstr "— [تحميل المزيد من العناصر...] —"
+
+msgid "Opens Headless Media Player Settings Panel in NVDA."
+msgstr "فتح لوحة إعدادات مشغل الميديا الخفي في NVDA."
+
 

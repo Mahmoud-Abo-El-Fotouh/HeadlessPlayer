@@ -7,6 +7,7 @@ yt-dlp library, plus a self-update mechanism from PyPI.
 """
 
 from __future__ import annotations
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import logging
 import os
@@ -16,11 +17,17 @@ import sys
 import tempfile
 import threading
 import time
-import urllib.parse
-import urllib.request
-import zipfile
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from .utils import log_debug, log_exception
+
+try:
+    from .config_spec import getConfig
+except ImportError:
+    try:
+        from config_spec import getConfig
+    except ImportError:
+        def getConfig() -> Dict[str, Any]:
+            return {}
 
 logger = logging.getLogger("HeadlessPlayer.StreamEngine")
 
@@ -455,7 +462,6 @@ def get_account_sections() -> List["StreamItem"]:
 
 def _get_config() -> Dict[str, Any]:
     try:
-        from .config_spec import getConfig
         return getConfig()
     except Exception:
         return {}
@@ -482,7 +488,7 @@ def _is_youtube_target(url: Optional[str]) -> bool:
     """
     Returns True if target URL/query is for YouTube.
     YouTube requests should never be overridden with generic browser headers
-    because InnerTube clients require their own specialized headers and clashing
+    because YouTube extractors manage their own native headers and clashing
     User-Agents trigger cookie invalidation and bot challenges.
     """
     if not url:
@@ -508,16 +514,10 @@ def _base_ydl_opts(use_cookies: bool = True, target_url: Optional[str] = None) -
         "ignoreerrors": True,
         "no_color": True,
         "js_runtimes": _get_js_runtimes(),
-        "extractor_args": {
-            "youtube": {
-                "player_client": ["android", "web"],
-                "player_skip": ["webpage", "configs"],
-            }
-        },
     }
 
     # Only apply standard browser headers to non-YouTube domains (such as TikTok, SoundCloud, or generic WAF sites).
-    # Overriding http_headers for YouTube overrides InnerTube clients and clashes with account cookies.
+    # Overriding http_headers for YouTube overrides native extractor clients and clashes with account cookies.
     if target_url and not _is_youtube_target(target_url):
         opts["http_headers"] = _STANDARD_HTTP_HEADERS
 
@@ -676,7 +676,6 @@ def fetch_listing(
                 _ch_title, channels = fetch_listing("https://www.youtube.com/feed/channels", limit=20, start_index=1)
                 seen_urls = {s.url for s in shorts}
                 top_channels = channels[:8]
-                from concurrent.futures import ThreadPoolExecutor, as_completed
 
                 def _fetch_single_channel_shorts(ch_item):
                     try:
@@ -801,7 +800,6 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
     ytdlp = _get_ytdlp()
 
     try:
-        from .config_spec import getConfig
         cfg = getConfig()
         quality = str(cfg.get("streamAudioQuality", "high")).lower()
     except Exception:
@@ -851,12 +849,7 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
         opts.update({
             "noplaylist": True,
             "format": format_selector if prefer_audio else "best",
-            "extractor_args": {
-                "youtube": {
-                    "player_client": ["android", "web"],
-                    "player_skip": ["webpage", "configs"],
-                }
-            }
+            "ignoreerrors": False,
         })
         with ytdlp.YoutubeDL(opts) as ydl:
             return ydl.extract_info(url, download=False)
@@ -956,6 +949,8 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
     available_audio_tracks = []
     seen_langs = {}
     for f in info.get("formats", []):
+        if not isinstance(f, dict):
+            continue
         if f.get("acodec") not in (None, "none") and f.get("vcodec") in (None, "none"):
             lang = f.get("language") or f.get("language_preference") or "default"
             abr = f.get("abr") or f.get("tbr") or 0
@@ -966,12 +961,48 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
         for lang, f in seen_langs.items():
             f_url = f.get("url")
             if f_url:
+                note = f.get("format_note") or ""
+                title = note if note else str(lang)
                 available_audio_tracks.append({
                     "url": f_url,
                     "lang": str(lang),
-                    "title": str(f.get("format_note") or f.get("language") or lang),
+                    "title": title,
                     "http_headers": dict(f.get("http_headers") or info.get("http_headers") or {}),
                 })
+        # Keep currently resolved audio stream at index 0 if present
+        for i, t in enumerate(available_audio_tracks):
+            if t.get("url") == stream_url:
+                if i > 0:
+                    available_audio_tracks.insert(0, available_audio_tracks.pop(i))
+                break
+
+    # Extract distinct video formats and quality options (1080p, 720p, etc.)
+    video_options: List[Tuple[str, str, int, bool]] = []
+    seen_vqs = set()
+    v_fmts = [
+        f for f in info.get("formats", [])
+        if isinstance(f, dict) and f.get("vcodec") not in (None, "none") and f.get("url") and (f.get("height") or 0) > 0
+    ]
+    v_fmts.sort(
+        key=lambda f: (
+            int(f.get("height") or 0),
+            1 if "avc" in str(f.get("vcodec") or "").lower() or f.get("ext") == "mp4" else 0,
+            int(f.get("tbr") or f.get("vbr") or 0)
+        ),
+        reverse=True
+    )
+    for f in v_fmts:
+        h = int(f.get("height") or 0)
+        note = str(f.get("format_note") or f"{h}p")
+        label = note if ("p" in note or "k" in note.lower()) else f"{h}p"
+        has_audio = f.get("acodec") not in (None, "none")
+        if has_audio:
+            label = f"{label} (video with audio)"
+        if label not in seen_vqs:
+            seen_vqs.add(label)
+            video_options.append((label, str(f["url"]), h, has_audio))
+
+    has_video = bool(video_options)
 
     headers = dict(info.get("http_headers") or {})
     low_url = url.lower()
@@ -991,6 +1022,8 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
         "webpage_url": str(info.get("webpage_url") or url),
         "chapters": parsed_chapters,
         "audio_tracks": available_audio_tracks,
+        "has_video": has_video,
+        "video_options": video_options,
     }
 
     with _resolve_cache_lock:

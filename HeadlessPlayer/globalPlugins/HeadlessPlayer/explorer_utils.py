@@ -6,10 +6,28 @@ Windows 11 tabbed Explorer, Desktop, or NVDA focus object tree.
 """
 
 from __future__ import annotations
+import ctypes
 import logging
 import os
 import threading
-from typing import Any, List, Optional, Sequence, Set
+from typing import Dict, List, Sequence
+from urllib.parse import unquote
+
+try:
+    import winUser
+except Exception:
+    winUser = None
+
+try:
+    import api
+except Exception:
+    api = None
+
+try:
+    import comtypes
+    import comtypes.client
+except Exception:
+    comtypes = None
 
 try:
     from .utils import (
@@ -17,6 +35,7 @@ try:
         filter_and_sort_media_files,
         find_media_files_in_dir,
         is_supported_media_file,
+        parse_time,
     )
 except ImportError:
     from utils import (
@@ -24,6 +43,7 @@ except ImportError:
         filter_and_sort_media_files,
         find_media_files_in_dir,
         is_supported_media_file,
+        parse_time,
     )
 
 logger = logging.getLogger("HeadlessPlayer.ExplorerUtils")
@@ -37,15 +57,15 @@ def _get_foreground_window() -> int:
     Returns the HWND of the current foreground window.
     Uses winUser if inside NVDA, ctypes otherwise.
     """
-    try:
-        import winUser
-        return winUser.getForegroundWindow()
-    except Exception:
+    if winUser and hasattr(winUser, "getForegroundWindow"):
         try:
-            import ctypes
-            return ctypes.windll.user32.GetForegroundWindow()
+            return winUser.getForegroundWindow()
         except Exception:
-            return 0
+            pass
+    try:
+        return ctypes.windll.user32.GetForegroundWindow()
+    except Exception:
+        return 0
 
 
 def _is_descendant_window(parent_hwnd: int, child_hwnd: int) -> bool:
@@ -54,20 +74,18 @@ def _is_descendant_window(parent_hwnd: int, child_hwnd: int) -> bool:
     """
     if parent_hwnd == child_hwnd:
         return True
+    if winUser and hasattr(winUser, "isDescendantWindow"):
+        try:
+            if winUser.isDescendantWindow(parent_hwnd, child_hwnd):
+                return True
+        except Exception:
+            pass
     try:
-        import winUser
-        if winUser.isDescendantWindow(parent_hwnd, child_hwnd):
-            return True
-    except Exception:
-        pass
-    try:
-        import ctypes
         if ctypes.windll.user32.IsChild(parent_hwnd, child_hwnd):
             return True
     except Exception:
         pass
     try:
-        import ctypes
         GA_ROOT = 2
         r1 = ctypes.windll.user32.GetAncestor(parent_hwnd, GA_ROOT)
         r2 = ctypes.windll.user32.GetAncestor(child_hwnd, GA_ROOT)
@@ -81,11 +99,11 @@ def _is_descendant_window(parent_hwnd: int, child_hwnd: int) -> bool:
 def _query_shell_windows_com(fg_hwnd: int) -> List[str]:
     """Helper worker: queries Shell.Application COM interface."""
     selected_paths: List[str] = []
+    if not comtypes or not hasattr(comtypes, "client"):
+        return selected_paths
+
     co_inited = False
     try:
-        import comtypes
-        import comtypes.client
-        from urllib.parse import unquote
         try:
             comtypes.CoInitialize()
             co_inited = True
@@ -214,9 +232,7 @@ def _get_focus_explorer_paths() -> List[str]:
     or when running under tabbed Windows 11 / hidden extensions.
     """
     paths: List[str] = []
-    try:
-        import api
-    except ImportError:
+    if not api or not hasattr(api, "getFocusObject"):
         return paths
 
     try:
@@ -238,28 +254,27 @@ def _get_focus_explorer_paths() -> List[str]:
 
         # 3. Query all open Explorer folder directories via comtypes
         open_dirs: List[str] = []
-        try:
-            import comtypes.client
-            from urllib.parse import unquote
-            shell_app = comtypes.client.CreateObject("Shell.Application")
-            windows = shell_app.Windows()
-            for i in range(getattr(windows, "Count", 0)):
-                try:
-                    w = windows.Item(i)
-                    doc = getattr(w, "Document", None)
-                    if doc and hasattr(doc, "Folder") and doc.Folder:
-                        p = getattr(doc.Folder.Self, "Path", "")
-                        if p and os.path.isdir(p) and p not in open_dirs:
-                            open_dirs.append(os.path.abspath(p))
-                    url = getattr(w, "LocationURL", "")
-                    if url.startswith("file:///"):
-                        p = unquote(url[8:]).replace("/", "\\")
-                        if os.path.isdir(p) and p not in open_dirs:
-                            open_dirs.append(os.path.abspath(p))
-                except Exception:
-                    continue
-        except Exception:
-            pass
+        if comtypes and hasattr(comtypes, "client"):
+            try:
+                shell_app = comtypes.client.CreateObject("Shell.Application")
+                windows = shell_app.Windows()
+                for i in range(getattr(windows, "Count", 0)):
+                    try:
+                        w = windows.Item(i)
+                        doc = getattr(w, "Document", None)
+                        if doc and hasattr(doc, "Folder") and doc.Folder:
+                            p = getattr(doc.Folder.Self, "Path", "")
+                            if p and os.path.isdir(p) and p not in open_dirs:
+                                open_dirs.append(os.path.abspath(p))
+                        url = getattr(w, "LocationURL", "")
+                        if url.startswith("file:///"):
+                            p = unquote(url[8:]).replace("/", "\\")
+                            if os.path.isdir(p) and p not in open_dirs:
+                                open_dirs.append(os.path.abspath(p))
+                    except Exception:
+                        continue
+            except Exception:
+                pass
 
         # 4. Search directories priority:
         # If open Explorer directories were found, search them FIRST and ONLY them!
@@ -425,17 +440,17 @@ def extract_local_media_durations(paths: Sequence[str]) -> Dict[str, float]:
             continue
 
     results: Dict[str, float] = {}
+    if not comtypes or not hasattr(comtypes, "client"):
+        return results
+
     co_inited = False
     try:
-        import comtypes
-        import comtypes.client
         try:
             comtypes.CoInitialize()
             co_inited = True
         except Exception:
             pass
 
-        from .utils import parse_time
         shell = comtypes.client.CreateObject("Shell.Application")
         for dir_path, file_paths in by_dir.items():
             try:
@@ -469,7 +484,6 @@ def extract_local_media_durations(paths: Sequence[str]) -> Dict[str, float]:
     finally:
         if co_inited:
             try:
-                import comtypes
                 comtypes.CoUninitialize()
             except Exception:
                 pass

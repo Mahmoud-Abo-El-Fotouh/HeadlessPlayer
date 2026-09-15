@@ -8,9 +8,7 @@ and global toggle gesture bindings.
 
 from __future__ import annotations
 import logging
-import os
-import sys
-from typing import Any, Dict, Optional
+from typing import Any
 
 # 1. Initialize Translations
 try:
@@ -53,7 +51,6 @@ except Exception:
     _NVDA_GUI_AVAILABLE = False
 
 # 3. Import HeadlessPlayer Subsystems
-from . import log_manager
 from .config_spec import initializeConfig, getConfig, setConfigValue
 from .engine import HeadlessEngine, ALL_SUPPORTED_EXTENSIONS, SPEED_PRESETS, is_supported_media_file
 from .ipc_client import WinNamedPipeClient
@@ -64,6 +61,7 @@ from .speech_feedback import SpeechFeedback, get_speech_feedback, set_speech_fee
 from .input_layer import ModalInputLayer
 from .controller import PlayerController, get_controller, set_controller
 from .settings_panel import HeadlessPlayerSettingsPanel
+from .addon_updater import cleanup_temp_addon_packages
 
 logger = logging.getLogger("HeadlessPlayer")
 
@@ -156,6 +154,15 @@ class GlobalPlugin(_BaseGlobalPlugin):
             self.input_layer.toggle_player_mode()
 
     @script(
+        description=_("Opens Headless Media Player Settings Panel in NVDA."),
+        category=_("Headless Media Player"),
+    )
+    def script_openSettings(self, gesture: Any) -> None:
+        """Opens HeadlessPlayer Settings panel in NVDA."""
+        if self.controller:
+            self.controller.open_settings()
+
+    @script(
         description=_("Directly loads and plays selected or focused media files/folders from Windows Explorer."),
         category=_("Headless Media Player"),
         gesture="kb:NVDA+control+windows+e"
@@ -245,7 +252,6 @@ class GlobalPlugin(_BaseGlobalPlugin):
 
         # 4. Clean up any leftover temporary installer packages on exit
         try:
-            from .addon_updater import cleanup_temp_addon_packages
             cleanup_temp_addon_packages()
         except Exception:
             pass

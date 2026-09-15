@@ -23,7 +23,7 @@ try:
     import addonHandler
     addonHandler.initTranslation()
 except Exception:
-    pass
+    addonHandler = None
 
 try:
     _
@@ -69,9 +69,9 @@ def is_newer_version(latest_ver: str, current_ver: str) -> bool:
 def get_current_addon_version() -> str:
     """Retrieves the installed version of HeadlessPlayer add-on."""
     try:
-        if "addonHandler" in globals() or "addonHandler" in sys.modules:
-            import addonHandler
-            cur_addon = addonHandler.getCodeAddon()
+        ah = sys.modules.get("addonHandler", addonHandler)
+        if ah is not None and hasattr(ah, "getCodeAddon"):
+            cur_addon = ah.getCodeAddon()
             if cur_addon and cur_addon.manifest:
                 ver = cur_addon.manifest.get("version")
                 if ver:
@@ -94,7 +94,7 @@ def get_current_addon_version() -> str:
     except Exception as e:
         logger.debug("Could not read manifest.ini for version: %s", e)
 
-    return "1.2.4"
+    return "1.3.0"
 
 
 def check_for_addon_update(
@@ -375,10 +375,10 @@ class AddonUpdateDialog(_WxDialog):
         # Launch NVDA native installation workflow: prefer addonHandler for portable & installed NVDA
         installed = False
         try:
-            import addonHandler
-            if hasattr(addonHandler, "installAddonPackage"):
-                bundle = addonHandler.AddonBundle(file_path)
-                addonHandler.installAddonPackage(bundle)
+            ah = sys.modules.get("addonHandler", addonHandler)
+            if ah is not None and hasattr(ah, "installAddonPackage"):
+                bundle = ah.AddonBundle(file_path)
+                ah.installAddonPackage(bundle)
                 installed = True
         except Exception as e:
             logger.debug("addonHandler.installAddonPackage attempt: %s", e)

@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
 """
-HeadlessPlayer Configuration Specification and SQLite Persistence Layer.
+HeadlessPlayer Configuration Specification and Persistence Layer.
 Manages all add-on settings, user preferences, and keyboard mappings
-with high-performance, crash-safe SQLite database storage.
+with high-performance, crash-safe HPDB database storage.
 """
 
-from typing import Any, Dict, List, Optional
-from .database import get_db_manager, normalize_file_path
+from typing import Any, Dict
+from .database import get_db_manager
 
 CONFIG_SECTION = "headlessPlayer"
 
@@ -20,6 +21,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "announceChapterAuto": True,
     "announcePlaylistTotalDuration": False,
     "remainingTimeAccountsForSpeed": True,
+    "elapsedTimeAccountsForSpeed": True,
     "seekStepNormal": 5,
 
     "seekStepSlow": 1,
@@ -51,6 +53,12 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "exportAudioToVideo": False,
     "exportVideoQuality": "",
     "exportAutoCopy": True,
+    "recentsEnabled": True,
+    "recentsMaxEntries": 30,
+    "recentsKeepFiles": True,
+    "recentsKeepFolders": True,
+    "recentsKeepPlaylists": True,
+    "recentsKeepStreams": True,
 }
 
 DEFAULT_KEYMAP: Dict[str, str] = {
@@ -101,6 +109,16 @@ DEFAULT_KEYMAP: Dict[str, str] = {
     "export_clip": "d",
     "quick_export": "shift+d",
     "account_feed": "p",
+    "recent_playlist_next": "control+.",
+    "recent_playlist_prev": "control+,",
+    "recent_playlist_first": "control+shift+,",
+    "recent_playlist_last": "control+shift+.",
+    "recent_track_next": ".",
+    "recent_track_prev": ",",
+    "recent_track_first": "shift+,",
+    "recent_track_last": "shift+.",
+    "recent_delete": "delete",
+    "open_settings": "control+shift+s",
     "close_player": "x",
     "exit_mode": "escape",
 }
@@ -108,7 +126,7 @@ DEFAULT_KEYMAP: Dict[str, str] = {
 
 def initializeConfig() -> None:
     """
-    Initializes the SQLite database manager and populates default settings if needed.
+    Initializes the database manager and populates default settings if needed.
     """
     db = get_db_manager()
     # Populate any missing default settings
@@ -124,7 +142,7 @@ def initializeConfig() -> None:
 
 def getConfig() -> Dict[str, Any]:
     """
-    Returns the active HeadlessPlayer configuration dictionary from SQLite database,
+    Returns the active HeadlessPlayer configuration dictionary from database,
     merged on top of DEFAULT_CONFIG defaults.
     """
     cfg = dict(DEFAULT_CONFIG)
@@ -139,7 +157,7 @@ def getConfig() -> Dict[str, Any]:
 
 def setConfigValue(key: str, value: Any) -> None:
     """
-    Sets a specific configuration key in the SQLite database.
+    Sets a specific configuration key in the database.
     """
     try:
         db = get_db_manager()
@@ -166,7 +184,7 @@ def getConfigValue(key: str, default: Any = None) -> Any:
 
 def saveConfig() -> None:
     """
-    Commits any pending configuration changes (SQLite handles WAL sync automatically).
+    Commits any pending configuration changes (database manager handles atomic persistence automatically).
     """
     pass
 
@@ -176,15 +194,40 @@ def parseKeymapKeys(value: str) -> list:
     Parses a keymap entry into its list of key gestures.
     Each action may have multiple shortcuts separated by commas,
     e.g. 'pagedown,tab' assigns both Page Down and Tab to Next Track.
+    Properly handles the comma key (',') and modifier combinations like 'control+,' or 'shift+,'.
     """
     if not value or not isinstance(value, str):
         return []
-    return [k.strip().lower() for k in value.split(",") if k.strip()]
+    val = value.strip().lower()
+    if val == ",":
+        return [","]
+    if val.replace(" ", "").replace(",", "") == "":
+        return []
+    tokens = []
+    current = []
+    for char in val:
+        if char == ",":
+            if current and current[-1] == "+":
+                current.append(char)
+            elif not current:
+                current.append(char)
+            else:
+                token = "".join(current).strip()
+                if token:
+                    tokens.append(token)
+                current = []
+        else:
+            current.append(char)
+    if current:
+        token = "".join(current).strip()
+        if token:
+            tokens.append(token)
+    return tokens
 
 
 def getKeymap() -> Dict[str, str]:
     """
-    Returns the active keymap for Player Mode, merging user customizations from SQLite over DEFAULT_KEYMAP.
+    Returns the active keymap for Player Mode, merging user customizations from database over DEFAULT_KEYMAP.
     Explicitly saved empty strings represent unassigned actions.
     """
     keymap = dict(DEFAULT_KEYMAP)
@@ -193,6 +236,9 @@ def getKeymap() -> Dict[str, str]:
         for action in DEFAULT_KEYMAP:
             config_key = f"key_{action}"
             val = db.get_setting(config_key)
+            if val is None and action.startswith("recent_playlist_"):
+                legacy_key = config_key.replace("recent_playlist_", "recent_container_")
+                val = db.get_setting(legacy_key)
             if val is not None and isinstance(val, str):
                 keymap[action] = val.strip().lower()
     except Exception:
@@ -202,7 +248,7 @@ def getKeymap() -> Dict[str, str]:
 
 def setKeymap(keymap: Dict[str, str]) -> None:
     """
-    Saves customized keymap entries to SQLite database.
+    Saves customized keymap entries to database.
     """
     try:
         db = get_db_manager()
@@ -218,7 +264,7 @@ def setKeymap(keymap: Dict[str, str]) -> None:
 
 def resetKeymap() -> None:
     """
-    Resets customized keymap entries in SQLite to factory defaults.
+    Resets customized keymap entries in database to factory defaults.
     """
     try:
         db = get_db_manager()

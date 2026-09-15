@@ -59,5 +59,4 @@ cover/
 HeadlessPlayer_debug.*
 manage_logs.py
 scratch/
-tests/
 !HeadlessPlayer/globalPlugins/HeadlessPlayer/log_manager.py

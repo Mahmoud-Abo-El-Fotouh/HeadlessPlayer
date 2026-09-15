@@ -9,12 +9,36 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, List, Optional
 
 try:
     import wx
 except Exception:
     wx = None
+
+try:
+    import gui
+except Exception:
+    gui = None
+
+try:
+    import ui
+except Exception:
+    ui = None
+
+try:
+    import api
+except Exception:
+    api = None
+
+try:
+    from .config_spec import getConfig
+except ImportError:
+    try:
+        from config_spec import getConfig
+    except ImportError:
+        def getConfig() -> dict:
+            return {}
 
 try:
     import addonHandler
@@ -43,11 +67,13 @@ logger = logging.getLogger("HeadlessPlayer.UrlDialogs")
 
 
 def _ui_message(text: str) -> None:
-    try:
-        import ui
-        ui.message(text)
-    except Exception:
-        logger.info("[msg] %s", text)
+    if ui and hasattr(ui, "message"):
+        try:
+            ui.message(text)
+            return
+        except Exception:
+            pass
+    logger.info("[msg] %s", text)
 
 
 # ---------------------------------------------------------------------------
@@ -76,15 +102,17 @@ class _UrlInputDialog(_DialogBase):
         message: str,
         default_val: str = "",
     ) -> None:
-        import wx
         super().__init__(
             parent,
             title=title or _("Play URL or Search YouTube"),
-            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER,
+            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER if wx else 0,
         )
         self.value: str = ""
         self._is_prefilled: bool = bool(default_val)
         self._prefilled_text: str = default_val
+
+        if not wx:
+            return
 
         mainSizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -133,27 +161,26 @@ class _UrlInputDialog(_DialogBase):
 
     @staticmethod
     def _get_clipboard_text() -> str:
-        try:
-            import api
-            clip_text = api.getClipData()
-            if clip_text and isinstance(clip_text, str):
-                return clip_text.strip()
-        except Exception:
-            pass
-        try:
-            import wx
-            if wx.TheClipboard.Open():
-                data = wx.TextDataObject()
-                success = wx.TheClipboard.GetData(data)
-                wx.TheClipboard.Close()
-                if success:
-                    return data.GetText().strip()
-        except Exception:
-            pass
+        if api and hasattr(api, "getClipData"):
+            try:
+                clip_text = api.getClipData()
+                if clip_text and isinstance(clip_text, str):
+                    return clip_text.strip()
+            except Exception:
+                pass
+        if wx and hasattr(wx, "TheClipboard"):
+            try:
+                if wx.TheClipboard.Open():
+                    data = wx.TextDataObject()
+                    success = wx.TheClipboard.GetData(data)
+                    wx.TheClipboard.Close()
+                    if success:
+                        return data.GetText().strip()
+            except Exception:
+                pass
         return ""
 
     def onKeyDown(self, evt: Any) -> None:
-        import wx
         kc = evt.GetKeyCode()
         uc = evt.GetUnicodeKey()
         mods = evt.GetModifiers()
@@ -251,10 +278,7 @@ def prompt_url_input(
     """
 
     def _show() -> None:
-        try:
-            import wx
-            import gui
-        except ImportError:
+        if not wx or not gui:
             logger.warning("wx unavailable; cannot show URL input dialog")
             if on_cancelled:
                 on_cancelled()
@@ -274,15 +298,15 @@ def prompt_url_input(
 
         # Check clipboard for pre-fill if it contains a URL
         default_val = ""
-        try:
-            import api
-            clip_text = api.getClipData()
-            if clip_text and isinstance(clip_text, str):
-                extracted = stream_engine.extract_url(clip_text)
-                if extracted:
-                    default_val = extracted
-        except Exception:
-            pass
+        if api and hasattr(api, "getClipData"):
+            try:
+                clip_text = api.getClipData()
+                if clip_text and isinstance(clip_text, str):
+                    extracted = stream_engine.extract_url(clip_text)
+                    if extracted:
+                        default_val = extracted
+            except Exception:
+                pass
 
         text: Optional[str] = None
         submitted = False
@@ -330,10 +354,12 @@ def prompt_url_input(
             except Exception:
                 pass
 
-    try:
-        import wx
-        wx.CallAfter(_show)
-    except Exception:
+    if wx is not None and hasattr(wx, "CallAfter"):
+        try:
+            wx.CallAfter(_show)
+        except Exception:
+            threading.Thread(target=_show, daemon=True).start()
+    else:
         threading.Thread(target=_show, daemon=True).start()
 
 
@@ -429,10 +455,7 @@ def show_results_dialog(
     """
 
     def _show() -> None:
-        try:
-            import wx
-            import gui
-        except ImportError:
+        if not wx or not gui:
             logger.warning("wx unavailable; cannot show results dialog")
             return
 
@@ -475,10 +498,9 @@ def show_results_dialog(
                 except Exception:
                     pass
 
-    try:
-        import wx
+    if wx and hasattr(wx, "CallAfter"):
         wx.CallAfter(_show)
-    except Exception:
+    else:
         logger.warning("wx.CallAfter unavailable; results dialog skipped")
 
 
@@ -504,7 +526,6 @@ class _ResultsDialog(_DialogBase):
         source_target: str = "",
         batch_size: Optional[int] = None,
     ) -> None:
-        import wx
         super().__init__(
             parent,
             title=title or _("YouTube Search Results"),
@@ -576,7 +597,6 @@ class _ResultsDialog(_DialogBase):
         self.listCtrl.SetFocus()
 
     def onCharHook(self, evt: Any) -> None:
-        import wx
         code = evt.GetKeyCode()
         focused = self.FindFocus()
         if focused is self.listCtrl:
@@ -597,7 +617,6 @@ class _ResultsDialog(_DialogBase):
         return None
 
     def _set_selection(self, index: int) -> None:
-        import wx
         count = self.listCtrl.GetItemCount()
         if count <= 0:
             return
@@ -648,7 +667,6 @@ class _ResultsDialog(_DialogBase):
         self._check_auto_load_more()
 
     def onListKeyDown(self, evt: Any) -> None:
-        import wx
         code = evt.GetKeyCode()
         if code in (wx.WXK_RETURN, wx.WXK_NUMPAD_ENTER):
             self.onActivate(evt)
@@ -659,7 +677,6 @@ class _ResultsDialog(_DialogBase):
         evt.Skip()
 
     def onListKeyUp(self, evt: Any) -> None:
-        import wx
         evt.Skip()
         self._check_auto_load_more()
 
@@ -669,7 +686,6 @@ class _ResultsDialog(_DialogBase):
             return
         if level.source_type not in ("search", "listing"):
             return
-        import time
         now = time.time()
         if now - getattr(self, "_last_scroll_check_time", 0.0) < 0.25:
             return
@@ -916,7 +932,6 @@ class _ResultsDialog(_DialogBase):
         ))
 
     def _enter_listing(self, item: StreamItem) -> None:
-        import wx
         if getattr(item, "requires_login", False) and not stream_engine.login_cookies_enabled():
             _ui_message(_(
                 "This section requires YouTube sign-in. Enable sign-in cookies from "
@@ -928,7 +943,6 @@ class _ResultsDialog(_DialogBase):
 
         def worker() -> None:
             try:
-                from .config_spec import getConfig
                 limit = int(getConfig().get("maxStreamPlaylistItems", 50))
             except Exception:
                 limit = 50
@@ -936,9 +950,11 @@ class _ResultsDialog(_DialogBase):
                 title, sub_items = stream_engine.fetch_listing(item.url, limit=limit, start_index=1)
             except Exception as e:
                 logger.error("Listing fetch failed: %s", e)
-                wx.CallAfter(self._on_listing_failed, str(e))
+                if wx and hasattr(wx, "CallAfter"):
+                    wx.CallAfter(self._on_listing_failed, str(e))
                 return
-            wx.CallAfter(self._on_listing_loaded, item, title, sub_items, limit)
+            if wx and hasattr(wx, "CallAfter"):
+                wx.CallAfter(self._on_listing_loaded, item, title, sub_items, limit)
 
         threading.Thread(target=worker, daemon=True, name="HeadlessPlayer-Listing").start()
 
@@ -993,9 +1009,9 @@ class _ResultsDialog(_DialogBase):
         _ui_message(_("%d items") % len(level.items))
 
     def _close_and(self, action: Callable[[], None]) -> None:
-        import wx
         try:
-            self.EndModal(wx.ID_OK)
+            if wx and hasattr(self, "EndModal"):
+                self.EndModal(wx.ID_OK)
         except Exception:
             pass
         try:

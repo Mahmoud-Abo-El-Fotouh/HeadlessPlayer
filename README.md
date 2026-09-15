@@ -11,10 +11,10 @@ A completely headless, privacy-oriented media player add-on for the [NVDA screen
 
 # Headless Media Player — Quick Overview & User Guide
 
-**Version:** 1.2.4  
+**Version:** 1.3.0  
 **Author:** Mahmoud Abo El Fotouh <mahmoudaboelfotouh.20@gmail.com>  
 **Repository:** [https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer](https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer)  
-**NVDA Compatibility:** NVDA 2024.1 to 2026.1+
+**NVDA Compatibility:** NVDA 2024.1 to 2026.2+
 
 ---
 

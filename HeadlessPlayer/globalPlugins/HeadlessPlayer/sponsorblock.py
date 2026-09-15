@@ -6,6 +6,7 @@ and intros/outros for YouTube audio and video playback using the open SponsorBlo
 """
 
 from __future__ import annotations
+import hashlib
 import json
 import logging
 import re
@@ -13,7 +14,7 @@ import threading
 import time
 import urllib.parse
 import urllib.request
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger("HeadlessPlayer.SponsorBlock")
 
@@ -28,6 +29,12 @@ try:
 except NameError:
     def _(s: str) -> str:
         return s
+
+try:
+    from .addon_updater import get_current_addon_version
+except Exception:
+    def get_current_addon_version() -> str:
+        return "1.3.0"
 
 # Default categories enabled for auto-skipping
 DEFAULT_CATEGORIES = [
@@ -161,15 +168,15 @@ def fetch_sponsor_segments(
     encoded_cats = urllib.parse.quote(cat_param)
 
     segments: List[Tuple[float, float, str]] = []
+    ver_str = get_current_addon_version()
     headers = {
-        "User-Agent": "HeadlessPlayer-NVDA-Addon/1.2.4 (https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer)",
+        "User-Agent": f"HeadlessPlayer-NVDA-Addon/{ver_str} (https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer)",
         "Accept": "application/json",
     }
 
     # 2. Privacy-preserving Hash Prefix API (k-anonymity)
     if use_hash_prefix:
         try:
-            import hashlib
             hash_prefix = hashlib.sha256(vid.encode("utf-8")).hexdigest()[:4]
             api_url = f"https://sponsor.ajay.app/api/skipSegments/{hash_prefix}?categories={encoded_cats}"
             req = urllib.request.Request(api_url, headers=headers)

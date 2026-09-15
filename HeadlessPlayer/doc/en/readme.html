@@ -85,7 +85,7 @@
 </head>
 <body>
     <h1>Headless Media Player — NVDA Add-on User Guide</h1>
-    <p><strong>Version:</strong> 1.2.4 &nbsp;|&nbsp; <strong>Author:</strong> Mahmoud Abo El Fotouh &lt;mahmoudaboelfotouh.20@gmail.com&gt; &nbsp;|&nbsp; <strong>NVDA Compatibility:</strong> NVDA 2024.1 to 2026.1+</p>
+    <p><strong>Version:</strong> 1.3.0 &nbsp;|&nbsp; <strong>Author:</strong> Mahmoud Abo El Fotouh &lt;mahmoudaboelfotouh.20@gmail.com&gt; &nbsp;|&nbsp; <strong>NVDA Compatibility:</strong> NVDA 2024.1 to 2026.2+</p>
     <p><strong>Official Repository:</strong> <a href="https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer">https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer</a></p>
     <hr>
 
@@ -178,13 +178,32 @@
         </tbody>
     </table>
 
-    <h3>3.6. Speech Queries & Help</h3>
+    <h3>3.6. Recent Media & Browsing History</h3>
+    <table>
+        <thead><tr><th>Key</th><th>Action</th><th>Description</th></tr></thead>
+        <tbody>
+            <tr><td><kbd>Ctrl + .</kbd></td><td>Next / Newer Container</td><td>Browses forward in recent folders and playlists.</td></tr>
+            <tr><td><kbd>Ctrl + ,</kbd></td><td>Previous / Older Container</td><td>Browses backward in recent folders and playlists.</td></tr>
+            <tr><td><kbd>Ctrl + Shift + ,</kbd></td><td>Oldest Container</td><td>Jumps directly to oldest folder or playlist in history.</td></tr>
+            <tr><td><kbd>Ctrl + Shift + .</kbd></td><td>Newest Container</td><td>Jumps directly to newest folder or playlist in history.</td></tr>
+            <tr><td><kbd>.</kbd></td><td>Next / Newer Track</td><td>Browses forward in recent files and streams.</td></tr>
+            <tr><td><kbd>,</kbd></td><td>Previous / Older Track</td><td>Browses backward in recent files and streams.</td></tr>
+            <tr><td><kbd>Shift + ,</kbd></td><td>Oldest Track</td><td>Jumps directly to oldest file or stream in history.</td></tr>
+            <tr><td><kbd>Shift + .</kbd></td><td>Newest Track</td><td>Jumps directly to newest file or stream in history.</td></tr>
+            <tr><td><kbd>Space</kbd></td><td>Play Focused Recent Item</td><td>Plays currently focused recent folder, playlist, file, or stream immediately (active within 6s idle timeout).</td></tr>
+            <tr><td><kbd>Delete</kbd></td><td>Remove Focused Item</td><td>Deletes the focused item from recent history database.</td></tr>
+            <tr><td><kbd>Escape</kbd></td><td>Cancel Recents Focus</td><td>Exits recent browsing mode without exiting Player Mode.</td></tr>
+            <tr><td><kbd>Ctrl + Shift + S</kbd></td><td>Open Settings Panel</td><td>Directly opens HeadlessPlayer settings panel in NVDA.</td></tr>
+        </tbody>
+    </table>
+
+    <h3>3.7. Speech Queries & Help</h3>
     <table>
         <thead><tr><th>Key</th><th>Action</th><th>Description</th></tr></thead>
         <tbody>
             <tr><td><kbd>i</kbd></td><td>Speak Media Info</td><td>Announces title, formatted duration, and track index (e.g. <em>Track 3 of 15</em>).</td></tr>
-            <tr><td><kbd>Ctrl + i</kbd></td><td>Speak Remaining Time</td><td>Announces remaining time in hours:minutes:seconds.</td></tr>
-            <tr><td><kbd>Shift + i</kbd></td><td>Speak Elapsed Time</td><td>Announces elapsed playback time.</td></tr>
+            <tr><td><kbd>Ctrl + i</kbd></td><td>Speak Remaining Time</td><td>Announces remaining playback time (scaled by active speed). Press twice within 1s to speak raw unscaled time.</td></tr>
+            <tr><td><kbd>Shift + i</kbd></td><td>Speak Elapsed Time</td><td>Announces elapsed playback time (scaled by active speed). Press twice within 1s to speak raw unscaled time.</td></tr>
             <tr><td><kbd>h</kbd></td><td>Shortcuts Help</td><td>Opens accessible shortcuts quick reference dialog.</td></tr>
         </tbody>
     </table>

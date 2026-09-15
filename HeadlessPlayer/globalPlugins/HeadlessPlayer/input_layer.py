@@ -7,6 +7,7 @@ leakage to active background applications.
 
 from __future__ import annotations
 import logging
+import threading
 from typing import Any, Callable, Dict, List, Optional, Set
 
 # Attempt importing NVDA modules
@@ -42,15 +43,30 @@ except (ImportError, ValueError):
 from .utils import log_debug, log_exception, log_info, log_error
 
 try:
-    from .config_spec import getConfig, getConfigValue
+    from .config_spec import getConfig, getConfigValue, getKeymap, parseKeymapKeys
 except ImportError:
     try:
-        from config_spec import getConfig, getConfigValue
+        from config_spec import getConfig, getConfigValue, getKeymap, parseKeymapKeys
     except ImportError:
         def getConfig() -> Dict[str, Any]:
             return {}
         def getConfigValue(k: str, d: Any = None) -> Any:
             return d
+        def getKeymap() -> Dict[str, str]:
+            return {}
+        def parseKeymapKeys(raw: str) -> List[str]:
+            return [k.strip().lower() for k in raw.split(",") if k.strip()]
+
+try:
+    from .mpv_process import is_64bit_os, find_mpv_binary
+except ImportError:
+    try:
+        from mpv_process import is_64bit_os, find_mpv_binary
+    except ImportError:
+        def is_64bit_os() -> bool:
+            return True
+        def find_mpv_binary(*args: Any, **kwargs: Any) -> Optional[str]:
+            return "mpv.exe"
 
 logger = logging.getLogger(__name__)
 
@@ -114,6 +130,9 @@ VK_TAB = 0x09
 # OEM Bracket keys (English [ and ] / Arabic ج and د)
 VK_OEM_4 = 0xDB  # 219 - English '[' / Arabic 'ج'
 VK_OEM_6 = 0xDD  # 221 - English ']' / Arabic 'د'
+VK_DELETE = 0x2E # 46 - Delete key
+VK_OEM_COMMA = 0xBC  # 188 - ',' / Arabic 'و'
+VK_OEM_PERIOD = 0xBE # 190 - '.' / Arabic 'ز'
 
 # Arabic Keyboard to Canonical English Key Map for layout invariance
 ARABIC_TO_ENGLISH_KEY_MAP: Dict[str, str] = {
@@ -151,6 +170,30 @@ HELP_KEYS: Set[str] = {
     "ا",
     "alef",
     "arabic_alef",
+}
+
+COMMA_KEYS: Set[str] = {
+    ",",
+    "comma",
+    "و",
+    "<",
+    "less",
+    "،",
+}
+
+PERIOD_KEYS: Set[str] = {
+    ".",
+    "period",
+    "fullstop",
+    "dot",
+    "ز",
+    ">",
+    "greater",
+}
+
+DELETE_KEYS: Set[str] = {
+    "delete",
+    "del",
 }
 
 DIGIT_MAP: Dict[str, int] = {
@@ -206,7 +249,7 @@ class ModalInputLayer:
 
         # State callback listeners
         self._mode_change_callbacks: List[Callable[[bool], None]] = []
-        # In-memory cached keymap dictionary to eliminate SQLite lookups on input thread
+        # In-memory cached keymap dictionary to eliminate database lookups on input thread
         self._cached_keymap: Optional[Dict[str, str]] = None
 
     def invalidate_keymap_cache(self) -> None:
@@ -217,14 +260,9 @@ class ModalInputLayer:
         """Returns the in-memory active keymap, populating from DB if needed."""
         if self._cached_keymap is None:
             try:
-                from .config_spec import getKeymap
                 self._cached_keymap = getKeymap()
             except Exception:
-                try:
-                    from config_spec import getKeymap
-                    self._cached_keymap = getKeymap()
-                except Exception:
-                    self._cached_keymap = {}
+                self._cached_keymap = {}
         return self._cached_keymap
 
     @property
@@ -333,7 +371,6 @@ class ModalInputLayer:
 
         if active:
             try:
-                from .mpv_process import is_64bit_os, find_mpv_binary
                 if not is_64bit_os():
                     addon_root = getattr(self.controller, "addon_root", None) if self.controller else None
                     if not find_mpv_binary(addon_root=addon_root):
@@ -355,7 +392,6 @@ class ModalInputLayer:
                     logger.debug("Error restoring session on mode enter: %s", e)
             # Pre-warm mpv engine in background thread so it is instantly ready
             if self.controller and hasattr(self.controller, "start"):
-                import threading
                 threading.Thread(
                     target=self.controller.start,
                     daemon=True,
@@ -458,6 +494,21 @@ class ModalInputLayer:
             "speak_remaining_time": ["speak_remaining_time", "announce_remaining_time", "get_remaining_time"],
             "speak_elapsed_time": ["speak_elapsed_time", "announce_elapsed_time", "get_elapsed_time"],
             "show_shortcuts_help": ["show_shortcuts_help", "show_help", "help", "shortcuts_help"],
+            "recent_playlist_next": ["recent_playlist_next", "recent_container_next"],
+            "recent_playlist_prev": ["recent_playlist_prev", "recent_container_prev"],
+            "recent_playlist_first": ["recent_playlist_first", "recent_container_first"],
+            "recent_playlist_last": ["recent_playlist_last", "recent_container_last"],
+            "recent_container_next": ["recent_playlist_next", "recent_container_next"],
+            "recent_container_prev": ["recent_playlist_prev", "recent_container_prev"],
+            "recent_container_first": ["recent_playlist_first", "recent_container_first"],
+            "recent_container_last": ["recent_playlist_last", "recent_container_last"],
+            "recent_track_next": ["recent_track_next"],
+            "recent_track_prev": ["recent_track_prev"],
+            "recent_track_first": ["recent_track_first"],
+            "recent_track_last": ["recent_track_last"],
+            "recent_delete": ["recent_delete_focused", "recent_delete"],
+            "recent_play": ["recent_play_focused", "recent_play"],
+            "open_settings": ["open_settings_dialog", "open_settings"],
             "close_player": ["close_player", "quit_player", "close", "quit", "exit_player"],
         }
 
@@ -569,7 +620,6 @@ class ModalInputLayer:
         Falls back to default_cond only when action is completely omitted from keymap.
         """
         try:
-            from .config_spec import parseKeymapKeys
             keymap = self._get_active_keymap()
             if action_name in keymap:
                 val = keymap[action_name]
@@ -577,6 +627,28 @@ class ModalInputLayer:
                     return False
                 custom_keys = parseKeymapKeys(val)
                 has_custom_mapping = True
+            elif action_name.startswith("recent_container_"):
+                alt_action = action_name.replace("recent_container_", "recent_playlist_")
+                if alt_action in keymap:
+                    val = keymap[alt_action]
+                    if not val or not val.strip():
+                        return False
+                    custom_keys = parseKeymapKeys(val)
+                    has_custom_mapping = True
+                else:
+                    custom_keys = []
+                    has_custom_mapping = False
+            elif action_name.startswith("recent_playlist_"):
+                alt_action = action_name.replace("recent_playlist_", "recent_container_")
+                if alt_action in keymap:
+                    val = keymap[alt_action]
+                    if not val or not val.strip():
+                        return False
+                    custom_keys = parseKeymapKeys(val)
+                    has_custom_mapping = True
+                else:
+                    custom_keys = []
+                    has_custom_mapping = False
             else:
                 custom_keys = []
                 has_custom_mapping = False
@@ -665,6 +737,12 @@ class ModalInputLayer:
                     return True
                 elif target_base in ("]", "bracketright", "د") and (main_key in POINT_B_KEYS or vk == VK_OEM_6):
                     return True
+                elif target_base in (",", "comma", "و") and (main_key in COMMA_KEYS or vk == VK_OEM_COMMA):
+                    return True
+                elif target_base in (".", "period", "fullstop", "dot", "ز") and (main_key in PERIOD_KEYS or vk == VK_OEM_PERIOD):
+                    return True
+                elif target_base in ("delete", "del") and (main_key in DELETE_KEYS or vk == VK_DELETE):
+                    return True
 
             if custom_key in ("control", "ctrl") and (main_key in ("control", "ctrl") or vk in (0x11, 0xA2, 0xA3)):
                 return True
@@ -695,14 +773,25 @@ class ModalInputLayer:
         # 1. Escape: Exit Player Mode
         # -------------------------------------------------------------
         if self._matches_action(gesture, "exit_mode", (main_key in ("escape", "esc") or vk == VK_ESCAPE)):
+            if self.controller and getattr(self.controller, "is_recents_focus_active", lambda: False)():
+                self.controller.cancel_recents_focus()
+                return True
             self.set_player_mode(False)
+            return True
+
+        # Open Settings Dialog (Ctrl + Shift + S)
+        if self._matches_action(gesture, "open_settings", ((main_key == "s" or vk == VK_S) and has_ctrl and has_shift and not has_alt)):
+            self._safe_call("open_settings")
             return True
 
         # -------------------------------------------------------------
         # 2. Playback & Core Controls
         # -------------------------------------------------------------
-        # Play/Pause toggle
+        # Play/Pause toggle (plays focused recent item if recents focus is active)
         if self._matches_action(gesture, "play_pause", ((main_key == "space" or vk == VK_SPACE) and not (has_ctrl or has_alt or has_shift))):
+            if self.controller and getattr(self.controller, "is_recents_focus_active", lambda: False)():
+                if self.controller.recent_play_focused():
+                    return True
             self._safe_call("toggle_pause")
             return True
 
@@ -905,7 +994,56 @@ class ModalInputLayer:
             return True
 
         # -------------------------------------------------------------
-        # 8. Speech Information Queries & Help Dialog
+        # 8. Recent Media History Navigation (Containers & Tracks)
+        # -------------------------------------------------------------
+        is_comma = main_key in COMMA_KEYS or vk == VK_OEM_COMMA
+        is_period = main_key in PERIOD_KEYS or vk == VK_OEM_PERIOD
+
+        # Playlist / Folder Navigation (Folders & Playlists)
+        if self._matches_action(gesture, "recent_playlist_first", (is_comma and has_ctrl and has_shift and not has_alt)) or self._matches_action(gesture, "recent_container_first", False):
+            self._safe_call("recent_playlist_first")
+            return True
+
+        if self._matches_action(gesture, "recent_playlist_last", (is_period and has_ctrl and has_shift and not has_alt)) or self._matches_action(gesture, "recent_container_last", False):
+            self._safe_call("recent_playlist_last")
+            return True
+
+        if self._matches_action(gesture, "recent_playlist_prev", (is_comma and has_ctrl and not (has_shift or has_alt))) or self._matches_action(gesture, "recent_container_prev", False):
+            self._safe_call("recent_playlist_prev")
+            return True
+
+        if self._matches_action(gesture, "recent_playlist_next", (is_period and has_ctrl and not (has_shift or has_alt))) or self._matches_action(gesture, "recent_container_next", False):
+            self._safe_call("recent_playlist_next")
+            return True
+
+        # Track Navigation (Files & Streams)
+        if self._matches_action(gesture, "recent_track_first", (is_comma and has_shift and not (has_ctrl or has_alt))):
+            self._safe_call("recent_track_first")
+            return True
+
+        if self._matches_action(gesture, "recent_track_last", (is_period and has_shift and not (has_ctrl or has_alt))):
+            self._safe_call("recent_track_last")
+            return True
+
+        if self._matches_action(gesture, "recent_track_prev", (is_comma and not (has_ctrl or has_shift or has_alt))):
+            self._safe_call("recent_track_prev")
+            return True
+
+        if self._matches_action(gesture, "recent_track_next", (is_period and not (has_ctrl or has_shift or has_alt))):
+            self._safe_call("recent_track_next")
+            return True
+
+        # Delete: Remove focused recent item from history
+        is_del = (main_key in DELETE_KEYS or vk == VK_DELETE) and not (has_ctrl or has_alt or has_shift)
+        if self._matches_action(gesture, "recent_delete", is_del):
+            if self.controller and getattr(self.controller, "is_recents_focus_active", lambda: False)():
+                self.controller.recent_delete_focused()
+                return True
+            self._safe_call("recent_delete")
+            return True
+
+        # -------------------------------------------------------------
+        # 9. Speech Information Queries & Help Dialog
         # -------------------------------------------------------------
         if self._matches_action(gesture, "remaining_time", ((main_key == "i" or vk == VK_I) and has_ctrl)):
             self._safe_call("speak_remaining_time")

@@ -1,14 +1,29 @@
+from __future__ import annotations
+
 """
 HeadlessPlayer NVDA Add-on - Utility Helpers
 Provides time formatting and parsing, format validation, natural sorting,
 and filesystem helpers for media playback and speech announcements.
 """
 
-from __future__ import annotations
+import ctypes
+from ctypes import wintypes
 import math
 import os
 import re
-from typing import Iterable, List, Optional, Union
+import sys
+import time
+from typing import Iterable, List, Optional, Tuple, Union
+
+try:
+    import api
+except Exception:
+    api = None
+
+try:
+    import wx
+except Exception:
+    wx = None
 
 # Supported media file extensions (lowercase with leading dot)
 SUPPORTED_AUDIO_EXTENSIONS = frozenset({
@@ -416,21 +431,18 @@ def copy_to_clipboard(target: str) -> bool:
 
     # 1. Official NVDA clipboard API (ensures NVDA hooks & unit tests capture copy)
     api_success = False
-    try:
-        import api
-        api_success = bool(api.copyToClip(target))
-    except Exception:
-        pass
+    api_mod = sys.modules.get("api", api)
+    if api_mod is not None:
+        try:
+            api_success = bool(api_mod.copyToClip(target))
+        except Exception:
+            pass
 
     if not is_local_file and api_success:
         return True
 
     # 2. High-fidelity native Win32 dual format clipboard (sets CF_HDROP for files)
     try:
-        import ctypes
-        from ctypes import wintypes
-        import time
-
         user32 = ctypes.windll.user32
         kernel32 = ctypes.windll.kernel32
 
@@ -519,19 +531,20 @@ def copy_to_clipboard(target: str) -> bool:
         pass
 
     # 3. wx fallback
-    try:
-        import wx
-        if wx.TheClipboard.Open():
-            if is_local_file:
-                fdo = wx.FileDataObject()
-                fdo.AddFile(target)
-                wx.TheClipboard.SetData(fdo)
-            else:
-                wx.TheClipboard.SetData(wx.TextDataObject(target))
-            wx.TheClipboard.Flush()
-            wx.TheClipboard.Close()
-            return True
-    except Exception:
-        pass
+    wx_mod = sys.modules.get("wx", wx)
+    if wx_mod is not None:
+        try:
+            if wx_mod.TheClipboard.Open():
+                if is_local_file:
+                    fdo = wx_mod.FileDataObject()
+                    fdo.AddFile(target)
+                    wx_mod.TheClipboard.SetData(fdo)
+                else:
+                    wx_mod.TheClipboard.SetData(wx_mod.TextDataObject(target))
+                wx_mod.TheClipboard.Flush()
+                wx_mod.TheClipboard.Close()
+                return True
+        except Exception:
+            pass
 
     return api_success

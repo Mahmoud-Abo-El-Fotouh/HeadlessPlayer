@@ -10,6 +10,23 @@ import logging
 import os
 from typing import Any, Callable, Dict, List, Optional
 
+try:
+    import wx
+except Exception:
+    wx = None
+
+try:
+    import gui
+    from gui import guiHelper
+except Exception:
+    gui = None
+    guiHelper = None
+
+try:
+    from . import clip_exporter as ce
+except ImportError:
+    import clip_exporter as ce
+
 logger = logging.getLogger("HeadlessPlayer.ExportDialog")
 
 try:
@@ -54,16 +71,11 @@ def prompt_export_dialog(
     """Shows the exporter dialog on the wx main thread."""
 
     def _show() -> None:
-        try:
-            import wx
-            import gui
-            from gui import guiHelper
-        except ImportError:
+        if not wx or not gui or not guiHelper:
             logger.warning("wx unavailable; cannot show export dialog")
             if on_cancelled:
                 on_cancelled()
             return
-        from . import clip_exporter as ce
 
         if suspend_capture:
             try:
@@ -193,8 +205,7 @@ def prompt_export_dialog(
         elif on_cancelled:
             on_cancelled()
 
-    try:
-        import wx
+    if wx and hasattr(wx, "CallAfter"):
         wx.CallAfter(_show)
-    except Exception:
+    else:
         _show()

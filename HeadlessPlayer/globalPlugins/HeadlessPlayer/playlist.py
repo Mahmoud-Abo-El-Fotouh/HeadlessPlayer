@@ -11,7 +11,7 @@ import logging
 import os
 import random
 import threading
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
 try:
     from .utils import (
@@ -35,9 +35,15 @@ except ImportError:
         is_supported_media_file,
         is_video_file,
         natural_sort,
-        log_debug,
-        log_exception,
     )
+
+try:
+    from .explorer_utils import extract_local_media_durations
+except ImportError:
+    try:
+        from explorer_utils import extract_local_media_durations
+    except ImportError:
+        extract_local_media_durations = None
 
 logger = logging.getLogger("HeadlessPlayer.Playlist")
 
@@ -83,9 +89,13 @@ class Track:
         path: str,
         title: Optional[str] = None,
         duration: Optional[float] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
+        is_stream: Optional[bool] = None
     ) -> None:
-        self.is_stream: bool = bool(path) and str(path).strip().lower().startswith(("http://", "https://", "ytdl://", "custom://"))
+        if is_stream is not None:
+            self.is_stream = bool(is_stream)
+        else:
+            self.is_stream = bool(path) and str(path).strip().lower().startswith(("http://", "https://", "ytdl://", "custom://", "youtube:"))
         self.metadata: Dict[str, Any] = dict(metadata) if metadata else {}
         if self.is_stream:
             self.path = str(path).strip()
@@ -167,15 +177,12 @@ class Track:
 
 def _extract_durations_safe(paths: Sequence[str]) -> Dict[str, float]:
     """Safely extracts durations for local media files using explorer_utils without crashing."""
-    try:
-        from .explorer_utils import extract_local_media_durations
-        return extract_local_media_durations(paths)
-    except Exception:
+    if callable(extract_local_media_durations):
         try:
-            from explorer_utils import extract_local_media_durations
             return extract_local_media_durations(paths)
         except Exception:
             return {}
+    return {}
 
 
 class Playlist:

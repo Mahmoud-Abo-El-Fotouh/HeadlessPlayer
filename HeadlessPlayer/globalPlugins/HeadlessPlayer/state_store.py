@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-HeadlessPlayer NVDA Add-on - Persistent State Store (SQLite-backed).
+HeadlessPlayer NVDA Add-on - Persistent State Store (HPDB-backed).
 Provides high-performance, ACID-compliant persistence for playback
 resume positions, recent playlists, and session states.
 """
@@ -8,12 +8,10 @@ resume positions, recent playlists, and session states.
 from __future__ import annotations
 import hashlib
 import logging
-import os
 import threading
-import time
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 
-from .database import get_db_manager, normalize_file_path, DatabaseManager, get_default_db_path
+from .database import get_db_manager, normalize_file_path, DatabaseManager
 
 logger = logging.getLogger("HeadlessPlayer.StateStore")
 CURRENT_SCHEMA_VERSION = 1
@@ -29,7 +27,7 @@ def compute_file_hash_key(file_path: str) -> str:
 
 class StateStore:
     """
-    Thread-safe, SQLite-backed state manager for HeadlessPlayer.
+    Thread-safe, HPDB-backed state manager for HeadlessPlayer.
     Maintains 100% backward compatibility for all API methods.
     """
 
@@ -47,11 +45,11 @@ class StateStore:
         return self._db.db_path
 
     def load(self) -> None:
-        """No-op: SQLite connections read dynamically from disk with WAL cache."""
+        """No-op: Database manager loads dynamically with thread-safe caching."""
         pass
 
     def save(self) -> bool:
-        """No-op: SQLite operations are committed synchronously/WAL."""
+        """No-op: Database operations are persisted automatically via atomic writes."""
         return True
 
     # -------------------------------------------------------------------------
@@ -133,6 +131,60 @@ class StateStore:
 
     def clear_recent_files(self) -> None:
         self._db.clear_recent_files()
+
+    def save_recent_container(
+        self,
+        path: str,
+        title: Optional[str] = None,
+        container_type: str = "folder",
+        parent_name: Optional[str] = None,
+        platform_or_channel: Optional[str] = None,
+        max_entries: Optional[int] = None
+    ) -> None:
+        self._db.save_recent_container(
+            path=path,
+            title=title,
+            container_type=container_type,
+            parent_name=parent_name,
+            platform_or_channel=platform_or_channel,
+            max_entries=max_entries
+        )
+
+    def get_recent_containers(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+        return self._db.get_recent_containers(limit=limit)
+
+    def delete_recent_container(self, path: str) -> bool:
+        return self._db.delete_recent_container(path=path)
+
+    def clear_recent_containers(self) -> None:
+        self._db.clear_recent_containers()
+
+    def save_recent_track(
+        self,
+        path: str,
+        title: Optional[str] = None,
+        track_type: str = "file",
+        parent_folder: Optional[str] = None,
+        platform_or_channel: Optional[str] = None,
+        max_entries: Optional[int] = None
+    ) -> None:
+        self._db.save_recent_track(
+            path=path,
+            title=title,
+            track_type=track_type,
+            parent_folder=parent_folder,
+            platform_or_channel=platform_or_channel,
+            max_entries=max_entries
+        )
+
+    def get_recent_tracks(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+        return self._db.get_recent_tracks(limit=limit)
+
+    def delete_recent_track(self, path: str) -> bool:
+        return self._db.delete_recent_track(path=path)
+
+    def clear_recent_tracks(self) -> None:
+        self._db.clear_recent_tracks()
 
     # -------------------------------------------------------------------------
     # Playlist State API

@@ -1,23 +1,57 @@
 # -*- coding: utf-8 -*-
 """
 HeadlessPlayer Debug Log Manager.
-Provides dedicated high-performance file-based logging to HeadlessPlayer_debug.log in %TEMP%.
+Provides dedicated high-performance file-based logging to HeadlessPlayer_debug.log in %TEMP%,
+and an in-memory Ring Buffer for instant self-diagnostics and telemetry dumps.
 """
 
 from __future__ import annotations
+import collections
 import datetime
 import logging
 import os
-import sys
 import threading
 import traceback
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 _TEMP = os.environ.get("TEMP", "") or os.environ.get("TMP", "") or "."
 _LOG_FILE = os.path.join(_TEMP, "HeadlessPlayer_debug.log")
 _FLAG_FILE = os.path.join(_TEMP, "HeadlessPlayer_debug.enabled")
 _LOCK = threading.Lock()
 _ENABLED = True
+
+
+class RingBuffer:
+    """Thread-safe generic circular ring buffer with bounded capacity."""
+
+    def __init__(self, capacity: int = 100) -> None:
+        self.capacity = max(1, capacity)
+        self._deque: collections.deque = collections.deque(maxlen=self.capacity)
+        self._lock = threading.Lock()
+
+    def append(self, item: Any) -> None:
+        with self._lock:
+            self._deque.append(item)
+
+    def to_list(self) -> List[Any]:
+        with self._lock:
+            return list(self._deque)
+
+    def clear(self) -> None:
+        with self._lock:
+            self._deque.clear()
+
+    def __len__(self) -> int:
+        with self._lock:
+            return len(self._deque)
+
+    def __iter__(self):
+        with self._lock:
+            return iter(list(self._deque))
+
+
+# In-memory circular Ring Buffer holding the most recent 100 log events
+_RING_BUFFER = RingBuffer(capacity=100)
 
 
 def is_enabled() -> bool:
@@ -48,7 +82,8 @@ def get_log_filepath() -> str:
 
 
 def clear_log() -> None:
-    """Clears the log file."""
+    """Clears the log file and in-memory ring buffer."""
+    _RING_BUFFER.clear()
     with _LOCK:
         try:
             with open(_LOG_FILE, "w", encoding="utf-8") as f:
@@ -57,10 +92,17 @@ def clear_log() -> None:
             pass
 
 
+clear_logs = clear_log
+
+
+def get_recent_logs(limit: int = 100) -> List[str]:
+    """Retrieves recent log entries from the in-memory ring buffer."""
+    entries = _RING_BUFFER.to_list()
+    return entries[-limit:] if limit > 0 else entries
+
+
 def log_debug(tag: str, message: str, *args: Any) -> None:
-    """Logs a formatted debug message with timestamp, thread ID, and tag."""
-    if not is_enabled():
-        return
+    """Logs a formatted debug message with timestamp, thread ID, tag, and saves to ring buffer."""
     try:
         now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         thread_name = threading.current_thread().name
@@ -77,17 +119,22 @@ def log_debug(tag: str, message: str, *args: Any) -> None:
         line = f"[{now_str}] [T:{thread_name}:{thread_id}] [{tag}] {formatted}\n"
 
         with _LOCK:
-            with open(_LOG_FILE, "a", encoding="utf-8", errors="replace") as fh:
-                fh.write(line)
-                fh.flush()
+            _RING_BUFFER.append(line)
+            if is_enabled():
+                with open(_LOG_FILE, "a", encoding="utf-8", errors="replace") as fh:
+                    fh.write(line)
+                    fh.flush()
     except Exception:
         pass
 
 
+def log_event(tag: str, message: str, *args: Any, level: str = "DEBUG") -> None:
+    """Convenience alias for structured telemetry logging."""
+    log_debug(tag, message, *args)
+
+
 def log_exception(tag: str, message: str, exc: Optional[BaseException] = None) -> None:
     """Logs an exception with traceback."""
-    if not is_enabled():
-        return
     try:
         if exc is None:
             tb = traceback.format_exc()
@@ -102,11 +149,9 @@ class HeadlessPlayerLogHandler(logging.Handler):
     """
     Logging handler that bridges standard Python logging calls
     (logger.info, logger.debug, logger.error, logger.warning, logger.exception)
-    from all HeadlessPlayer modules into HeadlessPlayer_debug.log.
+    from all HeadlessPlayer modules into HeadlessPlayer_debug.log and Ring Buffer.
     """
     def emit(self, record: logging.LogRecord) -> None:
-        if not is_enabled():
-            return
         try:
             raw_msg = record.getMessage()
             # Avoid duplicate writes for calls that already passed through utils.log_*
@@ -150,8 +195,3 @@ def attach_logging_handler() -> None:
         _HANDLER_ATTACHED = True
     except Exception:
         pass
-
-
-# Automatically attach handler when module is imported
-attach_logging_handler()
-

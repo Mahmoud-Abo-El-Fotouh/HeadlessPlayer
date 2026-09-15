@@ -10,7 +10,33 @@ from __future__ import annotations
 import logging
 import os
 import threading
-from typing import Any, Callable, List, Optional, Sequence, Union
+from typing import Any, Callable, List, Optional
+
+try:
+    import wx
+except Exception:
+    wx = None
+
+try:
+    import gui
+    from gui import guiHelper
+except Exception:
+    gui = None
+    guiHelper = None
+
+try:
+    import ui
+except Exception:
+    ui = None
+
+try:
+    from .config_spec import getKeymap, getConfig
+except ImportError:
+    try:
+        from config_spec import getKeymap, getConfig
+    except ImportError:
+        getKeymap = lambda: {}
+        getConfig = lambda: {}
 
 try:
     from .utils import get_media_dialog_wildcard
@@ -87,10 +113,7 @@ def prompt_open_file_dialog(
         return
 
     def _show_dialog() -> None:
-        try:
-            import wx
-            import gui
-        except ImportError:
+        if not wx or not gui:
             logger.warning("wx or gui module not available; cannot display FileDialog")
             if on_cancelled:
                 on_cancelled()
@@ -165,11 +188,13 @@ def prompt_open_file_dialog(
         except Exception:
             pass
 
-    try:
-        import wx
-        wx.CallAfter(_show_dialog)
-    except Exception:
-        # If not inside a wx main loop, run synchronously or dispatch to thread
+    if wx is not None and hasattr(wx, "CallAfter"):
+        try:
+            wx.CallAfter(_show_dialog)
+        except Exception:
+            t = threading.Thread(target=_show_dialog, daemon=True)
+            t.start()
+    else:
         t = threading.Thread(target=_show_dialog, daemon=True)
         t.start()
 
@@ -212,10 +237,7 @@ def prompt_open_files_dialog(
         return
 
     def _show_dialog() -> None:
-        try:
-            import wx
-            import gui
-        except ImportError:
+        if not wx or not gui:
             logger.warning("wx or gui module not available; cannot display FileDialog")
             if on_cancelled:
                 on_cancelled()
@@ -286,10 +308,13 @@ def prompt_open_files_dialog(
         except Exception:
             pass
 
-    try:
-        import wx
-        wx.CallAfter(_show_dialog)
-    except Exception:
+    if wx is not None and hasattr(wx, "CallAfter"):
+        try:
+            wx.CallAfter(_show_dialog)
+        except Exception:
+            t = threading.Thread(target=_show_dialog, daemon=True)
+            t.start()
+    else:
         t = threading.Thread(target=_show_dialog, daemon=True)
         t.start()
 
@@ -338,10 +363,7 @@ def prompt_open_folder_dialog(
         return
 
     def _show_dialog() -> None:
-        try:
-            import wx
-            import gui
-        except ImportError:
+        if not wx or not gui:
             logger.warning("wx or gui module not available; cannot display DirDialog")
             if on_cancelled:
                 on_cancelled()
@@ -409,10 +431,13 @@ def prompt_open_folder_dialog(
         except Exception:
             pass
 
-    try:
-        import wx
-        wx.CallAfter(_show_dialog)
-    except Exception:
+    if wx is not None and hasattr(wx, "CallAfter"):
+        try:
+            wx.CallAfter(_show_dialog)
+        except Exception:
+            t = threading.Thread(target=_show_dialog, daemon=True)
+            t.start()
+    else:
         t = threading.Thread(target=_show_dialog, daemon=True)
         t.start()
 
@@ -425,24 +450,14 @@ def generate_help_text(custom_toggle_gesture: Optional[str] = None) -> str:
     toggle_str = custom_toggle_gesture or "NVDA+Ctrl+Shift+P / Insert+Ctrl+Shift+P"
 
     try:
-        from .config_spec import getKeymap
         keymap = getKeymap()
     except Exception:
-        try:
-            from config_spec import getKeymap
-            keymap = getKeymap()
-        except Exception:
-            keymap = {}
+        keymap = {}
 
     try:
-        from .config_spec import getConfig
         cfg = getConfig()
     except Exception:
-        try:
-            from config_spec import getConfig
-            cfg = getConfig()
-        except Exception:
-            cfg = {}
+        cfg = {}
 
     s_norm = int(cfg.get("seekStepNormal", 5))
     s_slow = int(cfg.get("seekStepSlow", 1))
@@ -460,74 +475,152 @@ def generate_help_text(custom_toggle_gesture: Optional[str] = None) -> str:
     str_fast = _fmt_seconds(s_fast)
     str_ultra = _fmt_seconds(s_ultra)
 
-    k_play = keymap.get("play_pause", "Space").capitalize()
-    k_stop = keymap.get("stop", "s")
-    k_mute = keymap.get("mute", "m")
-    k_vup = keymap.get("vol_up", "Up Arrow")
-    k_vdown = keymap.get("vol_down", "Down Arrow")
-    k_next = keymap.get("next_track", "Page Down").replace("pagedown", "Page Down").replace("next", "Page Down")
-    k_prev = keymap.get("prev_track", "Page Up").replace("pageup", "Page Up").replace("prior", "Page Up")
-    k_open = keymap.get("open_file", "o")
-    k_folder = keymap.get("open_folder", "f")
-    k_url = keymap.get("open_url", "u")
-    k_exp = keymap.get("load_explorer", "e")
-    k_autonext = keymap.get("toggle_auto_next", "n")
-    k_shuffle = keymap.get("toggle_shuffle", "z")
-    k_help = keymap.get("show_help", "h")
-    k_exit = keymap.get("exit_mode", "Escape").capitalize()
+    def _fmt_key(raw_key: str) -> str:
+        if not raw_key:
+            return ""
+        parts = raw_key.split("+")
+        formatted_parts = []
+        for p in parts:
+            low = p.lower()
+            if low in ("ctrl", "control"):
+                formatted_parts.append("Ctrl")
+            elif low == "shift":
+                formatted_parts.append("Shift")
+            elif low == "alt":
+                formatted_parts.append("Alt")
+            elif low == "space":
+                formatted_parts.append("Space")
+            elif low in ("escape", "esc"):
+                formatted_parts.append("Escape")
+            elif low in ("pageup", "page_up", "prior"):
+                formatted_parts.append("Page Up")
+            elif low in ("pagedown", "page_down", "next"):
+                formatted_parts.append("Page Down")
+            elif low in ("home", "extendedhome"):
+                formatted_parts.append("Home")
+            elif low in ("end", "extendedend"):
+                formatted_parts.append("End")
+            elif low in ("leftarrow", "left"):
+                formatted_parts.append("Left Arrow")
+            elif low in ("rightarrow", "right"):
+                formatted_parts.append("Right Arrow")
+            elif low in ("uparrow", "up"):
+                formatted_parts.append("Up Arrow")
+            elif low in ("downarrow", "down"):
+                formatted_parts.append("Down Arrow")
+            elif low in ("delete", "del"):
+                formatted_parts.append("Delete")
+            elif low == ".":
+                formatted_parts.append(".")
+            elif low == ",":
+                formatted_parts.append(",")
+            elif len(p) == 1:
+                formatted_parts.append(p.upper())
+            else:
+                formatted_parts.append(p.capitalize())
+        return " + ".join(formatted_parts)
 
-    k_seek_f = keymap.get("seek_forward", "Right Arrow")
-    k_seek_b = keymap.get("seek_backward", "Left Arrow")
-    k_seek_sf = keymap.get("seek_slow_forward", "Alt + Right")
-    k_seek_sb = keymap.get("seek_slow_backward", "Alt + Left")
-    k_seek_ff = keymap.get("seek_fast_forward", "Ctrl + Right")
-    k_seek_fb = keymap.get("seek_fast_backward", "Ctrl + Left")
-    k_seek_uf = keymap.get("seek_ultrafast_forward", "Shift + Right")
-    k_seek_ub = keymap.get("seek_ultrafast_backward", "Shift + Left")
+    k_play = _fmt_key(keymap.get("play_pause", "space"))
+    k_stop = _fmt_key(keymap.get("stop", "s"))
+    k_mute = _fmt_key(keymap.get("mute", "m"))
+    k_vup = _fmt_key(keymap.get("vol_up", "uparrow"))
+    k_vdown = _fmt_key(keymap.get("vol_down", "downarrow"))
+    k_bup = _fmt_key(keymap.get("bass_up", "b"))
+    k_bdown = _fmt_key(keymap.get("bass_down", "shift+b"))
 
-    k_pt_a = keymap.get("point_a", "[")
-    k_pt_b = keymap.get("point_b", "]")
-    k_rep = keymap.get("toggle_repeat", "r")
-    k_clr = keymap.get("clear_loop", "c")
+    k_seek_f = _fmt_key(keymap.get("seek_forward", "rightarrow"))
+    k_seek_b = _fmt_key(keymap.get("seek_backward", "leftarrow"))
+    k_seek_sf = _fmt_key(keymap.get("seek_slow_forward", "alt+rightarrow"))
+    k_seek_sb = _fmt_key(keymap.get("seek_slow_backward", "alt+leftarrow"))
+    k_seek_ff = _fmt_key(keymap.get("seek_fast_forward", "control+rightarrow"))
+    k_seek_fb = _fmt_key(keymap.get("seek_fast_backward", "control+leftarrow"))
+    k_seek_uf = _fmt_key(keymap.get("seek_ultrafast_forward", "shift+rightarrow"))
+    k_seek_ub = _fmt_key(keymap.get("seek_ultrafast_backward", "shift+leftarrow"))
+    k_track_start = _fmt_key(keymap.get("track_start", "home"))
+    k_track_end = _fmt_key(keymap.get("track_end", "end"))
 
-    k_info = keymap.get("media_info", "i")
-    k_rem = keymap.get("remaining_time", "Ctrl + i")
-    if k_rem.lower() == "control+i":
-        k_rem = "Ctrl + i"
-    k_elapsed = keymap.get("elapsed_time", "Shift + i")
-    if k_elapsed.lower() == "shift+i":
-        k_elapsed = "Shift + i"
+    k_spd_down = _fmt_key(keymap.get("speed_down", "control+downarrow"))
+    k_spd_up = _fmt_key(keymap.get("speed_up", "control+uparrow"))
+    k_spd_pdown = _fmt_key(keymap.get("speed_preset_down", "shift+downarrow"))
+    k_spd_pup = _fmt_key(keymap.get("speed_preset_up", "shift+uparrow"))
+
+    k_pt_a = _fmt_key(keymap.get("point_a", "["))
+    k_pt_b = _fmt_key(keymap.get("point_b", "]"))
+    k_rep = _fmt_key(keymap.get("toggle_repeat", "r"))
+    k_clr = _fmt_key(keymap.get("clear_loop", "c"))
+
+    k_rc_prev = _fmt_key(keymap.get("recent_playlist_prev", keymap.get("recent_container_prev", "control+,")))
+    k_rc_next = _fmt_key(keymap.get("recent_playlist_next", keymap.get("recent_container_next", "control+.")))
+    k_rc_first = _fmt_key(keymap.get("recent_playlist_first", keymap.get("recent_container_first", "control+shift+,")))
+    k_rc_last = _fmt_key(keymap.get("recent_playlist_last", keymap.get("recent_container_last", "control+shift+.")))
+    k_rt_prev = _fmt_key(keymap.get("recent_track_prev", ","))
+    k_rt_next = _fmt_key(keymap.get("recent_track_next", "."))
+    k_rt_first = _fmt_key(keymap.get("recent_track_first", "shift+,"))
+    k_rt_last = _fmt_key(keymap.get("recent_track_last", "shift+."))
+    k_rc_del = _fmt_key(keymap.get("recent_delete", "delete"))
+
+    k_prev = _fmt_key(keymap.get("prev_track", "pageup"))
+    k_next = _fmt_key(keymap.get("next_track", "pagedown"))
+    k_first = _fmt_key(keymap.get("first_track", "control+home"))
+    k_last = _fmt_key(keymap.get("last_track", "control+end"))
+    k_open = _fmt_key(keymap.get("open_file", "o"))
+    k_folder = _fmt_key(keymap.get("open_folder", "f"))
+    k_exp = _fmt_key(keymap.get("load_explorer", "e"))
+    k_autonext = _fmt_key(keymap.get("toggle_auto_next", "n"))
+    k_shuffle = _fmt_key(keymap.get("toggle_shuffle", "z"))
+
+    k_url = _fmt_key(keymap.get("open_url", "u"))
+    k_acc = _fmt_key(keymap.get("account_feed", "p"))
+    k_curl = _fmt_key(keymap.get("copy_url", "v"))
+    k_cdurl = _fmt_key(keymap.get("copy_direct_url", "shift+v"))
+    k_clip = _fmt_key(keymap.get("export_clip", "d"))
+    k_qclip = _fmt_key(keymap.get("quick_export", "shift+d"))
+
+    k_pchap = _fmt_key(keymap.get("prev_chapter", "control+shift+leftarrow"))
+    k_nchap = _fmt_key(keymap.get("next_chapter", "control+shift+rightarrow"))
+    k_caudio = _fmt_key(keymap.get("cycle_audio_track", "a"))
+
+    k_info = _fmt_key(keymap.get("media_info", "i"))
+    k_rem = _fmt_key(keymap.get("remaining_time", "control+i"))
+    k_elapsed = _fmt_key(keymap.get("elapsed_time", "shift+i"))
+
+    k_settings = _fmt_key(keymap.get("open_settings", "control+shift+s"))
+    k_help = _fmt_key(keymap.get("show_help", "h"))
+    k_close = _fmt_key(keymap.get("close_player", "x"))
+    k_exit = _fmt_key(keymap.get("exit_mode", "escape"))
 
     lines = [
         "=" * 60,
         _("HEADLESS MEDIA PLAYER — KEYBOARD SHORTCUTS REFERENCE"),
         "=" * 60,
         "",
-        _("MODE ACTIVATION & EXIT:"),
+        _("MODE ACTIVATION, SETTINGS & EXIT:"),
         f"  • {toggle_str} : " + _("Enter or exit Headless Player Mode."),
         f"  • {k_exit} : " + _("Exit Player Mode and return to normal desktop keyboard control."),
+        f"  • {k_settings} : " + _("Open HeadlessPlayer Settings Panel in NVDA."),
         "  • Control : " + _("Silence speech immediately while in Player Mode."),
         f"  • {k_help} : " + _("Show this keyboard shortcuts help window."),
+        f"  • {k_close} : " + _("Close / quit media player completely."),
         "",
         _("PLAYBACK & VOLUME CONTROLS:"),
-        f"  • {k_play} : " + _("Play / Pause toggle."),
+        f"  • {k_play} : " + _("Play / Pause toggle (or play focused recent item while browsing history)."),
         f"  • {k_stop} : " + _("Stop playback and rewind to beginning."),
         f"  • {k_mute} : " + _("Mute / Unmute audio."),
         f"  • {k_vup} / {k_vdown} : " + _("Adjust volume (+/- 5%)."),
-        f"  • {keymap.get('bass_up', 'b')} / {keymap.get('bass_down', 'shift+b')} : " + _("Raise / lower bass (+/- 3 dB)."),
+        f"  • {k_bup} / {k_bdown} : " + _("Raise / lower bass (+/- 3 dB)."),
         "",
         _("SEEKING & JUMPS:"),
         f"  • {k_seek_b} / {k_seek_f} : " + _("Normal seek (+/- %s).") % str_norm,
         f"  • {k_seek_sb} / {k_seek_sf} : " + _("Slow & precise seek (+/- %s).") % str_slow,
         f"  • {k_seek_fb} / {k_seek_ff} : " + _("Fast seek (+/- %s).") % str_fast,
         f"  • {k_seek_ub} / {k_seek_uf} : " + _("Ultrafast seek (+/- %s).") % str_ultra,
-        f"  • {keymap.get('track_start', 'Home')} : " + _("Jump to start of current playing track."),
-        f"  • {keymap.get('track_end', 'End')} : " + _("Jump to end of current playing track."),
+        f"  • {k_track_start} : " + _("Jump to start of current playing track."),
+        f"  • {k_track_end} : " + _("Jump to end of current playing track."),
         "  • Number keys 1 to 9 (Top Row) : " + _("Jump directly to 10% through 90% of file duration."),
         "",
         _("PITCH-PRESERVED SPEED CONTROLS:"),
-        f"  • {keymap.get('speed_down', 'Ctrl + Down')} / {keymap.get('speed_up', 'Ctrl + Up')} : " + _("Fine speed adjustment (+/- 0.1x)."),
-        f"  • {keymap.get('speed_preset_down', 'Shift + Down')} / {keymap.get('speed_preset_up', 'Shift + Up')} : " + _("Cycle preset speeds (1.0x, 1.5x, 1.75x, 2.0x, 2.5x, 3.0x)."),
+        f"  • {k_spd_down} / {k_spd_up} : " + _("Fine speed adjustment (+/- 0.1x)."),
+        f"  • {k_spd_pdown} / {k_spd_pup} : " + _("Cycle preset speeds (1.0x, 1.5x, 1.75x, 2.0x, 2.5x, 3.0x)."),
         "",
         _("A-B SEGMENT LOOP & REPEAT MODES:"),
         f"  • {k_pt_a} : " + _("Mark start of loop (Point A)."),
@@ -535,36 +628,46 @@ def generate_help_text(custom_toggle_gesture: Optional[str] = None) -> str:
         f"  • {k_rep} : " + _("Toggle repeat: A-B loop (if marked) or cycle Single Track / Playlist / Off."),
         f"  • {k_clr} : " + _("Clear marked A-B loop points."),
         "",
+        _("RECENT MEDIA & BROWSING HISTORY:"),
+        f"  • {k_rc_prev} / {k_rc_next} : " + _("Browse recent playlists (folders & playlists) backward / forward."),
+        f"  • {k_rc_first} / {k_rc_last} : " + _("Jump to oldest / newest recent playlist."),
+        f"  • {k_rt_prev} / {k_rt_next} : " + _("Browse recent tracks (files & streams) backward / forward."),
+        f"  • {k_rt_first} / {k_rt_last} : " + _("Jump to oldest / newest recent track."),
+        f"  • Space : " + _("Play focused recent item immediately (active within 6 seconds of browsing)."),
+        f"  • {k_rc_del} : " + _("Remove focused recent item from history database."),
+        "  • Escape : " + _("Cancel recent browsing mode without leaving Player Mode."),
+        "",
         _("PLAYLIST, FOLDERS & WINDOWS EXPLORER:"),
         "  • NVDA + Ctrl + Windows + e : " + _("Directly load and play focused/selected media from Explorer/Desktop without entering Player Mode."),
         f"  • {k_exp} : " + _("Play active selection directly from Windows Explorer / Desktop."),
         f"  • {k_open} : " + _("Open file dialog (select single media file)."),
         f"  • {k_folder} : " + _("Open folder dialog (load entire folder as playlist)."),
         f"  • {k_prev} / {k_next} : " + _("Previous / Next track in playlist."),
-        f"  • {keymap.get('first_track', 'Ctrl+Home')} : " + _("Jump to first track in playlist."),
-        f"  • {keymap.get('last_track', 'Ctrl+End')} : " + _("Jump to last track in playlist."),
+        f"  • {k_first} : " + _("Jump to first track in playlist."),
+        f"  • {k_last} : " + _("Jump to last track in playlist."),
         f"  • {k_autonext} : " + _("Toggle Auto-Next track playback."),
         f"  • {k_shuffle} : " + _("Toggle playlist shuffle / random mode."),
         "",
         _("YOUTUBE & ONLINE STREAMING:"),
         f"  • {k_url} : " + _("Open URL / search box: paste a YouTube or website link to play it, or type text to search YouTube. Exits Player Mode automatically."),
-        f"  • {keymap.get('account_feed', 'p')} : " + _("Open YouTube account & feeds browser (recommendations, subscriptions, watch later, liked, history, trending)."),
-        f"  • {keymap.get('copy_url', 'v')} : " + _("Copy the current track's link (or file path) to the clipboard."),
-        f"  • {keymap.get('copy_direct_url', 'shift+v')} : " + _("Copy the direct audio media link of the playing YouTube item."),
-        f"  • {keymap.get('export_clip', 'd')} : " + _("Export the A-B selection (or the whole item) as MP3, M4A or MP4 video; with only point A set, the current position becomes B."),
-        f"  • {keymap.get('quick_export', 'shift+d')} : " + _("Quick export of the A-B selection with the remembered settings, no dialog."),
+        f"  • {k_acc} : " + _("Open YouTube account & feeds browser (recommendations, subscriptions, watch later, liked, history, trending)."),
+        f"  • {k_curl} : " + _("Copy the current track's link (or file path) to the clipboard."),
+        f"  • {k_cdurl} : " + _("Copy the direct audio media link of the playing YouTube item."),
+        f"  • {k_clip} : " + _("Export the A-B selection (or the whole item) as MP3, M4A or MP4 video; with only point A set, the current position becomes B."),
+        f"  • {k_qclip} : " + _("Quick export of the A-B selection with the remembered settings, no dialog."),
         "  • " + _("In search results: Enter on a video plays it; Enter on a playlist or channel opens it; Tab reaches the Play Playlist button; Backspace goes back."),
         "  • " + _("Online playlists behave exactly like local playlists (Next/Previous track, shuffle, repeat, resume)."),
         "",
         _("CHAPTERS & VIDEO AUDIO TRACKS:"),
-        f"  • {keymap.get('prev_chapter', 'Ctrl+Shift+Left')} / {keymap.get('next_chapter', 'Ctrl+Shift+Right')} : " + _("Jump to Previous / Next chapter."),
-        f"  • {keymap.get('cycle_audio_track', 'a')} : " + _("Cycle audio tracks / languages in video files."),
+        f"  • {k_pchap} / {k_nchap} : " + _("Jump to Previous / Next chapter."),
+        f"  • {k_caudio} : " + _("Cycle audio tracks / languages in video files."),
         "",
         _("SPEECH QUERIES:"),
         f"  • {k_info} : " + _("Speak full media information (title, duration, playlist index)."),
         f"  • {k_rem} : " + _("Speak remaining playback time (accounts for playback speed)."),
         f"  • {k_rem} (%s) : " % _("pressed twice") + _("Speak original remaining playback time (unscaled by speed)."),
-        f"  • {k_elapsed} : " + _("Speak elapsed playback time."),
+        f"  • {k_elapsed} : " + _("Speak elapsed playback time (accounts for playback speed)."),
+        f"  • {k_elapsed} (%s) : " % _("pressed twice") + _("Speak original elapsed playback time (unscaled by speed)."),
         "=" * 60,
     ]
     return "\n".join(lines)
@@ -601,9 +704,8 @@ def prompt_help_dialog(
             help_content = generate_help_text(custom_toggle_gesture)
 
             try:
-                import wx
-                import gui
-                from gui import guiHelper
+                if not wx or not gui or not guiHelper:
+                    raise RuntimeError("wx/gui not available")
 
                 class _ShortcutsModalDialog(wx.Dialog):
                     def __init__(self) -> None:
@@ -643,8 +745,7 @@ def prompt_help_dialog(
 
             except Exception:
                 try:
-                    import ui
-                    if hasattr(ui, "browseableMessage"):
+                    if ui and hasattr(ui, "browseableMessage"):
                         ui.browseableMessage(help_content, title=help_title)
                 except Exception:
                     logger.info("[Help Dialog Output]\n%s", help_content)
@@ -658,10 +759,9 @@ def prompt_help_dialog(
                 except Exception:
                     pass
 
-    try:
-        import wx
+    if wx and hasattr(wx, "CallAfter"):
         wx.CallAfter(_show_help)
-    except Exception:
+    else:
         t = threading.Thread(target=_show_help, daemon=True)
         t.start()
 

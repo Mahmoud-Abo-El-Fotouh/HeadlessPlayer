@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
 """
 mpv Process Lifecycle & Discovery Manager.
 Launches headless, detached mpv daemon process with zero UI, console, or taskbar footprint.
@@ -11,11 +12,15 @@ import os
 import platform
 import shutil
 import subprocess
-import sys
 import time
 from typing import List, Optional
 
 logger = logging.getLogger("HeadlessPlayer.MpvProcess")
+
+try:
+    import ui  # type: ignore
+except ImportError:
+    ui = None  # type: ignore
 
 try:
     from . import _  # type: ignore
@@ -329,11 +334,11 @@ class MpvProcess:
         if not binary:
             if not is_64bit_os():
                 msg = _("This is a 32-bit system; the bundled media player requires a 64-bit version of Windows.")
-                try:
-                    import ui
-                    ui.message(msg)
-                except Exception:
-                    pass
+                if ui and hasattr(ui, "message"):
+                    try:
+                        ui.message(msg)
+                    except Exception:
+                        pass
                 logger.error("Cannot launch mpv: 32-bit OS detected and no 32-bit mpv binary found.")
             else:
                 logger.error("Cannot launch mpv: No executable found in discovery cascade.")
@@ -364,7 +369,19 @@ class MpvProcess:
             # Short sleep to allow process initialization
             time.sleep(0.05)
             if self.process.poll() is not None:
-                logger.error("mpv process terminated immediately with exit code %d", self.process.poll())
+                exit_code = self.process.poll()
+                if exit_code in (3221225781, -1073741515, 0xC0000135):
+                    logger.error(
+                        "mpv process terminated immediately with exit code %d (0xC0000135: Required DLL missing, e.g. vulkan-1.dll)",
+                        exit_code
+                    )
+                    if ui and hasattr(ui, "message"):
+                        try:
+                            ui.message(_("The media player could not start because a required system library is missing on this computer."))
+                        except Exception:
+                            pass
+                else:
+                    logger.error("mpv process terminated immediately with exit code %d", exit_code)
                 return False
 
             # Assign to Win32 Job Object for crash daemon protection
@@ -373,11 +390,11 @@ class MpvProcess:
         except OSError as e:
             if getattr(e, "winerror", None) == 216:
                 msg = _("This is a 32-bit system; the bundled media player requires a 64-bit version of Windows.")
-                try:
-                    import ui
-                    ui.message(msg)
-                except Exception:
-                    pass
+                if ui and hasattr(ui, "message"):
+                    try:
+                        ui.message(msg)
+                    except Exception:
+                        pass
                 logger.error("Architecture mismatch: %s is a 64-bit binary and cannot run on this 32-bit Windows system.", binary)
             else:
                 logger.error("Failed to launch mpv subprocess: %s", e, exc_info=True)
