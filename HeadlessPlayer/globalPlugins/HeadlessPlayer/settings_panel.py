@@ -935,6 +935,176 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
         self.EndModal(wx.ID_OK)
 
 
+class YtdlpUpdateDialog(_WxDialog):
+    """
+    Accessible modal dialog presenting live streaming engine (yt-dlp) update progress,
+    gauge percentage, size downloaded, and status reporting.
+    """
+
+    def __init__(self, parent: Any, channel: str = "stable", current_version: str = "") -> None:
+        if not wx:
+            return
+        super().__init__(
+            parent,
+            title=_("Streaming Engine Update (yt-dlp)"),
+            style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER
+        )
+        self.channel = channel
+        self.current_version = current_version
+        self.updated_version: Optional[str] = None
+        self.is_success: bool = False
+        self.result_message: str = ""
+        self._last_spoken_pct = -1
+        self.InitUI()
+        self.CenterOnParent()
+        self.StartUpdate()
+
+    def InitUI(self) -> None:
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+        helper = guiHelper.BoxSizerHelper(self, sizer=mainSizer)
+
+        chan_label = self.channel.capitalize()
+        header_text = _("Updating streaming engine on %s channel (Current version: %s)") % (chan_label, self.current_version or _("Unknown"))
+        self.headerLabel = wx.StaticText(self, label=header_text)
+        helper.addItem(self.headerLabel)
+
+        self.statusLabel = wx.StaticText(self, label=_("Connecting to update server..."))
+        helper.addItem(self.statusLabel)
+
+        self.progressBar = wx.Gauge(self, range=100, size=(480, 20), style=wx.GA_HORIZONTAL)
+        helper.addItem(self.progressBar)
+
+        btnSizer = wx.BoxSizer(wx.HORIZONTAL)
+        btnSizer.AddStretchSpacer()
+        self.actionBtn = wx.Button(self, wx.ID_CANCEL, label=_("&Cancel"))
+        self.actionBtn.Bind(wx.EVT_BUTTON, self.onActionBtn)
+        btnSizer.Add(self.actionBtn, 0, wx.ALL, 5)
+
+        helper.addItem(btnSizer)
+        self.SetSizerAndFit(mainSizer)
+
+    def StartUpdate(self) -> None:
+        if ui and hasattr(ui, "message"):
+            try:
+                ui.message(_("Checking for streaming engine updates on %s channel, please wait...") % self.channel.capitalize())
+            except Exception:
+                pass
+
+        def progress_cb(stage: str, downloaded: int = 0, total: int = 0, pct: float = 0.0, extra: str = "") -> None:
+            wx.CallAfter(self._on_progress, stage, downloaded, total, pct, extra)
+
+        def worker() -> None:
+            try:
+                updated, msg = stream_engine.update_ytdlp(channel=self.channel, progress_cb=progress_cb)
+            except Exception as e:
+                updated, msg = False, f"error:unexpected:{e}"
+            wx.CallAfter(self._on_complete, updated, msg)
+
+        threading.Thread(target=worker, daemon=True, name="HeadlessPlayer-YtdlpUpdateDialog").start()
+
+    def _on_progress(self, stage: str, downloaded: int = 0, total: int = 0, pct: float = 0.0, extra: str = "") -> None:
+        try:
+            if not self or not getattr(self, "thisown", True):
+                return
+            if not hasattr(self, "progressBar") or not self.progressBar or not getattr(self.progressBar, "thisown", True):
+                return
+            if not hasattr(self, "statusLabel") or not self.statusLabel or not getattr(self.statusLabel, "thisown", True):
+                return
+        except Exception:
+            return
+
+        pct_int = min(100, max(0, int(pct)))
+        self.progressBar.SetValue(pct_int)
+
+        if stage == "checking":
+            self.statusLabel.SetLabel(_("Checking for updates on %s channel...") % self.channel.capitalize())
+        elif stage == "downloading":
+            down_mb = downloaded / (1024 * 1024)
+            total_mb = total / (1024 * 1024) if total > 0 else 0.0
+            if total_mb > 0:
+                msg = _("Downloading update: %.2f MB of %.2f MB (%d%%)") % (down_mb, total_mb, pct_int)
+            else:
+                msg = _("Downloading update: %.2f MB") % down_mb
+            self.statusLabel.SetLabel(msg)
+
+            # Announce milestones to screen reader
+            if pct_int in (25, 50, 75) and pct_int != self._last_spoken_pct:
+                self._last_spoken_pct = pct_int
+                if ui and hasattr(ui, "message"):
+                    try:
+                        ui.message(_("Downloading: %d%%") % pct_int)
+                    except Exception:
+                        pass
+        elif stage == "extracting":
+            self.statusLabel.SetLabel(_("Extracting streaming engine package..."))
+        elif stage == "installing":
+            self.statusLabel.SetLabel(_("Installing update into add-on directory..."))
+
+    def _on_complete(self, updated: bool, message: str) -> None:
+        try:
+            if not self or not getattr(self, "thisown", True):
+                return
+            if not hasattr(self, "progressBar") or not self.progressBar or not getattr(self.progressBar, "thisown", True):
+                return
+            if not hasattr(self, "statusLabel") or not self.statusLabel or not getattr(self.statusLabel, "thisown", True):
+                return
+            if not hasattr(self, "actionBtn") or not self.actionBtn or not getattr(self.actionBtn, "thisown", True):
+                return
+        except Exception:
+            return
+
+        self.is_success = updated
+        self.result_message = message
+        self.progressBar.SetValue(100 if updated else 0)
+
+        if updated:
+            new_ver = message.split(":", 1)[1] if ":" in message else ""
+            self.updated_version = new_ver
+            success_text = _(
+                "Streaming engine updated successfully to version %s!\n"
+                "Please restart NVDA to activate the new version."
+            ) % new_ver
+            self.statusLabel.SetLabel(success_text)
+            self.actionBtn.SetLabel(_("&Close"))
+            self.actionBtn.SetId(wx.ID_OK)
+            self.actionBtn.SetDefault()
+            self.actionBtn.SetFocus()
+
+            if ui and hasattr(ui, "message"):
+                try:
+                    ui.message(_("Streaming engine updated successfully to version %s. Restart NVDA to activate.") % new_ver)
+                except Exception:
+                    pass
+        elif message.startswith("up-to-date"):
+            cur = message.split(":", 1)[1] if ":" in message else ""
+            msg_text = _("The streaming engine is already up to date on the %s channel (version %s).") % (self.channel.capitalize(), cur)
+            self.statusLabel.SetLabel(msg_text)
+            self.actionBtn.SetLabel(_("&Close"))
+            self.actionBtn.SetId(wx.ID_OK)
+            self.actionBtn.SetDefault()
+            self.actionBtn.SetFocus()
+            if ui and hasattr(ui, "message"):
+                try:
+                    ui.message(msg_text)
+                except Exception:
+                    pass
+        else:
+            err_text = _("Could not update the streaming engine.\nDetails: %s") % message
+            self.statusLabel.SetLabel(err_text)
+            self.actionBtn.SetLabel(_("&Close"))
+            self.actionBtn.SetId(wx.ID_CANCEL)
+            self.actionBtn.SetDefault()
+            self.actionBtn.SetFocus()
+            if ui and hasattr(ui, "message"):
+                try:
+                    ui.message(_("Update failed: %s") % message)
+                except Exception:
+                    pass
+
+    def onActionBtn(self, evt: Any) -> None:
+        self.EndModal(self.actionBtn.GetId())
+
+
 SPEED_CHOICES: List[Tuple[str, str]] = [
     ("0.5", _("0.5x")),
     ("0.75", _("0.75x")),
@@ -958,6 +1128,13 @@ STREAM_QUALITY_CHOICES: List[Tuple[str, str]] = [
     ("medium", _("Medium (AAC ~128 kbps - Standard)")),
     ("low", _("Low (~64 kbps - Data saver)")),
 ]
+
+YTDLP_CHANNEL_CHOICES: List[Tuple[str, str]] = [
+    ("stable", _("Stable (PyPI - Recommended)")),
+    ("nightly", _("Nightly (Daily YouTube Fixes)")),
+    ("master", _("Master (Development)")),
+]
+
 
 
 class HeadlessPlayerSettingsPanel(SettingsPanel):
@@ -1244,16 +1421,42 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
             sizer=wx.StaticBoxSizer(streamBox, wx.VERTICAL)
         )
 
-        ver = (stream_engine.get_bundled_version() if stream_engine and hasattr(stream_engine, "get_bundled_version") else None) or _("not installed")
+        ver_info = stream_engine.get_channel_info() if stream_engine and hasattr(stream_engine, "get_channel_info") else {}
+        ver = ver_info.get("installed_version") or (stream_engine.get_bundled_version() if stream_engine and hasattr(stream_engine, "get_bundled_version") else None) or _("not installed")
+        chan_name = str(ver_info.get("installed_channel", "stable")).capitalize()
         self.ytdlpVersionText = streamGroup.addItem(
-            wx.StaticText(self.panelStreaming, label=_("Streaming engine (yt-dlp) version: %s") % ver)
+            wx.StaticText(self.panelStreaming, label=_("Streaming engine (yt-dlp) version: %s (%s)") % (ver, chan_name))
         )
+
+        channelLabels = [label for _val, label in YTDLP_CHANNEL_CHOICES]
+        self.ytdlpChannelChoice = streamGroup.addLabeledControl(
+            _("yt-dlp update &channel:"),
+            wx.Choice,
+            choices=channelLabels
+        )
+        curChan = str(cfg.get("ytdlpUpdateChannel", "stable")).lower()
+        chanIdx = 0
+        for i, (val, label) in enumerate(YTDLP_CHANNEL_CHOICES):
+            if val.lower() == curChan:
+                chanIdx = i
+                break
+        self.ytdlpChannelChoice.SetSelection(chanIdx)
 
         self.checkUpdatesBtn = streamGroup.addItem(
             wx.Button(self.panelStreaming, label=_("Check for &Updates of the streaming engine now..."))
         )
+        self.rollbackYtdlpBtn = streamGroup.addItem(
+            wx.Button(self.panelStreaming, label=_("&Revert streaming engine to previous version..."))
+        )
+        self.resetBundledYtdlpBtn = streamGroup.addItem(
+            wx.Button(self.panelStreaming, label=_("Restore &original bundled streaming engine..."))
+        )
         if hasattr(wx, "EVT_BUTTON"):
             self.checkUpdatesBtn.Bind(wx.EVT_BUTTON, self.onCheckYtdlpUpdates)
+            self.rollbackYtdlpBtn.Bind(wx.EVT_BUTTON, self.onRollbackYtdlp)
+            self.resetBundledYtdlpBtn.Bind(wx.EVT_BUTTON, self.onResetBundledYtdlp)
+
+        self._refreshYtdlpButtons()
 
         qualityLabels = [label for _val, label in STREAM_QUALITY_CHOICES]
         self.streamAudioQualityChoice = streamGroup.addLabeledControl(
@@ -1286,20 +1489,17 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         )
 
         self.cookiesBrowserChoices: List[Tuple[str, str]] = [
-            ("none", _("Disabled (no sign-in)")),
-            ("firefox", "Firefox"),
-            ("chrome", "Google Chrome"),
-            ("edge", "Microsoft Edge"),
-            ("brave", "Brave"),
-            ("opera", "Opera"),
-            ("vivaldi", "Vivaldi"),
+            ("none", _("None (anonymous, default)")),
+            ("firefox", _("Mozilla Firefox (compatible on Windows)")),
         ]
         self.cookiesBrowserChoice = streamGroup.addLabeledControl(
-            _("Use sign-in coo&kies from browser (for age-restricted or members-only content):"),
+            _("Use sign-in coo&kies from browser (Firefox only on Windows):"),
             wx.Choice,
             choices=[label for val, label in self.cookiesBrowserChoices]
         )
         curBrowser = str(cfg.get("ytdlpCookiesBrowser", "none")).lower()
+        if curBrowser not in ("none", "firefox"):
+            curBrowser = "none"
         browserIdx = 0
         for i, (val, label) in enumerate(self.cookiesBrowserChoices):
             if val == curBrowser:
@@ -1313,19 +1513,25 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         )
         self.cookiesFileCtrl.SetValue(str(cfg.get("ytdlpCookiesFile", "") or ""))
 
-        self.browseCookiesBtn = streamGroup.addItem(
-            wx.Button(self.panelStreaming, label=_("&Browse for cookies file..."))
-        )
+        cookiesBtnSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.browseCookiesBtn = wx.Button(self.panelStreaming, label=_("&Browse for cookies file..."))
+        cookiesBtnSizer.Add(self.browseCookiesBtn, 0, wx.RIGHT, 5)
         if hasattr(wx, "EVT_BUTTON"):
             self.browseCookiesBtn.Bind(wx.EVT_BUTTON, self.onBrowseCookiesFile)
+
+        self.testCookiesBtn = wx.Button(self.panelStreaming, label=_("&Test cookies file validity..."))
+        cookiesBtnSizer.Add(self.testCookiesBtn, 0)
+        if hasattr(wx, "EVT_BUTTON"):
+            self.testCookiesBtn.Bind(wx.EVT_BUTTON, self.onTestCookiesFile)
+
+        streamGroup.addItem(cookiesBtnSizer)
 
         cookiesHint = wx.StaticText(
             self.panelStreaming,
             label=_(
-                "Tip: export cookies.txt while signed in to YouTube in a standard (non-incognito) browser "
-                "window using an extension such as 'Get cookies.txt LOCALLY' (Chrome/Edge) or "
-                "'cookies.txt' (Firefox). Do not export from Incognito mode as private windows omit "
-                "login session credentials. The manual file takes priority over the browser choice above."
+                "Tip: On Windows, Chrome and Edge block automated cookie decryption. Use Firefox or "
+                "export cookies.txt using a browser extension from a Private/Incognito window while signed in "
+                "to YouTube. The manual cookies file takes priority over the browser choice above."
             )
         )
         cookiesHint.Wrap(560)
@@ -1567,89 +1773,147 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
                 except Exception:
                     pass
 
-    def onCheckYtdlpUpdates(self, evt: Any) -> None:
-        """
-        Checks PyPI for a newer yt-dlp streaming engine and installs it into
-        the add-on in the background. YouTube extraction libraries break
-        frequently, so this keeps the feature alive without reinstalling
-        the whole add-on.
-        """
+    def _refreshYtdlpButtons(self) -> None:
+        """Refreshes the enabled status and labels of yt-dlp rollback and reset buttons."""
         if not wx:
-            return
-
-        self.checkUpdatesBtn.Disable()
-        self.checkUpdatesBtn.SetLabel(_("Checking for updates..."))
-        if ui and hasattr(ui, "message"):
-            try:
-                ui.message(_("Checking for streaming engine updates, please wait..."))
-            except Exception:
-                pass
-
-        def report_progress(stage: str) -> None:
-            labels = {
-                "checking": _("Checking for updates..."),
-                "downloading": _("Downloading update..."),
-                "installing": _("Installing update..."),
-            }
-            label = labels.get(stage)
-            if label:
-                wx.CallAfter(self.checkUpdatesBtn.SetLabel, label)
-
-        def worker() -> None:
-            try:
-                updated, message = stream_engine.update_ytdlp(progress_cb=report_progress)
-            except Exception as e:
-                updated, message = False, f"error:unexpected:{e}"
-            wx.CallAfter(self._onUpdateFinished, updated, message)
-
-        threading.Thread(target=worker, daemon=True, name="HeadlessPlayer-YtdlpUpdate").start()
-
-    def _onUpdateFinished(self, updated: bool, message: str) -> None:
-        if not wx:
-            return
-        if not self or not hasattr(self, "checkUpdatesBtn") or not self.checkUpdatesBtn:
             return
         try:
-            if not getattr(self.checkUpdatesBtn, "thisown", True):
-                return
-            self.checkUpdatesBtn.Enable()
-            self.checkUpdatesBtn.SetLabel(_("Check for &Updates of the streaming engine now..."))
-        except Exception:
+            ver_info = stream_engine.get_channel_info() if stream_engine and hasattr(stream_engine, "get_channel_info") else {}
+            can_roll = bool(ver_info.get("can_rollback", False))
+            can_reset = bool(ver_info.get("can_reset_bundled", False))
+            prev_ver = ver_info.get("previous_version", "")
+
+            if hasattr(self, "rollbackYtdlpBtn") and self.rollbackYtdlpBtn and getattr(self.rollbackYtdlpBtn, "thisown", True):
+                if can_roll:
+                    self.rollbackYtdlpBtn.Enable()
+                    if prev_ver:
+                        self.rollbackYtdlpBtn.SetLabel(_("&Revert to previous version (%s)...") % prev_ver)
+                    else:
+                        self.rollbackYtdlpBtn.SetLabel(_("&Revert streaming engine to previous version..."))
+                else:
+                    self.rollbackYtdlpBtn.Disable()
+                    self.rollbackYtdlpBtn.SetLabel(_("&Revert streaming engine to previous version (none available)"))
+
+            if hasattr(self, "resetBundledYtdlpBtn") and self.resetBundledYtdlpBtn and getattr(self.resetBundledYtdlpBtn, "thisown", True):
+                if can_reset:
+                    self.resetBundledYtdlpBtn.Enable()
+                else:
+                    self.resetBundledYtdlpBtn.Disable()
+        except Exception as e:
+            logger.debug("Error refreshing ytdlp buttons: %s", e)
+
+    def onCheckYtdlpUpdates(self, evt: Any) -> None:
+        """
+        Checks the chosen channel for a newer yt-dlp streaming engine and installs it into
+        the add-on using an accessible modal progress dialog with live progress bar and spoken announcements.
+        """
+        if not wx:
             return
 
-        if updated:
-            new_ver = message.split(":", 1)[1] if ":" in message else ""
+        selected_channel = "stable"
+        if hasattr(self, "ytdlpChannelChoice") and self.ytdlpChannelChoice and getattr(self.ytdlpChannelChoice, "thisown", True):
+            sel = self.ytdlpChannelChoice.GetSelection()
+            if 0 <= sel < len(YTDLP_CHANNEL_CHOICES):
+                selected_channel = YTDLP_CHANNEL_CHOICES[sel][0]
+
+        ver_info = stream_engine.get_channel_info() if stream_engine and hasattr(stream_engine, "get_channel_info") else {}
+        cur_ver = ver_info.get("installed_version") or (stream_engine.get_bundled_version() if stream_engine and hasattr(stream_engine, "get_bundled_version") else "")
+
+        dlg = YtdlpUpdateDialog(self, channel=selected_channel, current_version=cur_ver)
+        dlg.ShowModal()
+
+        if getattr(dlg, "is_success", False) and getattr(dlg, "updated_version", None):
+            if hasattr(self, "ytdlpVersionText") and self.ytdlpVersionText and getattr(self.ytdlpVersionText, "thisown", True):
+                self.ytdlpVersionText.SetLabel(
+                    _("Streaming engine (yt-dlp) version: %s (%s - restart NVDA to activate)") % (dlg.updated_version, selected_channel.capitalize())
+                )
+        self._refreshYtdlpButtons()
+        try:
+            dlg.Destroy()
+        except Exception:
+            pass
+
+
+    def onRollbackYtdlp(self, evt: Any) -> None:
+        """Rolls back the streaming engine to the previous version."""
+        if not wx or not stream_engine:
+            return
+        if gui and hasattr(gui, "messageBox"):
+            res = gui.messageBox(
+                _("Are you sure you want to revert the streaming engine to the previous version?"),
+                _("Confirm Revert"),
+                wx.YES_NO | wx.NO_DEFAULT | wx.ICON_QUESTION
+            )
+            if res != wx.YES:
+                return
+
+        success, msg = stream_engine.rollback_ytdlp()
+        if success:
+            ver = msg.split(":", 1)[1] if ":" in msg else ""
             text = _(
-                "The streaming engine was updated successfully to version %s.\n"
-                "Please restart NVDA to start using the new version."
-            ) % new_ver
-            caption = _("Update Installed")
+                "The streaming engine was successfully restored to version %s.\n"
+                "Please restart NVDA to activate the changes."
+            ) % ver
+            caption = _("Revert Successful")
             icon = wx.ICON_INFORMATION
             if hasattr(self, "ytdlpVersionText"):
                 self.ytdlpVersionText.SetLabel(
-                    _("Streaming engine (yt-dlp) version: %s (restart NVDA to activate)") % new_ver
+                    _("Streaming engine (yt-dlp) version: %s (restart NVDA to activate)") % ver
                 )
-        elif message.startswith("up-to-date"):
-            cur = message.split(":", 1)[1] if ":" in message else ""
-            text = _("The streaming engine is already up to date (version %s).") % cur
-            caption = _("No Update Needed")
-            icon = wx.ICON_INFORMATION
         else:
-            text = _(
-                "Could not update the streaming engine.\n"
-                "Check your internet connection and try again.\n\nDetails: %s"
-            ) % message
-            caption = _("Update Failed")
+            text = _("Failed to revert the streaming engine.\nDetails: %s") % msg
+            caption = _("Revert Failed")
             icon = wx.ICON_ERROR
 
+        self._refreshYtdlpButtons()
         if gui and hasattr(gui, "messageBox"):
             gui.messageBox(text, caption, wx.OK | icon)
+        elif ui and hasattr(ui, "message"):
+            try:
+                ui.message(text)
+            except Exception:
+                pass
+
+    def onResetBundledYtdlp(self, evt: Any) -> None:
+        """Restores the original factory bundled streaming engine."""
+        if not wx or not stream_engine:
+            return
+        if gui and hasattr(gui, "messageBox"):
+            res = gui.messageBox(
+                _("Are you sure you want to restore the original factory bundled streaming engine?\n"
+                  "This will reset any downloaded updates."),
+                _("Confirm Factory Reset"),
+                wx.YES_NO | wx.NO_DEFAULT | wx.ICON_WARNING
+            )
+            if res != wx.YES:
+                return
+
+        success, msg = stream_engine.reset_to_bundled_ytdlp()
+        if success:
+            ver = msg.split(":", 1)[1] if ":" in msg else ""
+            text = _(
+                "The streaming engine was reset to the original bundled version %s.\n"
+                "Please restart NVDA to activate the changes."
+            ) % ver
+            caption = _("Reset Successful")
+            icon = wx.ICON_INFORMATION
+            if hasattr(self, "ytdlpVersionText"):
+                self.ytdlpVersionText.SetLabel(
+                    _("Streaming engine (yt-dlp) version: %s (restart NVDA to activate)") % ver
+                )
         else:
-            if ui and hasattr(ui, "message"):
-                try:
-                    ui.message(text)
-                except Exception:
-                    pass
+            text = _("Failed to restore bundled streaming engine.\nDetails: %s") % msg
+            caption = _("Reset Failed")
+            icon = wx.ICON_ERROR
+
+        self._refreshYtdlpButtons()
+        if gui and hasattr(gui, "messageBox"):
+            gui.messageBox(text, caption, wx.OK | icon)
+        elif ui and hasattr(ui, "message"):
+            try:
+                ui.message(text)
+            except Exception:
+                pass
 
     def onCustomizeShortcuts(self, evt: Any) -> None:
         """Opens the accessible Player Mode shortcuts customization dialog."""
@@ -1741,6 +2005,60 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
                     ui.message(text)
                 except Exception:
                     pass
+
+    def onBrowseCookiesFile(self, evt: Any) -> None:
+        if not wx:
+            return
+        current = self.cookiesFileCtrl.GetValue().strip().strip('"')
+        start_dir = os.path.dirname(current) if current and os.path.isfile(current) else os.path.join(os.path.expanduser("~"), "Downloads")
+        dlg = wx.FileDialog(
+            self,
+            message=_("Select Netscape format cookies.txt file"),
+            defaultDir=start_dir,
+            wildcard=_("Cookie files (*.txt)|*.txt|All files (*.*)|*.*"),
+            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST
+        )
+        with dlg:
+            if dlg.ShowModal() == wx.ID_OK:
+                chosen_path = dlg.GetPath()
+                self.cookiesFileCtrl.SetValue(chosen_path)
+                self.onTestCookiesFile(None)
+
+    def onTestCookiesFile(self, evt: Any) -> None:
+        path = self.cookiesFileCtrl.GetValue().strip().strip('"')
+        valid, reason = stream_engine.check_youtube_cookies_validity(path)
+        if valid:
+            msg = _("The selected cookies file is valid and contains active YouTube authentication tokens.")
+            caption = _("Cookies File Valid")
+            icon = wx.ICON_INFORMATION
+        elif reason == "expired":
+            msg = _("The cookies file contains expired session tokens (LOGIN_INFO). Please export fresh cookies from an Incognito/Private window.")
+            caption = _("Cookies Expired")
+            icon = wx.ICON_WARNING
+        elif reason == "missing_auth_tokens":
+            msg = _("The cookies file does not contain necessary YouTube authentication tokens (LOGIN_INFO/SAPISID). Make sure you were logged in to YouTube when exporting.")
+            caption = _("Incomplete Cookies")
+            icon = wx.ICON_WARNING
+        elif reason == "empty":
+            msg = _("The cookies file is empty or does not contain any YouTube or Google domain cookies.")
+            caption = _("Invalid Cookies")
+            icon = wx.ICON_ERROR
+        elif reason == "file_not_found":
+            msg = _("The specified cookies file path does not exist.")
+            caption = _("File Not Found")
+            icon = wx.ICON_ERROR
+        else:
+            msg = _("No cookies file specified. Please browse for a valid cookies.txt file.")
+            caption = _("No File Selected")
+            icon = wx.ICON_WARNING
+
+        if gui and hasattr(gui, "messageBox"):
+            gui.messageBox(msg, caption, wx.OK | icon)
+        elif ui and hasattr(ui, "message"):
+            try:
+                ui.message(f"{caption}: {msg}")
+            except Exception:
+                pass
 
     def onBrowseExportFolder(self, evt: Any) -> None:
         if not wx:
@@ -1873,6 +2191,13 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
                 pass
 
         # Update YouTube & online streaming options
+        if hasattr(self, "ytdlpChannelChoice"):
+            try:
+                chanSel = self.ytdlpChannelChoice.GetSelection()
+                if 0 <= chanSel < len(YTDLP_CHANNEL_CHOICES):
+                    setConfigValue("ytdlpUpdateChannel", YTDLP_CHANNEL_CHOICES[chanSel][0])
+            except Exception:
+                pass
         if hasattr(self, "streamAudioQualityChoice"):
             try:
                 qualSel = self.streamAudioQualityChoice.GetSelection()

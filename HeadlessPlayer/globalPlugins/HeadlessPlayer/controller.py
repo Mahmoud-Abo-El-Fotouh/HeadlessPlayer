@@ -1124,52 +1124,78 @@ class PlayerController:
         """
         Ctrl + Shift + S: Exits player mode and opens NVDA Settings dialog focused on HeadlessPlayer panel.
         """
-        self._exit_player_mode_for_dialog()
         def _do_open():
+            opened = False
+            has_gui = False
             try:
                 gm = sys.modules.get("gui", gui)
-                if not gm or not hasattr(gm, "mainFrame") or not gm.mainFrame:
-                    return
+                if gm and hasattr(gm, "mainFrame") and gm.mainFrame:
+                    has_gui = True
+                    # Method 1: Modern NVDA (2019.3+) via popupSettingsDialog with settingsDialogs.NVDASettingsDialog
+                    settings_dialogs = getattr(gm, "settingsDialogs", None)
+                    settings_dialog_cls = getattr(settings_dialogs, "NVDASettingsDialog", None) if settings_dialogs else getattr(gm, "NVDASettingsDialog", None)
+                    popup_func = getattr(gm.mainFrame, "popupSettingsDialog", None) or getattr(gm.mainFrame, "_popupSettingsDialog", None)
 
-                # 1. Try standard NVDA popupSettingsDialog with initialCategory
-                popup_func = (
-                    getattr(gm.mainFrame, "popupSettingsDialog", None)
-                    or getattr(gm.mainFrame, "_popupSettingsDialog", None)
-                )
-                if popup_func and callable(popup_func):
-                    try:
-                        popup_func(initialCategory=HeadlessPlayerSettingsPanel)
-                        return
-                    except TypeError:
+                    if popup_func and callable(popup_func) and settings_dialog_cls:
                         try:
-                            popup_func(HeadlessPlayerSettingsPanel)
-                            return
+                            popup_func(settings_dialog_cls, initialCategory=HeadlessPlayerSettingsPanel)
+                            opened = True
                         except TypeError:
-                            popup_func()
-                            return
+                            try:
+                                popup_func(settings_dialog_cls, HeadlessPlayerSettingsPanel)
+                                opened = True
+                            except TypeError:
+                                try:
+                                    popup_func(settings_dialog_cls)
+                                    opened = True
+                                except Exception:
+                                    pass
 
-                # 2. Try onPreferencesSettingsCommand / onPreferenceSettings
-                pref_cmd = (
-                    getattr(gm.mainFrame, "onPreferencesSettingsCommand", None)
-                    or getattr(gm.mainFrame, "onPreferenceSettings", None)
-                )
-                if pref_cmd and callable(pref_cmd):
-                    try:
-                        pref_cmd(None)
-                        return
-                    except Exception:
-                        pass
+                    # Method 2: Direct popupSettingsDialog if it accepts category directly in custom builds
+                    if not opened and popup_func and callable(popup_func):
+                        try:
+                            popup_func(initialCategory=HeadlessPlayerSettingsPanel)
+                            opened = True
+                        except TypeError:
+                            pass
 
-                # 3. Direct NVDASettingsDialog fallback
-                if hasattr(gm, "NVDASettingsDialog"):
-                    try:
-                        dlg = gm.NVDASettingsDialog(gm.mainFrame, initialCategory=HeadlessPlayerSettingsPanel)
-                        dlg.Show()
-                        return
-                    except Exception:
-                        pass
+                    # Method 3: onPreferencesSettingsCommand fallback
+                    if not opened:
+                        pref_cmd = (
+                            getattr(gm.mainFrame, "onPreferencesSettingsCommand", None)
+                            or getattr(gm.mainFrame, "onPreferenceSettings", None)
+                        )
+                        if pref_cmd and callable(pref_cmd):
+                            try:
+                                try:
+                                    evt = wx.CommandEvent() if wx else None
+                                    pref_cmd(evt)
+                                except Exception:
+                                    pref_cmd(None)
+                                opened = True
+                            except Exception as e_pref:
+                                logger.debug("onPreferencesSettingsCommand failed: %s", e_pref)
+
+                    # Method 4: Direct NVDASettingsDialog instantiation if all else fails
+                    if not opened and settings_dialog_cls:
+                        try:
+                            dlg = settings_dialog_cls(gm.mainFrame, initialCategory=HeadlessPlayerSettingsPanel)
+                            dlg.ShowModal()
+                            dlg.Destroy()
+                            opened = True
+                        except Exception as e_dlg:
+                            logger.debug("Direct NVDASettingsDialog instantiation failed: %s", e_dlg)
+
             except Exception as e:
-                logger.debug("Failed to open HeadlessPlayer settings panel: %s", e)
+                logger.error("Failed to open HeadlessPlayer settings panel: %s", e, exc_info=True)
+
+            if has_gui and not opened:
+                logger.warning("Could not launch NVDA settings dialog; notifying user")
+                if hasattr(self, "speech") and self.speech:
+                    self.speech.speak(_("Could not open settings dialog"))
+
+        # Exit player mode first so user has full keyboard access
+        self._exit_player_mode_for_dialog()
 
         wx_mod = sys.modules.get("wx", wx)
         if wx_mod is not None and hasattr(wx_mod, "CallAfter"):
@@ -1896,8 +1922,44 @@ class PlayerController:
                 self._stream_audio_track_idx = 0
                 self.speech.announce_track(orig_idx, total, track.display_name)
                 self._check_stream_queue_auto_extend()
+                self._prefetch_next_stream_track()
             else:
                 self.speech.speak(_("Playback engine failed to start."))
+
+    def _prefetch_next_stream_track(self) -> Optional[threading.Thread]:
+        """
+        Asynchronously pre-resolves the next online stream track in background.
+        Primes stream_engine._resolve_cache so advancing tracks (PageDown / Tab)
+        starts instantly with zero network delay.
+        """
+        with self._lock:
+            if not self.playlist or self.playlist.is_empty():
+                return None
+            cur_idx = self.playlist.current_index
+            total = self.playlist.count
+            if cur_idx + 1 >= total:
+                return None
+            next_t = self.playlist.get_track_at(cur_idx + 1)
+            if not next_t or not getattr(next_t, "is_stream", False) or not next_t.path:
+                return None
+            target_path = next_t.path
+
+        def worker(path: str) -> None:
+            try:
+                stream_engine.resolve_stream(path)
+            except Exception as e:
+                logger.debug("Background stream pre-fetch ignored error for %s: %s", path, e)
+
+        t = threading.Thread(
+            target=worker,
+            args=(target_path,),
+            daemon=True,
+            name="HeadlessPlayer-StreamPrefetch"
+        )
+        t.start()
+        if "unittest" in sys.modules:
+            t.join(timeout=0.2)
+        return t
 
     def _current_track_is_live_stream(self, path: Optional[str] = None) -> bool:
         if path:

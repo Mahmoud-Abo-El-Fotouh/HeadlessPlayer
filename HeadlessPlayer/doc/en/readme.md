@@ -4,7 +4,7 @@
 **Author:** Mahmoud Abo El-Fotouh <mahmoudaboelfotouh.20@gmail.com>  
 **Repository:** [https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer](https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer)  
 **Telegram:** [https://t.me/mahmoud_EG_1](https://t.me/mahmoud_EG_1)  
-**NVDA Compatibility:** NVDA 2024.1 to 2026.2+
+**NVDA Compatibility:** NVDA 2024.1 to 2026.2
 
 ---
 
@@ -24,8 +24,8 @@ When entering Player Mode (<kbd>NVDA+Ctrl+Shift+P</kbd>):
 ## 2. Global NVDA Shortcuts & Multimedia Keys
 | Shortcut | Action | Description |
 | :--- | :--- | :--- |
-| <kbd>NVDA+Ctrl+Shift+P</kbd> | Toggle Player Mode | Enters or exits exclusive player mode layer. |
-| <kbd>NVDA+Ctrl+Win+E</kbd> | Play from Windows Explorer | Immediately plays focused or selected file/folder in Explorer or Desktop. |
+| <kbd>NVDA+Ctrl+Shift+P</kbd> *(or Insert/CapsLock)* | Toggle Player Mode | Enters or exits exclusive player mode layer. |
+| <kbd>NVDA+Ctrl+Win+E</kbd> *(or Insert/Win)* | Play from Windows Explorer | Immediately plays focused or selected file/folder in Explorer or Desktop. |
 | <kbd>Media Play/Pause</kbd> | Global Play / Pause | Controls playback from any application or Bluetooth headset. |
 | <kbd>Media Next / Previous</kbd> | Global Next / Previous Track | Navigates playlist globally. |
 | <kbd>Media Stop</kbd> | Global Stop | Stops playback globally. |
@@ -87,26 +87,51 @@ When entering Player Mode (<kbd>NVDA+Ctrl+Shift+P</kbd>):
 | <kbd>f</kbd> | Open Folder | Queues entire directory into an ordered playlist. |
 | <kbd>e</kbd> | Play Explorer Selection | Immediately plays selected Explorer items. |
 
-### 3.6. Speech Queries
+### 3.6. Recent Media & Browsing History
+| Key | Action | Description |
+| :--- | :--- | :--- |
+| <kbd>Ctrl + .</kbd> | Next / Newer Playlist | Browses forward in recent folders and playlists. |
+| <kbd>Ctrl + ,</kbd> | Previous / Older Playlist | Browses backward in recent folders and playlists. |
+| <kbd>Ctrl + Shift + .</kbd> | Newest Playlist | Jumps directly to newest folder or playlist in history. |
+| <kbd>Ctrl + Shift + ,</kbd> | Oldest Playlist | Jumps directly to oldest folder or playlist in history. |
+| <kbd>.</kbd> | Next / Newer Track | Browses forward in recent files and streams. |
+| <kbd>,</kbd> | Previous / Older Track | Browses backward in recent files and streams. |
+| <kbd>Shift + .</kbd> | Newest Track | Jumps directly to newest file or stream in history. |
+| <kbd>Shift + ,</kbd> | Oldest Track | Jumps directly to oldest file or stream in history. |
+| <kbd>Space</kbd> | Play Focused Recent Item | Plays currently focused recent item immediately (within 6s idle timeout). |
+| <kbd>Delete</kbd> | Remove Focused Item | Removes the focused item from recent history database. |
+| <kbd>Escape</kbd> | Cancel Recents Focus | Exits recent browsing mode without leaving Player Mode. |
+| <kbd>Ctrl + Shift + S</kbd> | Open Settings Panel | Directly opens HeadlessPlayer settings panel in NVDA. |
+
+### 3.7. Clip Export & Link Copying
+| Key | Action | Description |
+| :--- | :--- | :--- |
+| <kbd>d</kbd> | Export / Clip Dialog | Opens clip export dialog to export A-B loop or entire item with format/quality selection. |
+| <kbd>Shift + d</kbd> | Quick Export | Instantly exports A-B selection to Downloads folder in background without dialogs. |
+| <kbd>v</kbd> | Copy Stream URL | Copies active media/video source URL to Windows Clipboard. |
+| <kbd>Shift + v</kbd> | Copy Direct Stream URL | Extracts and copies direct raw media stream URL to Windows Clipboard. |
+
+### 3.8. Speech Queries
 | Key | Action | Description |
 | :--- | :--- | :--- |
 | <kbd>i</kbd> | Media Info | Speaks title, total duration, and playlist index (e.g. *Track 3 of 15*). |
-| <kbd>Ctrl + i</kbd> | Remaining Time | Speaks remaining playback time. |
-| <kbd>Shift + i</kbd> | Elapsed Time | Speaks elapsed playback time. |
+| <kbd>Ctrl + i</kbd> | Remaining Time | Speaks remaining playback time (scaled by active speed; press twice for raw). |
+| <kbd>Shift + i</kbd> | Elapsed Time | Speaks elapsed playback time (scaled by active speed; press twice for raw). |
 | <kbd>h</kbd> | Quick Help | Opens interactive key reference dialog. |
 
 ---
 
-## 4. YouTube Streaming & SponsorBlock
+## 4. YouTube Streaming, Clip Export & SponsorBlock
 - **YouTube Search & URL (<kbd>u</kbd>):** Enter search queries or paste direct URLs (videos, playlists, channels, live streams).
 - **Trending & Subscriptions Portal (<kbd>p</kbd>):** Browse user playlists, subscriptions, and global trending music.
-- **Copy Stream Link (<kbd>v</kbd>):** Copies active stream URL to clipboard.
+- **Clip Exporter (<kbd>d</kbd> / <kbd>Shift+d</kbd>):** Export any A-B loop segment or entire track into audio/video format with custom quality.
+- **Copy Stream Links (<kbd>v</kbd> / <kbd>Shift+v</kbd>):** Copies web source or raw direct stream URL to clipboard.
 - **SponsorBlock Integration:** Automatically skips YouTube sponsored segments, self-promotions, interaction reminders, and intros with instant spoken announcements.
 
 ---
 
 ## 5. Add-on Settings & Customization
-Available via **NVDA Menu &larr; Preferences &larr; Settings &larr; Headless Media Player**:
+Available via **NVDA Menu &larr; Preferences &larr; Settings &larr; Headless Media Player** (or press <kbd>Ctrl + Shift + S</kbd> in Player Mode):
 - **Announcement Toggles:** Custom speech feedback for every action.
 - **Seek Step Sizes:** Configure jump sizes in seconds.
 - **SponsorBlock:** Toggle auto-skipping and speech announcements for YouTube sponsors.

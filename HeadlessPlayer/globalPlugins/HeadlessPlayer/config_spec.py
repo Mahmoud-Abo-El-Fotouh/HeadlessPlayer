@@ -39,6 +39,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "lastPlaybackPath": "",
     "ytdlpCookiesBrowser": "none",
     "ytdlpCookiesFile": "",
+    "ytdlpUpdateChannel": "stable",
     "searchResultsCount": 20,
     "maxStreamPlaylistItems": 300,
     "sponsorBlockEnabled": True,

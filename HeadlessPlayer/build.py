@@ -14,13 +14,14 @@ Usage:
 import os
 import sys
 import re
+import datetime
 import struct
 import array
 import zipfile
 import hashlib
 import shutil
 import argparse
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 # Reconfigure stdout/stderr for safe Unicode printing on Windows
 try:
@@ -152,7 +153,75 @@ class PurePythonMsgfmt:
             f.write(strs)
 
 
-def compile_locales(base_dir: str) -> None:
+def sync_translation_headers(base_dir: str, manifest: Dict[str, str]) -> None:
+    """
+    Synchronizes metadata headers of all .po files under locale/*/LC_MESSAGES/
+    using dynamic current timestamp from datetime and author/version information from manifest.ini.
+    """
+    locale_dir = os.path.join(base_dir, "locale")
+    if not os.path.isdir(locale_dir):
+        return
+
+    name = manifest.get("name", "HeadlessPlayer")
+    version = manifest.get("version", "1.0.0")
+    author = manifest.get("author", "Mahmoud Abo El Fotouh <mahmoudaboelfotouh.20@gmail.com>")
+    url = manifest.get("url", "https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer")
+
+    email_match = re.search(r"<([^>]+)>", author)
+    email = email_match.group(1) if email_match else "mahmoudaboelfotouh.20@gmail.com"
+
+    now_str = datetime.datetime.now().astimezone().strftime("%Y-%m-%d %H:%M%z")
+
+    LANGUAGE_NAMES = {
+        "ar": "Arabic",
+        "en": "English",
+        "fr": "French",
+        "es": "Spanish",
+        "de": "German",
+        "ru": "Russian",
+        "tr": "Turkish",
+        "it": "Italian",
+        "pt": "Portuguese",
+    }
+
+    for root, _, files in os.walk(locale_dir):
+        for f in files:
+            if not f.endswith(".po"):
+                continue
+
+            po_path = os.path.join(root, f)
+            rel_path = os.path.relpath(po_path, locale_dir)
+            lang_code = rel_path.split(os.sep)[0]
+            lang_display = LANGUAGE_NAMES.get(lang_code, lang_code)
+
+            header_block = (
+                f'msgid ""\n'
+                f'msgstr ""\n'
+                f'"Project-Id-Version: {name} {version}\\n"\n'
+                f'"Report-Msgid-Bugs-To: {url}\\n"\n'
+                f'"POT-Creation-Date: {now_str}\\n"\n'
+                f'"PO-Revision-Date: {now_str}\\n"\n'
+                f'"Last-Translator: {author}\\n"\n'
+                f'"Language-Team: {lang_display} <{email}>\\n"\n'
+                f'"Language: {lang_code}\\n"\n'
+                f'"MIME-Version: 1.0\\n"\n'
+                f'"Content-Type: text/plain; charset=UTF-8\\n"\n'
+                f'"Content-Transfer-Encoding: 8bit\\n"\n'
+                f'"X-Generator: {name} Build Pipeline\\n"\n'
+            )
+
+            with open(po_path, "r", encoding="utf-8", errors="replace") as pof:
+                content = pof.read()
+
+            match = re.search(r'msgid\s+""\s+msgstr\s+""\s+(?:"[^"\\]*(?:\\.[^"\\]*)*"\s*)+', content)
+            if match:
+                new_content = header_block + content[match.end():].lstrip("\r\n")
+                with open(po_path, "w", encoding="utf-8") as pof:
+                    pof.write(new_content)
+                print(f"[*] Synchronized PO header: {os.path.relpath(po_path, base_dir)}")
+
+
+def compile_locales(base_dir: str, manifest: Optional[Dict[str, str]] = None) -> None:
     """
     Compiles all .po files under locale/*/LC_MESSAGES/ into binary .mo files,
     generating both domain-specific .mo and NVDA's standard nvda.mo.
@@ -161,6 +230,12 @@ def compile_locales(base_dir: str) -> None:
     if not os.path.exists(locale_dir):
         print("[!] No locale directory found. Skipping translation compilation.")
         return
+
+    if manifest is None:
+        manifest_path = os.path.join(base_dir, "manifest.ini")
+        manifest = parse_manifest(manifest_path)
+
+    sync_translation_headers(base_dir, manifest)
 
     compiler = PurePythonMsgfmt()
     for root, _, files in os.walk(locale_dir):
@@ -229,8 +304,8 @@ def sync_documentation_versions(base_dir: str, manifest: Dict[str, str]) -> None
     and all doc/* documentation files based on manifest.ini.
     """
     version = manifest.get("version", "1.0.0")
-    min_ver = manifest.get("minimumNVDAVersion", "2022.1")
-    last_ver = manifest.get("lastTestedNVDAVersion", "2026.1")
+    min_ver = manifest.get("minimumNVDAVersion", "2024.1")
+    last_ver = manifest.get("lastTestedNVDAVersion", "2026.2")
     author = manifest.get("author", "Mahmoud Abo El Fotouh <mahmoudaboelfotouh.20@gmail.com>")
     
     root_dir = os.path.dirname(base_dir) if os.path.basename(base_dir) == "HeadlessPlayer" else base_dir
@@ -241,7 +316,7 @@ def sync_documentation_versions(base_dir: str, manifest: Dict[str, str]) -> None
         with open(readme_path, "r", encoding="utf-8") as f:
             content = f.read()
         content = re.sub(r"\*\*Version:\*\*.*", f"**Version:** {version}  ", content)
-        content = re.sub(r"\*\*NVDA Compatibility:\*\*.*", f"**NVDA Compatibility:** NVDA {min_ver} to {last_ver}+", content)
+        content = re.sub(r"\*\*NVDA Compatibility:\*\*.*", f"**NVDA Compatibility:** NVDA {min_ver} to {last_ver}", content)
         with open(readme_path, "w", encoding="utf-8") as f:
             f.write(content)
 
@@ -251,7 +326,7 @@ def sync_documentation_versions(base_dir: str, manifest: Dict[str, str]) -> None
         with open(en_md, "r", encoding="utf-8") as f:
             content = f.read()
         content = re.sub(r"\*\*Version:\*\*.*", f"**Version:** {version}  ", content)
-        content = re.sub(r"\*\*NVDA Compatibility:\*\*.*", f"**NVDA Compatibility:** NVDA {min_ver} to {last_ver}+", content)
+        content = re.sub(r"\*\*NVDA Compatibility:\*\*.*", f"**NVDA Compatibility:** NVDA {min_ver} to {last_ver}", content)
         with open(en_md, "w", encoding="utf-8") as f:
             f.write(content)
 
@@ -263,7 +338,7 @@ def sync_documentation_versions(base_dir: str, manifest: Dict[str, str]) -> None
         escaped_author = author.replace('<', '&lt;').replace('>', '&gt;')
         content = re.sub(
             r"<p><strong>Version:</strong>.*?<strong>NVDA Compatibility:</strong>.*?</p>",
-            f"<p><strong>Version:</strong> {version} &nbsp;|&nbsp; <strong>Author:</strong> {escaped_author} &nbsp;|&nbsp; <strong>NVDA Compatibility:</strong> NVDA {min_ver} to {last_ver}+</p>",
+            f"<p><strong>Version:</strong> {version} &nbsp;|&nbsp; <strong>Author:</strong> {escaped_author} &nbsp;|&nbsp; <strong>NVDA Compatibility:</strong> NVDA {min_ver} to {last_ver}</p>",
             content
         )
         with open(en_html, "w", encoding="utf-8") as f:
@@ -275,7 +350,7 @@ def sync_documentation_versions(base_dir: str, manifest: Dict[str, str]) -> None
         with open(ar_md, "r", encoding="utf-8") as f:
             content = f.read()
         content = re.sub(r"\*\*الإصدار:\*\*.*", f"**الإصدار:** {version}  ", content)
-        content = re.sub(r"\*\*التوافق:\*\*.*", f"**التوافق:** NVDA {min_ver} إلى {last_ver} وأحدث", content)
+        content = re.sub(r"\*\*التوافق:\*\*.*", f"**التوافق:** NVDA {min_ver} إلى {last_ver}", content)
         with open(ar_md, "w", encoding="utf-8") as f:
             f.write(content)
 
@@ -286,14 +361,14 @@ def sync_documentation_versions(base_dir: str, manifest: Dict[str, str]) -> None
             content = f.read()
         content = re.sub(
             r"<p><strong>الإصدار:</strong>.*?<strong>التوافق:</strong>.*?</p>",
-            f"<p><strong>الإصدار:</strong> {version} &nbsp;|&nbsp; <strong>المطور:</strong> محمود أبو الفتوح &lt;mahmoudaboelfotouh.20@gmail.com&gt; &nbsp;|&nbsp; <strong>التوافق:</strong> NVDA {min_ver} إلى {last_ver} وأحدث</p>",
+            f"<p><strong>الإصدار:</strong> {version} &nbsp;|&nbsp; <strong>المطور:</strong> محمود أبو الفتوح &lt;mahmoudaboelfotouh.20@gmail.com&gt; &nbsp;|&nbsp; <strong>التوافق:</strong> NVDA {min_ver} إلى {last_ver}</p>",
             content
         )
         with open(ar_html, "w", encoding="utf-8") as f:
             f.write(content)
 
 
-def package_addon(base_dir: str, output_dir: str, custom_label: str = None) -> str:
+def package_addon(base_dir: str, output_dir: str, custom_label: Optional[str] = None, is_dev: bool = False) -> str:
     """
     Packages the add-on directory into a .nvda-addon archive with proper naming convention.
     """
@@ -305,7 +380,14 @@ def package_addon(base_dir: str, output_dir: str, custom_label: str = None) -> s
 
     name = manifest.get("name", "HeadlessPlayer")
     version = manifest.get("version", "1.0.0")
-    if custom_label:
+    if is_dev:
+        if custom_label:
+            dev_label = custom_label if "dev" in custom_label.lower() else f"{custom_label}_dev"
+        else:
+            dev_label = "dev"
+        summary_slug = re.sub(r"[^\w\d_-]", "_", dev_label).strip("_")
+        addon_filename = f"{name}_v{version}_{summary_slug}.nvda-addon"
+    elif custom_label:
         summary_slug = re.sub(r"[^\w\d_-]", "_", custom_label).strip("_")
         addon_filename = f"{name}_v{version}_{summary_slug}.nvda-addon"
     else:
@@ -317,6 +399,10 @@ def package_addon(base_dir: str, output_dir: str, custom_label: str = None) -> s
     # Excluded files and directories
     EXCLUDE_DIRS = {".git", ".github", ".vscode", "__pycache__", ".agents", "tests", "dist"}
     EXCLUDE_EXTS = {".pyc", ".pyo", ".gitattributes", ".gitignore", ".tmp", ".md"}
+    if is_dev:
+        EXCLUDE_FILES = {"build.py"}
+    else:
+        EXCLUDE_FILES = {"build.py", "diagnostics.py", "log_manager.py", "manage_logs.py"}
 
     # Guard: Ensure mpv.exe binary is present and not a tiny Git LFS text pointer
     mpv_binary_path = os.path.join(base_dir, "resources", "bin", "x64", "mpv.exe")
@@ -328,7 +414,8 @@ def package_addon(base_dir: str, output_dir: str, custom_label: str = None) -> s
                 "Please run 'git lfs pull' or enable 'lfs: true' in GitHub Actions checkout."
             )
 
-    print(f"\n[*] Packaging NVDA Add-on: {addon_filename}")
+    mode_label = "DEVELOPMENT BUILD (with diagnostics & telemetry ON)" if is_dev else "PRODUCTION RELEASE"
+    print(f"\n[*] Packaging NVDA Add-on [{mode_label}]: {addon_filename}")
     added_count = 0
     with zipfile.ZipFile(addon_filepath, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(base_dir):
@@ -336,7 +423,7 @@ def package_addon(base_dir: str, output_dir: str, custom_label: str = None) -> s
 
             for file in files:
                 ext = os.path.splitext(file)[1].lower()
-                if ext in EXCLUDE_EXTS or file.endswith("~") or file == "build.py":
+                if ext in EXCLUDE_EXTS or file.endswith("~") or file in EXCLUDE_FILES:
                     continue
 
                 full_path = os.path.join(root, file)
@@ -346,8 +433,15 @@ def package_addon(base_dir: str, output_dir: str, custom_label: str = None) -> s
                 if os.path.abspath(full_path) == os.path.abspath(addon_filepath):
                     continue
 
-                zipf.write(full_path, rel_path)
-                print(f"  + Added: {rel_path}")
+                if is_dev and file == "log_manager.py":
+                    with open(full_path, "r", encoding="utf-8", errors="replace") as lf:
+                        log_code = lf.read()
+                    log_code = log_code.replace("_DEV_BUILD = False", "_DEV_BUILD = True")
+                    zipf.writestr(rel_path, log_code.encode("utf-8"))
+                    print(f"  + Added (DEV telemetry enabled): {rel_path}")
+                else:
+                    zipf.write(full_path, rel_path)
+                    print(f"  + Added: {rel_path}")
                 added_count += 1
 
     # Calculate SHA-256 Checksum
@@ -362,6 +456,7 @@ def package_addon(base_dir: str, output_dir: str, custom_label: str = None) -> s
 
     print("\n" + "=" * 64)
     print(" HEADLESSPLAYER ADD-ON BUILD SUCCESSFUL!")
+    print(f" Mode:     {mode_label}")
     print(f" Package:  {addon_filename}")
     print(f" Path:     {addon_filepath}")
     print(f" Files:    {added_count} files bundled")
@@ -373,6 +468,8 @@ def package_addon(base_dir: str, output_dir: str, custom_label: str = None) -> s
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="HeadlessPlayer NVDA Add-on Builder")
+    parser.add_argument("mode", nargs="?", default=None, help="Optional mode: 'dev' for development build with log_manager included and enabled")
+    parser.add_argument("--dev", action="store_true", help="Build development package with log_manager and diagnostics enabled")
     parser.add_argument("--clean", action="store_true", help="Clean up compiled .mo and build files")
     parser.add_argument("--output", default=None, help="Custom output directory for the .nvda-addon package")
     parser.add_argument("--label", default=None, help="Custom naming label / slug (e.g. InitialRelease)")
@@ -395,11 +492,13 @@ def main() -> None:
         print("[*] Clean completed.")
         return
 
+    is_dev = args.dev or (bool(args.mode) and args.mode.lower() in ("dev", "devel", "development"))
+
     # 1. Compile PO files into binary MO files
     compile_locales(base_dir)
 
     # 2. Package Add-on into .nvda-addon bundle
-    package_addon(base_dir, output_dir, custom_label=args.label)
+    package_addon(base_dir, output_dir, custom_label=args.label, is_dev=is_dev)
 
 
 if __name__ == "__main__":

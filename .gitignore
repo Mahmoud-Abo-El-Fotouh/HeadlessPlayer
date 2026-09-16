@@ -19,14 +19,12 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
 # Keep bundled internal libraries and compiled translations
 !HeadlessPlayer/globalPlugins/HeadlessPlayer/lib/
 !HeadlessPlayer/locale/**/*.mo
 
 # PyInstaller & Logs
-*.manifest
 *.spec
 pip-log.txt
 pip-delete-this-directory.txt
@@ -59,4 +57,3 @@ cover/
 HeadlessPlayer_debug.*
 manage_logs.py
 scratch/
-!HeadlessPlayer/globalPlugins/HeadlessPlayer/log_manager.py

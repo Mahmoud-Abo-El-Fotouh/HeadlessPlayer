@@ -132,31 +132,59 @@ def check_database() -> Dict[str, Any]:
 
 
 def check_translations() -> Dict[str, Any]:
-    """Inspects the localized translation catalog files."""
+    """Inspects all localized translation catalog files dynamically across the locale directory."""
     addon_root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
     locales_dir = os.path.join(addon_root, "locale")
-    ar_mo = os.path.join(locales_dir, "ar", "LC_MESSAGES", "nvda.mo")
-    en_mo = os.path.join(locales_dir, "en", "LC_MESSAGES", "nvda.mo")
 
-    ar_ok = os.path.isfile(ar_mo) and os.path.getsize(ar_mo) > 1000
-    en_ok = os.path.isfile(en_mo) and os.path.getsize(en_mo) > 1000
-
-    if ar_ok and en_ok:
-        return {
-            "status": HealthStatus.OK,
-            "component": "Translations (i18n)",
-            "message": "Arabic and English compiled binary translation catalogs (.mo) are intact.",
-            "ar_mo": ar_mo,
-            "en_mo": en_mo,
-        }
-    else:
+    if not os.path.isdir(locales_dir):
         return {
             "status": HealthStatus.WARNING,
             "component": "Translations (i18n)",
-            "message": f"Translation catalog check: AR present={ar_ok}, EN present={en_ok}",
-            "ar_mo": ar_mo,
-            "en_mo": en_mo,
+            "message": "Locale directory not found.",
+            "languages": {},
         }
+
+    lang_results: Dict[str, Dict[str, Any]] = {}
+    verified_langs: List[str] = []
+    missing_langs: List[str] = []
+
+    for lang_name in sorted(os.listdir(locales_dir)):
+        lang_path = os.path.join(locales_dir, lang_name)
+        if not os.path.isdir(lang_path):
+            continue
+
+        lc_messages = os.path.join(lang_path, "LC_MESSAGES")
+        mo_path = os.path.join(lc_messages, "nvda.mo")
+        alt_mo_path = os.path.join(lc_messages, "messages.mo")
+
+        mo_file = mo_path if os.path.isfile(mo_path) else (alt_mo_path if os.path.isfile(alt_mo_path) else "")
+        is_ok = bool(mo_file and os.path.getsize(mo_file) > 1000)
+
+        lang_results[lang_name] = {
+            "path": mo_file or mo_path,
+            "ok": is_ok,
+            "size": os.path.getsize(mo_file) if mo_file else 0,
+        }
+
+        if is_ok:
+            verified_langs.append(lang_name)
+        else:
+            missing_langs.append(lang_name)
+
+    all_ok = bool(verified_langs and not missing_langs)
+    status = HealthStatus.OK if all_ok else HealthStatus.WARNING
+
+    if all_ok:
+        msg = f"All {len(verified_langs)} translation catalogs ({', '.join(verified_langs)}) are verified and intact."
+    else:
+        msg = f"Translation check: {len(verified_langs)} valid ({', '.join(verified_langs)}), {len(missing_langs)} missing/invalid ({', '.join(missing_langs)})"
+
+    return {
+        "status": status,
+        "component": "Translations (i18n)",
+        "message": msg,
+        "languages": lang_results,
+    }
 
 
 def run_full_diagnostics() -> Dict[str, Any]:

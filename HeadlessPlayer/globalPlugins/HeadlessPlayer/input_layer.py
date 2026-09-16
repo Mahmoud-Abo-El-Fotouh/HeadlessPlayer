@@ -6,6 +6,7 @@ leakage to active background applications.
 """
 
 from __future__ import annotations
+import ctypes
 import logging
 import threading
 from typing import Any, Callable, Dict, List, Optional, Set
@@ -81,6 +82,46 @@ VK_LEFT = 0x25
 VK_UP = 0x26
 VK_RIGHT = 0x27
 VK_DOWN = 0x28
+
+# Modifier Virtual Key Codes (Win32)
+KEYEVENTF_KEYUP = 0x0002
+VK_SHIFT = 0x10
+VK_CONTROL = 0x11
+VK_MENU = 0x12  # Alt key
+VK_LSHIFT = 0xA0
+VK_RSHIFT = 0xA1
+VK_LCONTROL = 0xA2
+VK_RCONTROL = 0xA3
+VK_LMENU = 0xA4
+VK_RMENU = 0xA5
+VK_LWIN = 0x5B
+VK_RWIN = 0x5C
+
+ALL_MODIFIER_VKS = (
+    VK_SHIFT, VK_LSHIFT, VK_RSHIFT,
+    VK_CONTROL, VK_LCONTROL, VK_RCONTROL,
+    VK_MENU, VK_LMENU, VK_RMENU,
+    VK_LWIN, VK_RWIN,
+)
+
+
+def _send_key_up(vk: int) -> None:
+    """Sends a Win32 synthetic key-up event for a given virtual key code."""
+    try:
+        if hasattr(ctypes, "windll") and hasattr(ctypes.windll, "user32"):
+            ctypes.windll.user32.keybd_event(vk, 0, KEYEVENTF_KEYUP, 0)
+    except Exception as e:
+        logger.debug("keybd_event error for vk=0x%02X: %s", vk, e)
+
+
+def release_all_modifiers() -> None:
+    """
+    Pulses synthetic key-up events for all modifier keys (Shift, Ctrl, Alt, Win)
+    to eliminate sticky modifier keys after exiting modal capture or opening dialogs.
+    """
+    for vk in ALL_MODIFIER_VKS:
+        _send_key_up(vk)
+
 
 # Digits 0-9
 VK_0 = 0x30
@@ -335,6 +376,7 @@ class ModalInputLayer:
     def suspend(self) -> None:
         """Temporarily suspends modal interception so normal keyboard input reaches dialogs."""
         self._is_suspended = True
+        release_all_modifiers()
 
     def suspend_interception(self) -> None:
         """Alias for suspend()."""
@@ -398,6 +440,7 @@ class ModalInputLayer:
                     name="HeadlessPlayer-PrewarmEngine"
                 ).start()
         else:
+            release_all_modifiers()
             if announce:
                 self._speak(_("Player Mode exited"))
 

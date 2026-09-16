@@ -6,11 +6,15 @@ and an in-memory Ring Buffer for instant self-diagnostics and telemetry dumps.
 """
 
 from __future__ import annotations
+import argparse
 import collections
 import datetime
 import logging
 import os
+import subprocess
+import sys
 import threading
+import time
 import traceback
 from typing import Any, List, Optional
 
@@ -18,7 +22,8 @@ _TEMP = os.environ.get("TEMP", "") or os.environ.get("TMP", "") or "."
 _LOG_FILE = os.path.join(_TEMP, "HeadlessPlayer_debug.log")
 _FLAG_FILE = os.path.join(_TEMP, "HeadlessPlayer_debug.enabled")
 _LOCK = threading.Lock()
-_ENABLED = True
+_ENABLED = False
+_DEV_BUILD = False
 
 
 class RingBuffer:
@@ -55,9 +60,9 @@ _RING_BUFFER = RingBuffer(capacity=100)
 
 
 def is_enabled() -> bool:
-    """Returns True if debug logging is currently enabled."""
-    global _ENABLED
-    return _ENABLED or os.path.exists(_FLAG_FILE)
+    """Returns True if debug logging is explicitly enabled in dev mode or dev builds."""
+    global _ENABLED, _DEV_BUILD
+    return _DEV_BUILD or _ENABLED or os.path.exists(_FLAG_FILE) or os.environ.get("HEADLESSPLAYER_DEV") == "1"
 
 
 def set_enabled(enabled: bool) -> None:
@@ -195,3 +200,167 @@ def attach_logging_handler() -> None:
         _HANDLER_ATTACHED = True
     except Exception:
         pass
+
+
+def _tail_log(initial_lines: int = 15) -> None:
+    log_file = get_log_filepath()
+    if not is_enabled():
+        print("\n[!] NOTICE: Debug logging is currently DISABLED.")
+        print("    Enable it first (Option 1 or 'on' command) to capture incoming NVDA events.")
+
+    if not os.path.exists(log_file):
+        print(f"\n[*] Waiting for log file to be created: {log_file}")
+        print("    (Press Ctrl+C to stop)")
+        while not os.path.exists(log_file):
+            time.sleep(0.5)
+
+    print(f"\n[*] Live-tailing log file: {log_file}")
+    print("    (Showing last lines, then waiting for new events in real time. Press Ctrl+C to stop)")
+    print("-" * 70)
+
+    try:
+        with open(log_file, "r", encoding="utf-8", errors="replace") as f:
+            all_lines = f.readlines()
+            if all_lines:
+                recent = all_lines[-initial_lines:]
+                for l in recent:
+                    sys.stdout.write(l)
+                sys.stdout.flush()
+
+            f.seek(0, os.SEEK_END)
+            while True:
+                line = f.readline()
+                if line:
+                    sys.stdout.write(line)
+                    sys.stdout.flush()
+                else:
+                    time.sleep(0.1)
+    except KeyboardInterrupt:
+        print("\n\n[*] Stopped live log monitoring.")
+
+
+def _run_diagnostics() -> None:
+    try:
+        cur_dir = os.path.dirname(os.path.abspath(__file__))
+        parent_dir = os.path.abspath(os.path.join(cur_dir, "..", ".."))
+        if parent_dir not in sys.path:
+            sys.path.insert(0, parent_dir)
+        diag_mod = sys.modules.get("globalPlugins.HeadlessPlayer.diagnostics")
+        if not diag_mod:
+            try:
+                diag_mod = __import__("globalPlugins.HeadlessPlayer.diagnostics", fromlist=["generate_diagnostic_report_text"])
+            except Exception:
+                diag_mod = __import__("diagnostics")
+        print("\n[*] Running Full System Health Diagnostics...\n")
+        report = getattr(diag_mod, "generate_diagnostic_report_text")()
+        print(report)
+    except Exception as e:
+        print(f"[-] Failed to run diagnostics: {e}")
+
+
+def _print_status() -> None:
+    status_str = "ENABLED" if is_enabled() else "DISABLED"
+    log_file = get_log_filepath()
+    print("\n==================================================")
+    print(f" HeadlessPlayer Debug Logging Status: [{status_str}]")
+    print("==================================================")
+    print(f" - Flag File: {_FLAG_FILE} ({'EXISTS' if os.path.exists(_FLAG_FILE) else 'NOT FOUND'})")
+    print(f" - Log File : {log_file}")
+    if os.path.exists(log_file):
+        size_kb = os.path.getsize(log_file) / 1024.0
+        try:
+            with open(log_file, "r", encoding="utf-8", errors="replace") as f:
+                line_count = sum(1 for _ in f)
+        except Exception:
+            line_count = 0
+        mtime = time.ctime(os.path.getmtime(log_file))
+        print(f" - File Size: {size_kb:.2f} KB ({line_count} lines)")
+        print(f" - Last Modified: {mtime}")
+    else:
+        print(" - File Size: Log file does not exist yet.")
+    print("==================================================\n")
+
+
+def _interactive_menu() -> None:
+    while True:
+        status_str = "ENABLED" if is_enabled() else "DISABLED"
+        print(f"\n=== HeadlessPlayer Debug Log Manager [Status: {status_str}] ===")
+        print("1. Enable Debug Logging")
+        print("2. Disable Debug Logging")
+        print("3. Check Status & Log File Info")
+        print("4. Open Log File in Notepad")
+        print("5. Live Monitor Logs (Tail)")
+        print("6. Clear Log File & Memory Buffer")
+        print("7. Run System Diagnostics")
+        print("0. Exit")
+        print("==================================================")
+        try:
+            choice = input("Enter your choice (0-7): ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print("\nExiting.")
+            break
+
+        if choice == "1":
+            set_enabled(True)
+            print(f"\n[+] Debug logging ENABLED -> {get_log_filepath()}")
+        elif choice == "2":
+            set_enabled(False)
+            print("\n[-] Debug logging DISABLED")
+        elif choice == "3":
+            _print_status()
+        elif choice == "4":
+            log_file = get_log_filepath()
+            if not os.path.exists(log_file):
+                with open(log_file, "w", encoding="utf-8") as f:
+                    f.write("")
+            subprocess.Popen(["notepad.exe", log_file])
+            print(f"\n[*] Opened {log_file} in Notepad.")
+        elif choice == "5":
+            _tail_log()
+        elif choice == "6":
+            clear_log()
+            print("\n[+] Log file and memory buffer cleared.")
+        elif choice == "7":
+            _run_diagnostics()
+        elif choice == "0":
+            print("Goodbye!")
+            break
+        else:
+            print("[-] Invalid choice. Please select 0 to 7.")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="HeadlessPlayer Developer Debug Log Manager")
+    parser.add_argument(
+        "action",
+        nargs="?",
+        choices=["on", "off", "status", "open", "view", "clear", "tail", "diag"],
+        help="Action: on, off, status, open, view, clear, tail, diag (or omit for interactive menu)"
+    )
+    args = parser.parse_args()
+
+    if not args.action:
+        _interactive_menu()
+    elif args.action == "on":
+        set_enabled(True)
+        print(f"[+] Debug logging ENABLED -> {get_log_filepath()}")
+    elif args.action == "off":
+        set_enabled(False)
+        print("[-] Debug logging DISABLED")
+    elif args.action == "status":
+        _print_status()
+    elif args.action in ("open", "view"):
+        log_file = get_log_filepath()
+        if not os.path.exists(log_file):
+            with open(log_file, "w", encoding="utf-8") as f:
+                f.write("")
+        subprocess.Popen(["notepad.exe", log_file])
+        print(f"[*] Opened {log_file} in Notepad.")
+    elif args.action == "clear":
+        clear_log()
+        print("[+] Log file and memory buffer cleared.")
+    elif args.action == "tail":
+        _tail_log()
+    elif args.action == "diag":
+        _run_diagnostics()
+

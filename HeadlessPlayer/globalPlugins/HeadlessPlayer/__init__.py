@@ -8,6 +8,7 @@ and global toggle gesture bindings.
 
 from __future__ import annotations
 import logging
+import sys
 from typing import Any
 
 # 1. Initialize Translations
@@ -51,7 +52,7 @@ except Exception:
     _NVDA_GUI_AVAILABLE = False
 
 # 3. Import HeadlessPlayer Subsystems
-from .config_spec import initializeConfig, getConfig, setConfigValue
+from .config_spec import initializeConfig, getConfig, setConfigValue, getConfigValue
 from .engine import HeadlessEngine, ALL_SUPPORTED_EXTENSIONS, SPEED_PRESETS, is_supported_media_file
 from .ipc_client import WinNamedPipeClient
 from .mpv_process import MpvProcess, find_mpv_binary, DEFAULT_PIPE_NAME

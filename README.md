@@ -14,7 +14,7 @@ A completely headless, privacy-oriented media player add-on for the [NVDA screen
 **Version:** 1.3.0  
 **Author:** Mahmoud Abo El Fotouh <mahmoudaboelfotouh.20@gmail.com>  
 **Repository:** [https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer](https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer)  
-**NVDA Compatibility:** NVDA 2024.1 to 2026.2+
+**NVDA Compatibility:** NVDA 2024.1 to 2026.2
 
 ---
 
@@ -35,21 +35,25 @@ When Player Mode is active (<kbd>NVDA+Ctrl+Shift+P</kbd>):
 ---
 
 ## 3. Essential Player Mode Shortcuts
-- **Playback:** <kbd>Space</kbd> (Play/Pause), <kbd>s</kbd> (Stop & Rewind to 0:00), <kbd>m</kbd> (Mute/Unmute), <kbd>Escape</kbd> (Exit Player Mode), <kbd>Control</kbd> (Silence speech).
+- **Playback:** <kbd>Space</kbd> (Play/Pause), <kbd>s</kbd> (Stop & Rewind to 0:00), <kbd>x</kbd> (Close player completely), <kbd>m</kbd> (Mute/Unmute), <kbd>Escape</kbd> (Exit Player Mode), <kbd>Control</kbd> (Silence speech).
 - **Volume & Bass:** <kbd>Up/Down Arrow</kbd> (Volume ±5%), <kbd>b</kbd> (Bass +3dB), <kbd>Shift + b</kbd> (Bass -3dB).
-- **Seeking:** <kbd>Left/Right Arrow</kbd> (5s seek), <kbd>Alt + Left/Right</kbd> (1s slow seek), <kbd>Ctrl + Left/Right</kbd> (30s fast seek), <kbd>Shift + Left/Right</kbd> (5m ultrafast seek), <kbd>1</kbd> to <kbd>9</kbd> (10% to 90% direct jump), <kbd>0</kbd> (Jump to start).
+- **Seeking:** <kbd>Left/Right Arrow</kbd> (5s seek), <kbd>Alt + Left/Right</kbd> (1s slow seek), <kbd>Ctrl + Left/Right</kbd> (30s fast seek), <kbd>Shift + Left/Right</kbd> (5m ultrafast seek), <kbd>1</kbd> to <kbd>9</kbd> (10% to 90% direct jump), <kbd>0</kbd> (Jump to start), <kbd>Home</kbd> / <kbd>End</kbd> (Track start/end).
 - **Pitch-Preserved Speed:** <kbd>Ctrl + Up/Down</kbd> (Fine ±0.1x), <kbd>Shift + Up/Down</kbd> (Preset speeds from 1.0x up to 4.0x).
 - **A-B Looping & Repeat:** <kbd>[</kbd> (Set Point A), <kbd>]</kbd> (Set Point B & Loop), <kbd>c</kbd> (Clear Loop), <kbd>r</kbd> (Toggle Repeat mode).
-- **Navigation:** <kbd>Page Down</kbd> / <kbd>Tab</kbd> (Next track), <kbd>Page Up</kbd> / <kbd>Shift+Tab</kbd> (Previous track), <kbd>n</kbd> (Toggle Auto-Next), <kbd>z</kbd> (Toggle Shuffle), <kbd>o</kbd> (Open file), <kbd>f</kbd> (Open folder), <kbd>e</kbd> (Play Explorer selection).
-- **Speech Queries:** <kbd>i</kbd> (Full media info), <kbd>Ctrl + i</kbd> (Remaining time), <kbd>Shift + i</kbd> (Elapsed time), <kbd>h</kbd> (Shortcuts help dialog).
+- **Navigation:** <kbd>Page Down</kbd> / <kbd>Tab</kbd> (Next track), <kbd>Page Up</kbd> / <kbd>Shift+Tab</kbd> (Previous track), <kbd>Ctrl+Home</kbd> / <kbd>Ctrl+End</kbd> (First/Last track), <kbd>n</kbd> (Toggle Auto-Next), <kbd>z</kbd> (Toggle Shuffle), <kbd>o</kbd> (Open file), <kbd>f</kbd> (Open folder), <kbd>e</kbd> (Play Explorer selection).
+- **Recent Media & History:** <kbd>.</kbd> / <kbd>,</kbd> (Next/Previous recent track), <kbd>Ctrl+.</kbd> / <kbd>Ctrl+,</kbd> (Next/Previous recent playlist), <kbd>Space</kbd> (Play focused recent item), <kbd>Delete</kbd> (Remove from history).
+- **Clip Export & Links:** <kbd>d</kbd> (Export/Clip dialog), <kbd>Shift+d</kbd> (Quick export A-B loop), <kbd>v</kbd> (Copy stream URL), <kbd>Shift+v</kbd> (Copy raw stream URL).
+- **Speech Queries & Settings:** <kbd>i</kbd> (Media info), <kbd>Ctrl + i</kbd> (Remaining time), <kbd>Shift + i</kbd> (Elapsed time), <kbd>h</kbd> (Shortcuts help dialog), <kbd>Ctrl + Shift + S</kbd> (Open settings panel).
 
 ---
 
-## 4. YouTube & Online Streaming
+## 4. YouTube Streaming, Clip Export & SponsorBlock
 - **Search (<kbd>u</kbd>):** Press <kbd>u</kbd>, type any search query (e.g., *Beethoven Symphony 5* or *Podcast episode*), and press <kbd>Enter</kbd>. Browse results with Up/Down arrows and press <kbd>Enter</kbd> to play. Press <kbd>Tab</kbd> on a playlist to queue all tracks at once.
 - **Direct URLs (<kbd>u</kbd>):** Paste any YouTube video/playlist URL, Twitch stream, SoundCloud link, or radio stream.
 - **YouTube Portal (<kbd>p</kbd>):** Browse Subscribed Channels, Latest Subscriptions, Watch History, Liked Videos, Watch Later, and Global Top 100 Music Charts.
-- **Copy Link (<kbd>v</kbd>):** Copies active stream URL to Windows Clipboard.
+- **Clip Exporter (<kbd>d</kbd> / <kbd>Shift+d</kbd>):** Export any A-B loop segment or entire track into audio/video format with custom quality.
+- **Copy Stream Links (<kbd>v</kbd> / <kbd>Shift+v</kbd>):** Copies active stream URL or direct media link to Windows Clipboard.
+- **SponsorBlock Integration:** Automatically skips YouTube sponsored segments, self-promotions, interaction reminders, and intros with instant spoken announcements.
 
 ---
 

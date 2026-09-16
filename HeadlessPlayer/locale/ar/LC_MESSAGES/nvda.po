@@ -1655,9 +1655,6 @@ msgstr "تذكير الاشتراك والتفاعل"
 msgid "— [Load more items...] —"
 msgstr "— [تحميل المزيد من العناصر...] —"
 
-msgid "Could not open settings dialog"
-msgstr "تعذر فتح نافذة الإعدادات"
-
 
 msgid "&Revert streaming engine to previous version (none available)"
 msgstr "ال&رجوع للإصدار السابق من محرك البث (لا توجد نسخة سابقة)"

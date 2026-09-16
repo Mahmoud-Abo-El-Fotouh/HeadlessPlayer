@@ -1656,9 +1656,6 @@ msgstr "subscribe reminder"
 msgid "— [Load more items...] —"
 msgstr "— [Load more items...] —"
 
-msgid "Could not open settings dialog"
-msgstr "Could not open settings dialog"
-
 
 msgid "&Revert streaming engine to previous version (none available)"
 msgstr "&Revert streaming engine to previous version (none available)"

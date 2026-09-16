@@ -18,16 +18,21 @@ import tempfile
 import threading
 import time
 from typing import Any, Callable, Dict, List, Optional, Tuple
+import urllib.request
+import tarfile
+import zipfile
 from .utils import log_debug, log_exception
 
 try:
-    from .config_spec import getConfig
+    from .config_spec import getConfig, getConfigValue
 except ImportError:
     try:
-        from config_spec import getConfig
+        from config_spec import getConfig, getConfigValue
     except ImportError:
         def getConfig() -> Dict[str, Any]:
             return {}
+        def getConfigValue(key: str, default: Any = None) -> Any:
+            return default
 
 logger = logging.getLogger("HeadlessPlayer.StreamEngine")
 
@@ -103,12 +108,17 @@ def get_unavailable_reason() -> str:
     return _ytdlp_import_error or ""
 
 
-def get_bundled_version() -> str:
+def get_installed_version(pkg_dir: Optional[str] = None) -> str:
     """
-    Returns the version string of the bundled yt-dlp without importing it
-    (reads lib/yt_dlp/version.py textually), or empty string.
+    Returns the version string from yt_dlp/version.py in the specified directory
+    or lib/yt_dlp by default, or empty string.
     """
-    ver_file = os.path.join(LIB_DIR, "yt_dlp", "version.py")
+    if pkg_dir is None:
+        ver_file = os.path.join(LIB_DIR, "yt_dlp", "version.py")
+    elif pkg_dir.endswith(".py"):
+        ver_file = pkg_dir
+    else:
+        ver_file = os.path.join(pkg_dir, "version.py")
     try:
         with open(ver_file, "r", encoding="utf-8") as fh:
             content = fh.read()
@@ -118,6 +128,14 @@ def get_bundled_version() -> str:
     except OSError:
         pass
     return ""
+
+
+def get_bundled_version() -> str:
+    """
+    Returns the version string of the installed yt-dlp without importing it.
+    """
+    return get_installed_version()
+
 
 
 class _SilentLogger:
@@ -308,6 +326,9 @@ class StreamItem:
         )
 
 
+SUPPORTED_COOKIE_BROWSERS: Sequence[str] = ("none", "firefox")
+
+
 def get_manual_cookies_file() -> str:
     """Returns the configured manual cookies.txt path if it exists, else ''."""
     cfg = _get_config()
@@ -322,13 +343,13 @@ def get_manual_cookies_file() -> str:
 def login_cookies_enabled() -> bool:
     """
     True when sign-in cookies are configured: either a manual cookies.txt
-    file, or a browser selected for automatic cookie extraction.
+    file, or a supported browser (Firefox) selected for automatic cookie extraction.
     """
     if get_manual_cookies_file():
         return True
     cfg = _get_config()
     browser = str(cfg.get("ytdlpCookiesBrowser", "") or "").strip().lower()
-    return bool(browser and browser != "none")
+    return bool(browser in SUPPORTED_COOKIE_BROWSERS and browser != "none")
 
 
 def is_cookie_error(error_text: str) -> bool:
@@ -344,20 +365,26 @@ def is_cookie_error(error_text: str) -> bool:
         or "sign in to confirm" in low
         or "confirm you're not a bot" in low
         or "confirm you?re not a bot" in low
+        or "only available to registered users" in low
+        or "sign in to view" in low
+        or "private video" in low
+        or "members-only" in low
+        or "app-bound" in low
+        or "elevation" in low
     )
 
 
 def check_youtube_cookies_validity(cookie_path: Optional[str] = None) -> Tuple[bool, str]:
     """
     Validates whether the configured or specified cookies.txt file contains
-    the essential YouTube authentication tokens (specifically LOGIN_INFO).
+    the essential YouTube authentication tokens (specifically LOGIN_INFO / SAPISID).
     Returns (is_valid, reason_str).
     Possible reasons:
         'ok': Cookies appear complete and valid.
         'not_configured': No cookies file configured.
         'file_not_found': File path does not exist.
-        'missing_login_info': Missing LOGIN_INFO (frequent in Incognito exports).
-        'missing_auth_tokens': Missing SID/SAPISID/3PSID tokens.
+        'missing_auth_tokens': Missing SID/SAPISID/3PSID/LOGIN_INFO tokens.
+        'expired': Session tokens (LOGIN_INFO) have expired timestamp.
         'empty': File is empty or has no YouTube cookies.
     """
     if cookie_path is None:
@@ -370,6 +397,8 @@ def check_youtube_cookies_validity(cookie_path: Optional[str] = None) -> Tuple[b
     has_yt = False
     has_login_info = False
     has_sid_or_sapisid = False
+    is_expired = False
+    current_time = time.time()
 
     try:
         with open(cookie_path, "r", encoding="utf-8", errors="ignore") as f:
@@ -380,9 +409,18 @@ def check_youtube_cookies_validity(cookie_path: Optional[str] = None) -> Tuple[b
                 parts = line.split("\t")
                 if len(parts) >= 7:
                     domain = parts[0].lower()
+                    expiry_str = parts[4].strip()
                     name = parts[5].strip()
                     if "youtube.com" in domain or "google.com" in domain:
                         has_yt = True
+                        try:
+                            expiry = int(expiry_str)
+                            if expiry > 0 and expiry < current_time:
+                                if name in ("LOGIN_INFO", "SAPISID", "__Secure-3PAPISID", "SID"):
+                                    is_expired = True
+                        except (ValueError, TypeError):
+                            pass
+
                         if name == "LOGIN_INFO":
                             has_login_info = True
                         if name in ("SAPISID", "__Secure-3PAPISID", "__Secure-1PAPISID", "SID", "__Secure-3PSID"):
@@ -392,6 +430,8 @@ def check_youtube_cookies_validity(cookie_path: Optional[str] = None) -> Tuple[b
 
     if not has_yt:
         return False, "empty"
+    if is_expired:
+        return False, "expired"
     if not has_login_info and not has_sid_or_sapisid:
         return False, "missing_auth_tokens"
     return True, "ok"
@@ -522,17 +562,29 @@ def _base_ydl_opts(use_cookies: bool = True, target_url: Optional[str] = None) -
         opts["http_headers"] = _STANDARD_HTTP_HEADERS
 
     if not use_cookies:
+        opts["extractor_args"] = {
+            "youtube": {
+                "player_client": ["tv_embedded"]
+            }
+        }
         return opts
+
+    opts["extractor_args"] = {
+        "youtube": {
+            "player_client": ["web"]
+        }
+    }
+
     # Sign-in cookies: a manual cookies.txt file takes priority (works even
     # when the browser blocks automatic extraction, e.g. Chrome's app-bound
-    # encryption); otherwise fall back to automatic browser extraction.
+    # encryption); otherwise fall back to supported browser automatic extraction.
     cookie_file = get_manual_cookies_file()
     if cookie_file:
         opts["cookiefile"] = cookie_file
     else:
         cfg = _get_config()
         browser = str(cfg.get("ytdlpCookiesBrowser", "") or "").strip().lower()
-        if browser and browser != "none":
+        if browser in SUPPORTED_COOKIE_BROWSERS and browser != "none":
             opts["cookiesfrombrowser"] = (browser,)
     return opts
 
@@ -1044,10 +1096,23 @@ def clear_resolve_cache() -> None:
 
 
 # ---------------------------------------------------------------------------
-# yt-dlp self-update from PyPI
+# yt-dlp self-update and multi-channel management (Stable / Nightly / Master)
 # ---------------------------------------------------------------------------
 
 _PYPI_JSON_URL = "https://pypi.org/pypi/yt-dlp/json"
+_GITHUB_NIGHTLY_API_URL = "https://api.github.com/repos/yt-dlp/yt-dlp-nightly-builds/releases/latest"
+_GITHUB_MASTER_API_URL = "https://api.github.com/repos/yt-dlp/yt-dlp-master-builds/releases/latest"
+
+YTDLP_CHANNELS = {
+    "stable": "Stable (PyPI)",
+    "nightly": "Nightly (Daily YouTube Fixes)",
+    "master": "Master (Development)",
+}
+
+BUNDLED_BACKUP_DIR = os.path.join(LIB_DIR, "yt_dlp_bundled")
+PREVIOUS_BACKUP_DIR = os.path.join(LIB_DIR, "yt_dlp_previous")
+META_FILE = os.path.join(LIB_DIR, "yt_dlp_meta.json")
+
 _update_lock = threading.Lock()
 
 
@@ -1059,107 +1124,289 @@ def _version_tuple(ver: str) -> Tuple[int, ...]:
     return tuple(parts)
 
 
-def check_latest_version(timeout: float = 15.0) -> Tuple[str, str]:
+def _load_meta() -> Dict[str, Any]:
+    if os.path.isfile(META_FILE):
+        try:
+            with open(META_FILE, "r", encoding="utf-8") as fh:
+                return json.load(fh)
+        except Exception:
+            pass
+    return {
+        "installed_version": get_bundled_version(),
+        "installed_channel": "stable",
+        "previous_version": "",
+        "previous_channel": "",
+        "updated_at": "",
+    }
+
+
+def _save_meta(data: Dict[str, Any]) -> None:
+    try:
+        os.makedirs(LIB_DIR, exist_ok=True)
+        with open(META_FILE, "w", encoding="utf-8") as fh:
+            json.dump(data, fh, indent=2, ensure_ascii=False)
+    except Exception as e:
+        logger.warning("Failed to save yt-dlp metadata: %s", e)
+
+
+def ensure_bundled_snapshot() -> None:
     """
-    Queries PyPI for the newest yt-dlp release.
+    Ensures that a pristine factory backup copy of yt_dlp exists in LIB_DIR/yt_dlp_bundled.
+    This creates an immutable snapshot of the version originally shipped with the addon.
+    """
+    target_pkg = os.path.join(LIB_DIR, "yt_dlp")
+    if os.path.isdir(target_pkg) and not os.path.isdir(BUNDLED_BACKUP_DIR):
+        try:
+            shutil.copytree(target_pkg, BUNDLED_BACKUP_DIR, dirs_exist_ok=True)
+            logger.info("Created pristine factory snapshot of yt-dlp in %s", BUNDLED_BACKUP_DIR)
+        except Exception as e:
+            logger.warning("Could not create bundled snapshot: %s", e)
+
+
+def can_rollback() -> bool:
+    """Returns True if a valid previous version backup exists."""
+    prev_ver_file = os.path.join(PREVIOUS_BACKUP_DIR, "version.py")
+    return os.path.isfile(prev_ver_file)
+
+
+def can_reset_bundled() -> bool:
+    """Returns True if factory bundled backup exists."""
+    bundled_ver_file = os.path.join(BUNDLED_BACKUP_DIR, "version.py")
+    return os.path.isfile(bundled_ver_file)
+
+
+def get_channel_info() -> Dict[str, Any]:
+    """Returns metadata about current, previous, and bundled versions."""
+    meta = _load_meta()
+    installed_ver = get_bundled_version()
+    prev_ver = get_installed_version(PREVIOUS_BACKUP_DIR) if can_rollback() else ""
+    bundled_ver = get_installed_version(BUNDLED_BACKUP_DIR) if can_reset_bundled() else ""
+    return {
+        "installed_version": installed_ver or meta.get("installed_version", ""),
+        "installed_channel": meta.get("installed_channel", "stable"),
+        "previous_version": prev_ver or meta.get("previous_version", ""),
+        "previous_channel": meta.get("previous_channel", ""),
+        "bundled_version": bundled_ver,
+        "can_rollback": can_rollback(),
+        "can_reset_bundled": can_reset_bundled(),
+    }
+
+
+def check_latest_version(channel: str = "stable", timeout: float = 15.0) -> Tuple[str, str]:
+    """
+    Queries the appropriate API for the newest yt-dlp release on the specified channel.
+    Channels: 'stable', 'nightly', 'master'
 
     Returns:
         (latest_version, wheel_download_url)
     """
-    req = urllib.request.Request(
-        _PYPI_JSON_URL,
-        headers={"User-Agent": "HeadlessPlayer-NVDA-Addon"},
-    )
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        data = json.loads(resp.read().decode("utf-8"))
+    channel = (channel or "stable").strip().lower()
 
-    latest = str(data["info"]["version"])
-    wheel_url = ""
-    for f in data["releases"].get(latest, []):
-        if str(f.get("filename", "")).endswith("py3-none-any.whl"):
-            wheel_url = str(f["url"])
-            break
-    if not wheel_url:
-        for f in data.get("urls", []):
-            if str(f.get("filename", "")).endswith(".whl"):
-                wheel_url = str(f["url"])
+    if channel == "stable":
+        req = urllib.request.Request(
+            _PYPI_JSON_URL,
+            headers={"User-Agent": "HeadlessPlayer-NVDA-Addon"},
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+
+        latest = str(data.get("info", {}).get("version", ""))
+        archive_url = ""
+        for f in data.get("releases", {}).get(latest, []):
+            if str(f.get("filename", "")).endswith("py3-none-any.whl"):
+                archive_url = str(f.get("url", ""))
                 break
-    return latest, wheel_url
+        if not archive_url:
+            for f in data.get("releases", {}).get(latest, []):
+                if str(f.get("filename", "")).endswith(".whl") or str(f.get("filename", "")).endswith(".tar.gz"):
+                    archive_url = str(f.get("url", ""))
+                    break
+        if not archive_url:
+            for f in data.get("urls", []):
+                if str(f.get("filename", "")).endswith(".whl") or str(f.get("filename", "")).endswith(".tar.gz"):
+                    archive_url = str(f.get("url", ""))
+                    break
+        return latest, archive_url
+
+    elif channel in ("nightly", "master"):
+        api_url = _GITHUB_NIGHTLY_API_URL if channel == "nightly" else _GITHUB_MASTER_API_URL
+        req = urllib.request.Request(
+            api_url,
+            headers={
+                "User-Agent": "HeadlessPlayer-NVDA-Addon",
+                "Accept": "application/vnd.github.v3+json",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+
+        latest = str(data.get("tag_name", "")).lstrip("v")
+        if not latest:
+            latest = str(data.get("name", "")).lstrip("v")
+
+        archive_url = ""
+        assets = data.get("assets", [])
+        # 1. Prefer .whl
+        for asset in assets:
+            name = str(asset.get("name", ""))
+            if name.endswith("py3-none-any.whl") or (name.endswith(".whl") and "yt_dlp" in name):
+                archive_url = str(asset.get("browser_download_url", ""))
+                break
+        # 2. Prefer yt-dlp.tar.gz or any .tar.gz archive
+        if not archive_url:
+            for asset in assets:
+                name = str(asset.get("name", ""))
+                if name == "yt-dlp.tar.gz" or name.endswith(".tar.gz") or name.endswith(".tgz"):
+                    archive_url = str(asset.get("browser_download_url", ""))
+                    break
+        # 3. Prefer any .zip archive
+        if not archive_url:
+            for asset in assets:
+                name = str(asset.get("name", ""))
+                if name.endswith(".zip") and not name.endswith(".exe"):
+                    archive_url = str(asset.get("browser_download_url", ""))
+                    break
+        # 4. Fallback to GitHub tarball or zipball
+        if not archive_url:
+            archive_url = str(data.get("tarball_url", "") or data.get("zipball_url", ""))
+
+        return latest, archive_url
+
+    else:
+        raise ValueError(f"Unknown yt-dlp channel: {channel}")
 
 
-def update_ytdlp(progress_cb: Optional[Callable[[str], None]] = None) -> Tuple[bool, str]:
+def update_ytdlp(channel: Optional[str] = None, progress_cb: Optional[Callable[[str], None]] = None) -> Tuple[bool, str]:
     """
-    Checks PyPI and, if a newer yt-dlp exists, downloads and installs it into
-    the add-on's lib directory. NVDA must be restarted to load the new version.
+    Checks the chosen channel, downloads and installs the package into lib/yt_dlp.
+    Automatically preserves previous version in lib/yt_dlp_previous and factory snapshot in lib/yt_dlp_bundled.
 
     Returns:
         (updated, message)
     """
-    def report(msg: str) -> None:
+    def report(stage: str, downloaded: int = 0, total: int = 0, pct: float = 0.0, extra: str = "") -> None:
         if progress_cb:
             try:
-                progress_cb(msg)
+                try:
+                    progress_cb(stage, downloaded, total, pct, extra)
+                except TypeError:
+                    progress_cb(stage)
             except Exception:
                 pass
 
-    with _update_lock:
-        current = get_bundled_version()
-        report("checking")
+    if not channel:
         try:
-            latest, wheel_url = check_latest_version()
+            channel = getConfigValue("ytdlpUpdateChannel", "stable")
+        except Exception:
+            channel = "stable"
+    channel = (channel or "stable").strip().lower()
+
+    with _update_lock:
+        ensure_bundled_snapshot()
+        current = get_bundled_version()
+        meta = _load_meta()
+        current_channel = meta.get("installed_channel", "stable")
+
+        report("checking", 0, 0, 0.0)
+        try:
+            latest, download_url = check_latest_version(channel=channel)
         except Exception as e:
             return False, f"error:network:{e}"
 
-        if not wheel_url:
-            return False, "error:no-wheel"
+        if not download_url:
+            return False, "error:no-download-url"
 
-        if current and _version_tuple(latest) <= _version_tuple(current):
+        # If staying on the same channel and version <= current, it is already up to date
+        if channel == current_channel and current and _version_tuple(latest) <= _version_tuple(current):
             return False, f"up-to-date:{current}"
 
-        report("downloading")
+        report("downloading", 0, 0, 0.0)
         tmp_dir = tempfile.mkdtemp(prefix="hp_ytdlp_")
         try:
-            wheel_path = os.path.join(tmp_dir, "yt_dlp.whl")
+            archive_path = os.path.join(tmp_dir, "yt_dlp_archive")
             req = urllib.request.Request(
-                wheel_url,
+                download_url,
                 headers={"User-Agent": "HeadlessPlayer-NVDA-Addon"},
             )
-            with urllib.request.urlopen(req, timeout=120) as resp, open(wheel_path, "wb") as fh:
-                shutil.copyfileobj(resp, fh)
+            with urllib.request.urlopen(req, timeout=120) as resp, open(archive_path, "wb") as fh:
+                try:
+                    headers = getattr(resp, "headers", None)
+                    if headers and hasattr(headers, "get"):
+                        total_len = int(headers.get("Content-Length", 0) or 0)
+                    elif hasattr(resp, "getheader"):
+                        total_len = int(resp.getheader("Content-Length") or 0)
+                    elif hasattr(resp, "info"):
+                        info = resp.info()
+                        total_len = int(info.get("Content-Length", 0) or 0) if hasattr(info, "get") else 0
+                    else:
+                        total_len = 0
+                except (ValueError, TypeError, AttributeError):
+                    total_len = 0
+                downloaded = 0
+                chunk_size = 65536
+                while True:
+                    chunk = resp.read(chunk_size)
+                    if not chunk:
+                        break
+                    fh.write(chunk)
+                    downloaded += len(chunk)
+                    pct = (downloaded / total_len * 100.0) if total_len > 0 else 0.0
+                    report("downloading", downloaded, total_len, pct)
 
-            report("installing")
+            report("extracting", downloaded, total_len, 100.0)
             extract_dir = os.path.join(tmp_dir, "extracted")
-            with zipfile.ZipFile(wheel_path) as zf:
-                members = [m for m in zf.namelist() if m.startswith("yt_dlp/")]
-                if not members:
-                    return False, "error:bad-wheel"
-                zf.extractall(extract_dir, members=members)
+            os.makedirs(extract_dir, exist_ok=True)
 
-            new_pkg = os.path.join(extract_dir, "yt_dlp")
+            report("installing", downloaded, total_len, 100.0)
+            extracted = False
+            # 1. Try zipfile (for .whl or .zip)
+            if zipfile.is_zipfile(archive_path):
+                try:
+                    with zipfile.ZipFile(archive_path) as zf:
+                        zf.extractall(extract_dir)
+                    extracted = True
+                except Exception as e:
+                    logger.debug("Zipfile extraction failed: %s", e)
+
+            # 2. Try tarfile (for .tar.gz, .tgz, .tar, etc.)
+            if not extracted:
+                try:
+                    with tarfile.open(archive_path, "r:*") as tf:
+                        tf.extractall(extract_dir)
+                    extracted = True
+                except Exception as e:
+                    logger.debug("Tarfile extraction failed: %s", e)
+
+            if not extracted:
+                return False, "error:bad-archive"
+
+            # Locate the package directory named 'yt_dlp' inside extracted contents
+            new_pkg = None
+            for root, dirs, files in os.walk(extract_dir):
+                if os.path.basename(root) == "yt_dlp" and ("version.py" in files or "__init__.py" in files):
+                    new_pkg = root
+                    break
+
+            if not new_pkg or not os.path.isdir(new_pkg):
+                return False, "error:bad-package-contents"
+
             target_pkg = os.path.join(LIB_DIR, "yt_dlp")
-            backup_pkg = os.path.join(LIB_DIR, f"yt_dlp_old_{int(time.time())}")
-
             os.makedirs(LIB_DIR, exist_ok=True)
 
-            # Clean any stale backups from previous updates
-            for name in os.listdir(LIB_DIR):
-                if name.startswith("yt_dlp_old_"):
-                    shutil.rmtree(os.path.join(LIB_DIR, name), ignore_errors=True)
-
-            moved_old = False
+            # Move current package to PREVIOUS_BACKUP_DIR
             if os.path.isdir(target_pkg):
+                if os.path.isdir(PREVIOUS_BACKUP_DIR):
+                    shutil.rmtree(PREVIOUS_BACKUP_DIR, ignore_errors=True)
                 try:
-                    os.rename(target_pkg, backup_pkg)
-                    moved_old = True
+                    os.rename(target_pkg, PREVIOUS_BACKUP_DIR)
                 except OSError:
-                    # Directory busy: fall back to overwrite-in-place
-                    pass
+                    shutil.copytree(target_pkg, PREVIOUS_BACKUP_DIR, dirs_exist_ok=True)
+                    shutil.rmtree(target_pkg, ignore_errors=True)
 
             try:
-                if moved_old or not os.path.isdir(target_pkg):
+                if not os.path.isdir(target_pkg):
                     shutil.move(new_pkg, target_pkg)
                 else:
-                    # Overwrite files in place
                     for root, _dirs, files in os.walk(new_pkg):
                         rel = os.path.relpath(root, new_pkg)
                         dest_root = os.path.join(target_pkg, rel) if rel != "." else target_pkg
@@ -1167,36 +1414,122 @@ def update_ytdlp(progress_cb: Optional[Callable[[str], None]] = None) -> Tuple[b
                         for f in files:
                             shutil.copy2(os.path.join(root, f), os.path.join(dest_root, f))
             except Exception as e:
-                # Attempt rollback
-                if moved_old and not os.path.isdir(target_pkg):
+                # Attempt rollback on install failure
+                if os.path.isdir(PREVIOUS_BACKUP_DIR) and not os.path.isdir(target_pkg):
                     try:
-                        os.rename(backup_pkg, target_pkg)
+                        os.rename(PREVIOUS_BACKUP_DIR, target_pkg)
                     except OSError:
                         pass
                 return False, f"error:install:{e}"
 
-            if moved_old:
-                shutil.rmtree(backup_pkg, ignore_errors=True)
-
-            # Remove stale compiled caches so the new version loads cleanly
+            # Remove stale pycache
             for root, dirs, _files in os.walk(target_pkg):
                 for d in list(dirs):
                     if d == "__pycache__":
                         shutil.rmtree(os.path.join(root, d), ignore_errors=True)
                         dirs.remove(d)
 
-            logger.info("yt-dlp updated from %s to %s", current or "?", latest)
+            new_installed_ver = get_installed_version(target_pkg) or latest
+            meta["previous_version"] = current
+            meta["previous_channel"] = current_channel
+            meta["installed_version"] = new_installed_ver
+            meta["installed_channel"] = channel
+            meta["updated_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
+            _save_meta(meta)
 
-            # Also refresh the companion JS challenge solver package
-            # (yt-dlp-ejs); new yt-dlp releases expect matching solver scripts.
+            logger.info("yt-dlp updated from %s (%s) to %s (%s)", current or "?", current_channel, new_installed_ver, channel)
+
             try:
                 _update_ejs_package(tmp_dir)
             except Exception as e:
                 logger.warning("yt-dlp-ejs update failed (non-fatal): %s", e)
 
-            return True, f"updated:{latest}"
+            return True, f"updated:{new_installed_ver}"
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
+
+
+def rollback_ytdlp() -> Tuple[bool, str]:
+    """
+    Rolls back the current yt-dlp installation to the previous version in lib/yt_dlp_previous.
+    Returns (success, message).
+    """
+    with _update_lock:
+        if not can_rollback():
+            return False, "error:no_backup"
+
+        target_pkg = os.path.join(LIB_DIR, "yt_dlp")
+        meta = _load_meta()
+        prev_ver = get_installed_version(PREVIOUS_BACKUP_DIR) or meta.get("previous_version", "")
+        prev_channel = meta.get("previous_channel", "stable")
+        cur_ver = get_bundled_version()
+        cur_channel = meta.get("installed_channel", "stable")
+
+        tmp_swap = os.path.join(LIB_DIR, f"yt_dlp_swap_{int(time.time())}")
+        try:
+            if os.path.isdir(target_pkg):
+                os.rename(target_pkg, tmp_swap)
+            os.rename(PREVIOUS_BACKUP_DIR, target_pkg)
+            if os.path.isdir(tmp_swap):
+                os.rename(tmp_swap, PREVIOUS_BACKUP_DIR)
+        except Exception:
+            try:
+                shutil.rmtree(target_pkg, ignore_errors=True)
+                shutil.copytree(PREVIOUS_BACKUP_DIR, target_pkg, dirs_exist_ok=True)
+            except Exception as e:
+                return False, f"error:rollback_failed:{e}"
+            finally:
+                if os.path.isdir(tmp_swap):
+                    shutil.rmtree(tmp_swap, ignore_errors=True)
+
+        meta["installed_version"] = prev_ver
+        meta["installed_channel"] = prev_channel
+        meta["previous_version"] = cur_ver
+        meta["previous_channel"] = cur_channel
+        meta["updated_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
+        _save_meta(meta)
+
+        logger.info("yt-dlp rolled back to %s (%s)", prev_ver, prev_channel)
+        return True, f"rolled_back:{prev_ver}"
+
+
+def reset_to_bundled_ytdlp() -> Tuple[bool, str]:
+    """
+    Restores the factory bundled baseline version of yt-dlp from lib/yt_dlp_bundled.
+    Returns (success, message).
+    """
+    with _update_lock:
+        if not can_reset_bundled():
+            return False, "error:no_bundled"
+
+        target_pkg = os.path.join(LIB_DIR, "yt_dlp")
+        meta = _load_meta()
+        bundled_ver = get_installed_version(BUNDLED_BACKUP_DIR)
+        cur_ver = get_bundled_version()
+        cur_channel = meta.get("installed_channel", "stable")
+
+        if os.path.isdir(target_pkg):
+            shutil.rmtree(PREVIOUS_BACKUP_DIR, ignore_errors=True)
+            try:
+                shutil.copytree(target_pkg, PREVIOUS_BACKUP_DIR, dirs_exist_ok=True)
+            except Exception:
+                pass
+
+        try:
+            shutil.rmtree(target_pkg, ignore_errors=True)
+            shutil.copytree(BUNDLED_BACKUP_DIR, target_pkg, dirs_exist_ok=True)
+        except Exception as e:
+            return False, f"error:reset_failed:{e}"
+
+        meta["installed_version"] = bundled_ver
+        meta["installed_channel"] = "stable"
+        meta["previous_version"] = cur_ver
+        meta["previous_channel"] = cur_channel
+        meta["updated_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
+        _save_meta(meta)
+
+        logger.info("yt-dlp reset to bundled baseline version %s", bundled_ver)
+        return True, f"reset_bundled:{bundled_ver}"
 
 
 def _update_ejs_package(tmp_dir: str) -> None:
@@ -1207,11 +1540,11 @@ def _update_ejs_package(tmp_dir: str) -> None:
     )
     with urllib.request.urlopen(req, timeout=15) as resp:
         data = json.loads(resp.read().decode("utf-8"))
-    latest = str(data["info"]["version"])
+    latest = str(data.get("info", {}).get("version", ""))
     wheel_url = ""
-    for f in data["releases"].get(latest, []):
+    for f in data.get("releases", {}).get(latest, []):
         if str(f.get("filename", "")).endswith(".whl"):
-            wheel_url = str(f["url"])
+            wheel_url = str(f.get("url", ""))
             break
     if not wheel_url:
         return
@@ -1240,3 +1573,4 @@ def _update_ejs_package(tmp_dir: str) -> None:
     if old_pkg and os.path.isdir(old_pkg):
         shutil.rmtree(old_pkg, ignore_errors=True)
     logger.info("yt-dlp-ejs updated to %s", latest)
+

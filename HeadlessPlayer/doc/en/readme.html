@@ -85,7 +85,7 @@
 </head>
 <body>
     <h1>Headless Media Player — NVDA Add-on User Guide</h1>
-    <p><strong>Version:</strong> 1.3.0 &nbsp;|&nbsp; <strong>Author:</strong> Mahmoud Abo El Fotouh &lt;mahmoudaboelfotouh.20@gmail.com&gt; &nbsp;|&nbsp; <strong>NVDA Compatibility:</strong> NVDA 2024.1 to 2026.2+</p>
+    <p><strong>Version:</strong> 1.3.0 &nbsp;|&nbsp; <strong>Author:</strong> Mahmoud Abo El Fotouh &lt;mahmoudaboelfotouh.20@gmail.com&gt; &nbsp;|&nbsp; <strong>NVDA Compatibility:</strong> NVDA 2024.1 to 2026.2</p>
     <p><strong>Official Repository:</strong> <a href="https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer">https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer</a></p>
     <hr>
 
@@ -116,6 +116,7 @@
         <tbody>
             <tr><td><kbd>Space</kbd></td><td>Play / Pause</td><td>Toggles playback. Restarts from start if track reached end.</td></tr>
             <tr><td><kbd>s</kbd></td><td>Stop</td><td>Stops playback, saves position, rewinds to 0:00.</td></tr>
+            <tr><td><kbd>x</kbd></td><td>Close Player</td><td>Completely stops engine, terminates background process, and exits mode.</td></tr>
             <tr><td><kbd>m</kbd></td><td>Mute / Unmute</td><td>Toggles audio mute.</td></tr>
             <tr><td><kbd>Up Arrow</kbd></td><td>Volume Up</td><td>Increases volume by +5%.</td></tr>
             <tr><td><kbd>Down Arrow</kbd></td><td>Volume Down</td><td>Decreases volume by -5%.</td></tr>
@@ -136,6 +137,8 @@
             <tr><td><kbd>Shift + Left</kbd> / <kbd>Shift + Right</kbd></td><td>Ultrafast Seek</td><td>- / + 5 minutes (300s, Configurable)</td></tr>
             <tr><td><kbd>1</kbd> to <kbd>9</kbd></td><td>Percentage Jump</td><td>Jumps directly to 10% through 90% of file.</td></tr>
             <tr><td><kbd>0</kbd></td><td>Jump to Start</td><td>Rewinds directly to 0%.</td></tr>
+            <tr><td><kbd>Home</kbd></td><td>Track Start</td><td>Jumps to beginning of current track (0:00).</td></tr>
+            <tr><td><kbd>End</kbd></td><td>Track End</td><td>Jumps to end of current track.</td></tr>
         </tbody>
     </table>
 
@@ -167,11 +170,13 @@
         <tbody>
             <tr><td><kbd>Page Down</kbd> / <kbd>Tab</kbd></td><td>Next Track</td><td>Advances to next track in playlist.</td></tr>
             <tr><td><kbd>Page Up</kbd> / <kbd>Shift+Tab</kbd></td><td>Previous Track</td><td>Returns to previous track in playlist.</td></tr>
+            <tr><td><kbd>Ctrl + Home</kbd></td><td>First Track</td><td>Jumps immediately to first track in playlist.</td></tr>
+            <tr><td><kbd>Ctrl + End</kbd></td><td>Last Track</td><td>Jumps immediately to last track in playlist.</td></tr>
             <tr><td><kbd>n</kbd></td><td>Toggle Auto-Next</td><td>Toggles automatic advancement to next track upon completion.</td></tr>
             <tr><td><kbd>z</kbd></td><td>Toggle Shuffle</td><td>Non-destructive shuffle/unshuffle.</td></tr>
             <tr><td><kbd>Ctrl + Shift + Right</kbd></td><td>Next Chapter</td><td>Jumps to next chapter (speaks title/index).</td></tr>
             <tr><td><kbd>Ctrl + Shift + Left</kbd></td><td>Previous Chapter</td><td>Jumps to previous chapter.</td></tr>
-            <tr><td><kbd>a</kbd></td><td>Cycle Audio Track</td><td>Switches audio tracks/languages in video files.</td></tr>
+            <tr><td><kbd>a</kbd></td><td>Cycle Audio Track</td><td>Switches audio tracks/languages in video files and multi-track streams.</td></tr>
             <tr><td><kbd>o</kbd></td><td>Open File Dialog</td><td>Prompts for single audio/video file.</td></tr>
             <tr><td><kbd>f</kbd></td><td>Open Folder Dialog</td><td>Prompts for folder to queue in natural order.</td></tr>
             <tr><td><kbd>e</kbd></td><td>Play Explorer Selection</td><td>Plays focused file/folder from Windows Explorer.</td></tr>
@@ -182,14 +187,14 @@
     <table>
         <thead><tr><th>Key</th><th>Action</th><th>Description</th></tr></thead>
         <tbody>
-            <tr><td><kbd>Ctrl + .</kbd></td><td>Next / Newer Container</td><td>Browses forward in recent folders and playlists.</td></tr>
-            <tr><td><kbd>Ctrl + ,</kbd></td><td>Previous / Older Container</td><td>Browses backward in recent folders and playlists.</td></tr>
-            <tr><td><kbd>Ctrl + Shift + ,</kbd></td><td>Oldest Container</td><td>Jumps directly to oldest folder or playlist in history.</td></tr>
-            <tr><td><kbd>Ctrl + Shift + .</kbd></td><td>Newest Container</td><td>Jumps directly to newest folder or playlist in history.</td></tr>
+            <tr><td><kbd>Ctrl + .</kbd></td><td>Next / Newer Playlist</td><td>Browses forward in recent folders and playlists.</td></tr>
+            <tr><td><kbd>Ctrl + ,</kbd></td><td>Previous / Older Playlist</td><td>Browses backward in recent folders and playlists.</td></tr>
+            <tr><td><kbd>Ctrl + Shift + .</kbd></td><td>Newest Playlist</td><td>Jumps directly to newest folder or playlist in history.</td></tr>
+            <tr><td><kbd>Ctrl + Shift + ,</kbd></td><td>Oldest Playlist</td><td>Jumps directly to oldest folder or playlist in history.</td></tr>
             <tr><td><kbd>.</kbd></td><td>Next / Newer Track</td><td>Browses forward in recent files and streams.</td></tr>
             <tr><td><kbd>,</kbd></td><td>Previous / Older Track</td><td>Browses backward in recent files and streams.</td></tr>
-            <tr><td><kbd>Shift + ,</kbd></td><td>Oldest Track</td><td>Jumps directly to oldest file or stream in history.</td></tr>
             <tr><td><kbd>Shift + .</kbd></td><td>Newest Track</td><td>Jumps directly to newest file or stream in history.</td></tr>
+            <tr><td><kbd>Shift + ,</kbd></td><td>Oldest Track</td><td>Jumps directly to oldest file or stream in history.</td></tr>
             <tr><td><kbd>Space</kbd></td><td>Play Focused Recent Item</td><td>Plays currently focused recent folder, playlist, file, or stream immediately (active within 6s idle timeout).</td></tr>
             <tr><td><kbd>Delete</kbd></td><td>Remove Focused Item</td><td>Deletes the focused item from recent history database.</td></tr>
             <tr><td><kbd>Escape</kbd></td><td>Cancel Recents Focus</td><td>Exits recent browsing mode without exiting Player Mode.</td></tr>
@@ -197,7 +202,18 @@
         </tbody>
     </table>
 
-    <h3>3.7. Speech Queries & Help</h3>
+    <h3>3.7. Clip Export & Link Copying</h3>
+    <table>
+        <thead><tr><th>Key</th><th>Action</th><th>Description</th></tr></thead>
+        <tbody>
+            <tr><td><kbd>d</kbd></td><td>Export / Clip Dialog</td><td>Opens clip export dialog to export A-B loop or entire item with format/quality selection.</td></tr>
+            <tr><td><kbd>Shift + d</kbd></td><td>Quick Export</td><td>Instantly exports A-B selection to Downloads folder in background without dialogs.</td></tr>
+            <tr><td><kbd>v</kbd></td><td>Copy Stream URL</td><td>Copies active media/video source URL to Windows Clipboard.</td></tr>
+            <tr><td><kbd>Shift + v</kbd></td><td>Copy Direct Stream URL</td><td>Extracts and copies direct raw media stream URL to Windows Clipboard.</td></tr>
+        </tbody>
+    </table>
+
+    <h3>3.8. Speech Queries & Help</h3>
     <table>
         <thead><tr><th>Key</th><th>Action</th><th>Description</th></tr></thead>
         <tbody>
@@ -208,12 +224,14 @@
         </tbody>
     </table>
 
-    <h2>4. YouTube & Online Streaming</h2>
+    <h2>4. YouTube Streaming, Clip Export & SponsorBlock</h2>
     <ul>
         <li><strong>Search (<kbd>u</kbd>):</strong> Press <kbd>u</kbd>, type any search query (e.g., <em>Beethoven Symphony 5</em> or <em>Podcast episode</em>), and press <kbd>Enter</kbd>. Browse results with Up/Down arrows and press <kbd>Enter</kbd> to play. Press <kbd>Tab</kbd> on a playlist to queue all tracks at once.</li>
         <li><strong>Direct URLs (<kbd>u</kbd>):</strong> Paste any YouTube video/playlist URL, Twitch stream, SoundCloud link, or radio stream.</li>
         <li><strong>YouTube Portal (<kbd>p</kbd>):</strong> Browse Subscribed Channels, Latest Subscriptions, Watch History, Liked Videos, Watch Later, and Global Top 100 Music Charts.</li>
-        <li><strong>Copy Link (<kbd>v</kbd>):</strong> Copies active stream URL to Windows Clipboard.</li>
+        <li><strong>Clip Exporter (<kbd>d</kbd> / <kbd>Shift+d</kbd>):</strong> Export any A-B loop segment or entire track into audio/video format with custom quality.</li>
+        <li><strong>Copy Stream Links (<kbd>v</kbd> / <kbd>Shift+v</kbd>):</strong> Copies web source or raw direct stream URL to clipboard.</li>
+        <li><strong>SponsorBlock Integration:</strong> Automatically skips YouTube sponsored segments, self-promotions, interaction reminders, and intros with instant spoken announcements.</li>
     </ul>
 
     <h2>5. YouTube Cookies & Long-Lived Session Solutions</h2>
@@ -252,7 +270,7 @@
     </ol>
 
     <h2>6. NVDA Settings & Customization</h2>
-    <p>Located in <strong>NVDA Menu -> Preferences -> Settings -> Headless Media Player</strong>:</p>
+    <p>Located in <strong>NVDA Menu -> Preferences -> Settings -> Headless Media Player</strong> (or press <kbd>Ctrl + Shift + S</kbd> in Player Mode):</p>
     <ul>
         <li><strong>Speech Verbosity:</strong> Toggle individual announcements for volume, seek, speed, track changes, repeat, and A-B points.</li>
         <li><strong>Seek Step Sizes:</strong> Configure seconds for Normal (5s), Slow (1s), Fast (30s), and Ultrafast (300s) seeks.</li>
