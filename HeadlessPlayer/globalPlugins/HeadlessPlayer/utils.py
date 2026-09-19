@@ -8,12 +8,13 @@ and filesystem helpers for media playback and speech announcements.
 
 import ctypes
 from ctypes import wintypes
+import gettext
 import math
 import os
 import re
 import sys
 import time
-from typing import Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 try:
     import api
@@ -150,75 +151,110 @@ def parse_time(time_str: str) -> float:
         raise ValueError(f"Too many colon-separated parts in time string: {time_str}")
 
 
+try:
+    from . import _  # type: ignore
+except (ImportError, ValueError):
+    try:
+        _ = _  # type: ignore
+    except NameError:
+        _ = lambda text: text
+
+_TRANSLATION_CACHE: Dict[str, Any] = {}
+
+
+def get_translator_for_lang(lang: Optional[str] = None):
+    """
+    Returns a gettext translation function for the specified language code,
+    or active NVDA translation function if lang is None or omitted.
+    """
+    if not lang:
+        return _
+    lang_clean = lang.lower().replace("-", "_").split("_")[0]
+    if lang_clean in _TRANSLATION_CACHE:
+        return _TRANSLATION_CACHE[lang_clean]
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.path.join(current_dir, "..", "..", "locale", lang_clean, "LC_MESSAGES", "nvda.mo"),
+        os.path.join(current_dir, "..", "locale", lang_clean, "LC_MESSAGES", "nvda.mo"),
+        os.path.join(current_dir, "locale", lang_clean, "LC_MESSAGES", "nvda.mo"),
+    ]
+    for mo_candidate in candidates:
+        norm_path = os.path.normpath(mo_candidate)
+        if os.path.isfile(norm_path):
+            try:
+                with open(norm_path, "rb") as f:
+                    trans = gettext.GNUTranslations(f)
+                    _TRANSLATION_CACHE[lang_clean] = trans.gettext
+                    return trans.gettext
+            except Exception:
+                pass
+
+    _TRANSLATION_CACHE[lang_clean] = _
+    return _
+
+
 def format_spoken_time(
     seconds: Optional[Union[float, int]],
-    lang: str = "en"
+    lang: Optional[str] = None
 ) -> str:
     """
     Formats duration into natural speech text for screen reader announcements.
+    Purely internationalized via gettext (.po/.mo) translation catalogs with zero hardcoded language text.
     
     Args:
         seconds: Duration in seconds.
-        lang: 'en' for English or 'ar' for Arabic.
+        lang: Optional language code (e.g. 'en', 'ar', 'fr'). If None, uses active NVDA locale.
         
     Returns:
-        Spoken string (e.g. '1 hour 25 minutes 10 seconds' or '3 دقائق و 5 ثوانٍ').
+        Spoken string (e.g. '1 hour 25 minutes 10 seconds' or localized equivalent).
     """
+    translate_fn = get_translator_for_lang(lang)
+
     if seconds is None:
-        return "0 seconds" if lang == "en" else "0 ثانية"
+        return translate_fn("0 seconds")
 
     try:
         sec_val = float(seconds)
     except (ValueError, TypeError):
-        return "0 seconds" if lang == "en" else "0 ثانية"
+        return translate_fn("0 seconds")
 
     if math.isnan(sec_val) or math.isinf(sec_val):
-        return "0 seconds" if lang == "en" else "0 ثانية"
+        return translate_fn("0 seconds")
 
     total_sec = max(0, int(round(abs(sec_val))))
+    if total_sec == 0:
+        return translate_fn("0 seconds")
+
     hours = total_sec // 3600
     minutes = (total_sec % 3600) // 60
     secs = total_sec % 60
 
-    if lang == "ar":
-        parts = []
-        if hours > 0:
-            if hours == 1:
-                parts.append("ساعة واحدة")
-            elif hours == 2:
-                parts.append("ساعتان")
-            elif 3 <= hours <= 10:
-                parts.append(f"{hours} ساعات")
-            else:
-                parts.append(f"{hours} ساعة")
-        if minutes > 0:
-            if minutes == 1:
-                parts.append("دقيقة واحدة")
-            elif minutes == 2:
-                parts.append("دقيقتان")
-            elif 3 <= minutes <= 10:
-                parts.append(f"{minutes} دقائق")
-            else:
-                parts.append(f"{minutes} دقيقة")
-        if secs > 0 or not parts:
-            if secs == 1:
-                parts.append("ثانية واحدة")
-            elif secs == 2:
-                parts.append("ثانيتان")
-            elif 3 <= secs <= 10:
-                parts.append(f"{secs} ثوانٍ")
-            else:
-                parts.append(f"{secs} ثانية")
-        return " و ".join(parts)
-    else:
-        parts = []
-        if hours > 0:
-            parts.append(f"{hours} hour" if hours == 1 else f"{hours} hours")
-        if minutes > 0:
-            parts.append(f"{minutes} minute" if minutes == 1 else f"{minutes} minutes")
-        if secs > 0 or not parts:
-            parts.append(f"{secs} second" if secs == 1 else f"{secs} seconds")
-        return " ".join(parts)
+    def _get_unit(count: int, unit_name: str) -> str:
+        if count <= 0:
+            return ""
+        if count == 1:
+            return translate_fn(f"1 {unit_name}")
+        if count == 2:
+            return translate_fn(f"2 {unit_name}s")
+        if 3 <= count <= 10:
+            tmpl_3_10 = translate_fn(f"{{n}} {unit_name}s (3-10)")
+            if tmpl_3_10 != f"{{n}} {unit_name}s (3-10)":
+                return tmpl_3_10.format(n=count)
+        return translate_fn(f"{{n}} {unit_name}s").format(n=count)
+
+    parts = []
+    if hours > 0:
+        parts.append(_get_unit(hours, "hour"))
+    if minutes > 0:
+        parts.append(_get_unit(minutes, "minute"))
+    if secs > 0 or not parts:
+        parts.append(_get_unit(secs, "second"))
+
+    sep = translate_fn("spoken_time_separator")
+    if sep == "spoken_time_separator":
+        sep = " "
+    return sep.join(parts)
 
 
 def is_supported_media_file(path_or_name: str) -> bool:

@@ -9,7 +9,8 @@ and global toggle gesture bindings.
 from __future__ import annotations
 import logging
 import sys
-from typing import Any
+import time
+from typing import Any, Optional
 
 # 1. Initialize Translations
 try:
@@ -74,6 +75,7 @@ class GlobalPlugin(_BaseGlobalPlugin):
     """
 
     scriptCategory = _("Headless Media Player")
+    MEDIA_PREV_DOUBLE_PRESS_SECONDS: float = 2.0
 
     __gestures__ = {
         "kb:NVDA+control+shift+p": "togglePlayerMode",
@@ -91,6 +93,7 @@ class GlobalPlugin(_BaseGlobalPlugin):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         logger.info("Initializing HeadlessPlayer GlobalPlugin...")
+        self._last_media_prev_press: Optional[float] = None
 
         # 1. Initialize Configuration Specification
         try:
@@ -180,6 +183,7 @@ class GlobalPlugin(_BaseGlobalPlugin):
     )
     def script_mediaPlayPause(self, gesture: Any) -> None:
         """Global Media Play/Pause key handler."""
+        self._last_media_prev_press = None
         if self.controller and (self.controller.engine.is_loaded or not self.controller.playlist.is_empty()):
             self.controller.toggle_play_pause()
         elif self.controller and getConfigValue("rememberPlaybackState", False) and self.state_store.get_last_session():
@@ -195,21 +199,33 @@ class GlobalPlugin(_BaseGlobalPlugin):
     )
     def script_mediaNextTrack(self, gesture: Any) -> None:
         """Global Media Next Track key handler."""
+        self._last_media_prev_press = None
         if self.controller and not self.controller.playlist.is_empty():
             self.controller.next_track(manual=True)
         else:
             gesture.send()
 
     @script(
-        description=_("Plays the previous track in Headless Media Player playlist from anywhere."),
+        description=_("Restarts the current track, or plays previous track on rapid double press."),
         category=_("Headless Media Player"),
         gesture="kb:mediaprevtrack"
     )
     def script_mediaPrevTrack(self, gesture: Any) -> None:
-        """Global Media Previous Track key handler."""
+        """Global Media Previous Track key handler with double-press detection."""
         if self.controller and not self.controller.playlist.is_empty():
-            self.controller.prev_track()
+            now = time.monotonic()
+            is_second_press = (
+                self._last_media_prev_press is not None
+                and (now - self._last_media_prev_press) < self.MEDIA_PREV_DOUBLE_PRESS_SECONDS
+            )
+            if is_second_press:
+                self._last_media_prev_press = None
+                self.controller.prev_track()
+            else:
+                self._last_media_prev_press = now
+                self.controller.jump_to_track_start()
         else:
+            self._last_media_prev_press = None
             gesture.send()
 
     @script(
@@ -219,6 +235,7 @@ class GlobalPlugin(_BaseGlobalPlugin):
     )
     def script_mediaStop(self, gesture: Any) -> None:
         """Global Media Stop key handler."""
+        self._last_media_prev_press = None
         if self.controller and (self.controller.engine.is_loaded or not self.controller.playlist.is_empty()):
             self.controller.stop()
         else:

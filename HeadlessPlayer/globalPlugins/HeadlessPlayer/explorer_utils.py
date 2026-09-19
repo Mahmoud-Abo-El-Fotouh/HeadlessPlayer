@@ -461,7 +461,7 @@ def extract_local_media_durations(paths: Sequence[str]) -> Dict[str, float]:
                 col_len = 27
                 for col in (27, 28, 26, 29, 30):
                     header = ns.GetDetailsOf(None, col)
-                    if header and any(k in str(header).lower() for k in ("length", "duration", "المدة", "طول")):
+                    if header and any(k in str(header).lower() for k in ("length", "duration", "المدة", "طول", "durée", "dauer", "duración", "длительность", "duração", "durata", "duur", "czas", "süre")):
                         col_len = col
                         break
 

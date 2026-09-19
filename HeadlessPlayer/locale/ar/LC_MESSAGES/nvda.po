@@ -1,9 +1,9 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: HeadlessPlayer 1.3.0\n"
+"Project-Id-Version: HeadlessPlayer 1.3.2\n"
 "Report-Msgid-Bugs-To: https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer\n"
-"POT-Creation-Date: 2026-09-16 08:12+0300\n"
-"PO-Revision-Date: 2026-09-16 08:12+0300\n"
+"POT-Creation-Date: 2026-09-19 21:50+0300\n"
+"PO-Revision-Date: 2026-09-19 21:50+0300\n"
 "Last-Translator: Mahmoud Abo El Fotouh <mahmoudaboelfotouh.20@gmail.com>\n"
 "Language-Team: Arabic <mahmoudaboelfotouh.20@gmail.com>\n"
 "Language: ar\n"
@@ -1045,8 +1045,8 @@ msgstr "الخيارات الافتراضية العامة للتشغيل"
 msgid "Playback engine failed to start."
 msgstr "فشل بدء محرك التشغيل."
 
-msgid "Playback of this stream failed. Press Enter or Space to retry."
-msgstr "فشل تشغيل هذا البث. اضغط إدخال أو المسافة لإعادة المحاولة."
+msgid "Playback of this stream failed. Press Space to retry."
+msgstr "فشل تشغيل هذا البث. اضغط مسافة لإعادة المحاولة."
 
 msgid "Playback resumed from %s"
 msgstr "تم استئناف التشغيل من %s"
@@ -1087,8 +1087,8 @@ msgstr "تشغيل أو إيقاف تشغيل المشغل الخفي مؤقتا
 msgid "Plays the next track in Headless Media Player playlist from anywhere."
 msgstr "تشغيل المقطع التالي في المشغل الخفي من أي مكان في النظام."
 
-msgid "Plays the previous track in Headless Media Player playlist from anywhere."
-msgstr "تشغيل المقطع السابق في المشغل الخفي من أي مكان في النظام."
+msgid "Restarts the current track, or plays previous track on rapid double press."
+msgstr "إعادة تشغيل المقطع الحالي، أو الانتقال للمقطع السابق عند الضغط المزدوج السريع."
 
 msgid "Please select a key from the suggestions list."
 msgstr "يرجى تحديد مفتاح من قائمة الاقتراحات."
@@ -1190,6 +1190,12 @@ msgstr "قائمة تشغيل أخيرة (%s): %s (%d من %d)"
 
 msgid "Recent playlist: %s (%d of %d)"
 msgstr "قائمة تشغيل أخيرة: %s (%d من %d)"
+
+msgid "Recent search (%s): %s (%d of %d)"
+msgstr "نتائج بحث أخيرة (%s): %s (%d من %d)"
+
+msgid "Recent search: %s (%d of %d)"
+msgstr "نتائج بحث أخيرة: %s (%d من %d)"
 
 msgid "Recent stream (%s): %s (%d of %d)"
 msgstr "مقطع بث أخير (%s): %s (%d من %d)"
@@ -1849,3 +1855,48 @@ msgid ""
 msgstr ""
 "تم تحديث محرك البث بنجاح إلى الإصدار %s (قناة %s).\n"
 "يرجى إعادة تشغيل NVDA للبدء في استخدام الإصدار الجديد."
+
+msgid "0 seconds"
+msgstr "0 ثانية"
+
+msgid "1 hour"
+msgstr "ساعة واحدة"
+
+msgid "2 hours"
+msgstr "ساعتان"
+
+msgid "{n} hours (3-10)"
+msgstr "{n} ساعات"
+
+msgid "{n} hours"
+msgstr "{n} ساعة"
+
+msgid "2 minutes"
+msgstr "دقيقتان"
+
+msgid "{n} minutes (3-10)"
+msgstr "{n} دقائق"
+
+msgid "{n} minutes"
+msgstr "{n} دقيقة"
+
+msgid "2 seconds"
+msgstr "ثانيتان"
+
+msgid "{n} seconds (3-10)"
+msgstr "{n} ثوانٍ"
+
+msgid "{n} seconds"
+msgstr "{n} ثانية"
+
+msgid "spoken_time_separator"
+msgstr " و "
+
+msgid "No tracks in playlist"
+msgstr "لا توجد مقاطع في قائمة التشغيل"
+
+msgid "Track {current} of {total}"
+msgstr "المقطع {current} من {total}"
+
+msgid "Track {current} of {total}: {title}"
+msgstr "المقطع {current} من {total}: {title}"
