@@ -72,6 +72,8 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # Virtual Key Codes (Win32)
+VK_TAB = 0x09
+VK_RETURN = 0x0D
 VK_ESCAPE = 0x1B
 VK_SPACE = 0x20
 VK_PRIOR = 0x21  # Page Up
@@ -551,6 +553,7 @@ class ModalInputLayer:
             "recent_track_last": ["recent_track_last"],
             "recent_delete": ["recent_delete_focused", "recent_delete"],
             "recent_play": ["recent_play_focused", "recent_play"],
+            "recent_open": ["recent_open_focused", "recent_activate_focused", "recent_open"],
             "open_settings": ["open_settings_dialog", "open_settings"],
             "close_player": ["close_player", "quit_player", "close", "quit", "exit_player"],
         }
@@ -838,6 +841,12 @@ class ModalInputLayer:
             self._safe_call("toggle_pause")
             return True
 
+        # Enter / Return: Open/Browse focused recent item (or swallow key in Player Mode)
+        if (main_key in ("enter", "return") or vk == VK_RETURN) and not (has_ctrl or has_alt or has_shift):
+            if self.controller and getattr(self.controller, "is_recents_focus_active", lambda: False)():
+                self.controller.recent_open_focused()
+            return True
+
         # Stop and rewind
         if self._matches_action(gesture, "stop", ((main_key == "s" or vk == VK_S) and not (has_ctrl or has_alt))):
             self._safe_call("stop")
@@ -1000,11 +1009,21 @@ class ModalInputLayer:
             self._safe_call("load_from_explorer")
             return True
 
-        if self._matches_action(gesture, "prev_track", (main_key in ("pageup", "page_up", "prior") or vk == VK_PRIOR)):
+        # Previous Track (PageUp or Shift+Tab by default)
+        is_prev_key = (
+            (main_key in ("pageup", "page_up", "prior") or vk == VK_PRIOR)
+            or ((main_key == "tab" or vk == VK_TAB) and has_shift and not (has_ctrl or has_alt))
+        )
+        if self._matches_action(gesture, "prev_track", is_prev_key):
             self._safe_call("prev_track")
             return True
 
-        if self._matches_action(gesture, "next_track", (main_key in ("pagedown", "page_down", "next") or vk == VK_NEXT)):
+        # Next Track (PageDown or Tab by default)
+        is_next_key = (
+            (main_key in ("pagedown", "page_down", "next") or vk == VK_NEXT)
+            or ((main_key == "tab" or vk == VK_TAB) and not (has_ctrl or has_alt or has_shift))
+        )
+        if self._matches_action(gesture, "next_track", is_next_key):
             self._safe_call("next_track")
             return True
 

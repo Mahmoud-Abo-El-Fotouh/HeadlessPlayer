@@ -143,7 +143,7 @@ def normalize_file_path(file_path: str) -> str:
 def disambiguate_recent_name(item: Dict[str, Any], all_items: Sequence[Dict[str, Any]]) -> str:
     """
     Returns an accessible, disambiguated display title for a recent container or track.
-    - For local folders: If multiple folders have the same folder name, prepends parent folder (e.g. 'محمود - أغاني').
+    - For local folders: If multiple folders have the same folder name, prepends parent folder (e.g. 'Parent - Folder').
     - For local files: If multiple files have the same filename, prepends parent folder.
     - For online streams/playlists: If channel/platform is present and duplicates exist, prepends channel/platform.
     """
@@ -778,7 +778,7 @@ class DatabaseManager:
             if container_type == "folder":
                 if self.get_setting("recentsKeepFolders") is False:
                     return
-            elif container_type in ("playlist", "container"):
+            elif container_type in ("playlist", "container", "search"):
                 if self.get_setting("recentsKeepPlaylists") is False:
                     return
 
@@ -827,7 +827,7 @@ class DatabaseManager:
             keep_playlists = self.get_setting("recentsKeepPlaylists") is not False
             filtered = [
                 it for it in items
-                if (it.get("type") == "folder" and keep_folders) or (it.get("type") in ("playlist", "container") and keep_playlists)
+                if (it.get("type") == "folder" and keep_folders) or (it.get("type") in ("playlist", "container", "search") and keep_playlists)
             ]
             return filtered[:lim]
 

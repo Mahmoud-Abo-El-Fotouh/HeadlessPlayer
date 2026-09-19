@@ -1274,6 +1274,12 @@ class PlayerController:
         """Plays the currently focused item from recents browsing."""
         return self.recents_manager.play_focused()
 
+    def recent_open_focused(self) -> bool:
+        """Opens/browses the currently focused recent item (e.g. opens search dialog for search results)."""
+        return self.recents_manager.open_focused()
+
+    recent_activate_focused = recent_open_focused
+
     def recent_delete_focused(self) -> bool:
         """Removes the currently focused recent item from the database."""
         return self.recents_manager.delete_focused()
@@ -1709,7 +1715,7 @@ class PlayerController:
                 db.save_recent_container(
                     path=target,
                     title=listing_title or target,
-                    container_type="playlist"
+                    container_type="search" if source_type == "search" else "playlist"
                 )
             except Exception as e:
                 logger.debug("Error saving recent playlist container: %s", e)
@@ -1720,6 +1726,57 @@ class PlayerController:
 
         self._check_auto_enter_player_mode()
         return res
+
+    def play_search_as_playlist(self, query: str) -> None:
+        """
+        Searches YouTube in the background for query and plays the results directly
+        as a continuous stream playlist without opening any GUI dialog.
+        """
+        if not query:
+            return
+        self.speech.speak(_("Searching YouTube, please wait..."))
+
+        def worker() -> None:
+            try:
+                cfg = getConfig()
+                limit = int(cfg.get("searchResultsCount", 20))
+                results = stream_engine.search_youtube(query, limit=limit)
+                if not results:
+                    self.speech.speak(_("No results found."))
+                    return
+                lvl_items = [
+                    it for it in results
+                    if getattr(it, "kind", "") in (stream_engine.ITEM_VIDEO, stream_engine.ITEM_SHORTS)
+                ]
+                if not lvl_items:
+                    lvl_items = results
+                self.play_stream_items(
+                    lvl_items,
+                    start_index=0,
+                    listing_title=_("YouTube results for: %s") % query,
+                    source_target=query,
+                    source_type="search",
+                    batch_size=limit,
+                )
+            except Exception as e:
+                logger.error("Error playing search playlist for '%s': %s", query, e, exc_info=True)
+                self.speech.speak(self._stream_error_message(e))
+
+        threading.Thread(target=worker, daemon=True, name="HeadlessPlayer-PlaySearchPlaylist").start()
+
+    def open_search_dialog(self, query: str) -> None:
+        """
+        Asynchronously searches YouTube in background thread and opens results dialog
+        without blocking the NVDA keyboard hook thread.
+        """
+        if not query:
+            return
+        threading.Thread(
+            target=self._handle_url_or_search,
+            args=(query,),
+            daemon=True,
+            name="HeadlessPlayer-OpenSearchDialog"
+        ).start()
 
     def play_stream_listing(self, url: str, listing_title: str = "") -> None:
         """
@@ -2278,7 +2335,7 @@ class PlayerController:
                             self._stream_auto_retries = 0
                             self.engine.stop()
                             self.speech.speak(_(
-                                "Playback of this stream failed. Press Enter or Space to retry."
+                                "Playback of this stream failed. Press Space to retry."
                             ))
                             return
                     else:
@@ -2298,7 +2355,7 @@ class PlayerController:
                     except Exception:
                         pass
                     self.speech.speak(_(
-                        "Playback of this stream failed. Press Enter or Space to retry."
+                        "Playback of this stream failed. Press Space to retry."
                     ))
 
     def _on_engine_property_change(self, name: str, data: Any) -> None:

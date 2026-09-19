@@ -189,7 +189,7 @@ def extract_url(text: str) -> Optional[str]:
     
     Examples:
         - "Check this out https://youtu.be/abc123xyz it is great!" -> "https://youtu.be/abc123xyz"
-        - "اسمع ده www.youtube.com/watch?v=123 روعة" -> "https://www.youtube.com/watch?v=123"
+        - "listen to www.youtube.com/watch?v=123 now" -> "https://www.youtube.com/watch?v=123"
         - "https://soundcloud.com/artist/track" -> "https://soundcloud.com/artist/track"
     """
     if not text or not isinstance(text, str):

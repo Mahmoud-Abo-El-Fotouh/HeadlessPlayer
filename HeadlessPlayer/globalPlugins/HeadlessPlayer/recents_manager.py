@@ -26,6 +26,25 @@ from .playlist import Track
 logger = logging.getLogger("HeadlessPlayer.RecentsManager")
 
 
+def _inspect_container_item(item: Dict[str, Any], title: str) -> tuple[str, str]:
+    """Determines accurate container type ('folder', 'playlist', or 'search') and cleans display title."""
+    ctype = str(item.get("type", "folder"))
+    p = str(item.get("path", ""))
+    t = str(item.get("title", ""))
+    if ctype not in ("folder", "search"):
+        if not p.startswith(("http://", "https://", "youtube:", "ytdl://", "custom://")) and not os.path.exists(p):
+            ctype = "search"
+        elif "YouTube results for:" in t or "نتائج بحث يوتيوب" in t:
+            ctype = "search"
+
+    if ctype == "search":
+        for prefix in ("YouTube results for: ", "نتائج بحث يوتيوب لـ: ", "نتائج بحث يوتيوب لـ : "):
+            if title.startswith(prefix):
+                title = title[len(prefix):].strip()
+                break
+    return ctype, title
+
+
 class RecentsManager:
     """
     Coordinates recents history browsing, focus state, and activation.
@@ -128,11 +147,13 @@ class RecentsManager:
             self.last_interaction = time.time()
 
             item = items[idx]
-            title = disambiguate_recent_name(item, items)
+            raw_title = disambiguate_recent_name(item, items)
             display_num = len(items) - idx
-            ctype = item.get("type", "folder")
+            ctype, title = _inspect_container_item(item, raw_title)
             if ctype == "folder":
                 msg = _("Recent folder: %s (%d of %d)") % (title, display_num, len(items))
+            elif ctype == "search":
+                msg = _("Recent search: %s (%d of %d)") % (title, display_num, len(items))
             else:
                 msg = _("Recent playlist: %s (%d of %d)") % (title, display_num, len(items))
             self.controller.speech.speak(msg)
@@ -179,12 +200,14 @@ class RecentsManager:
             self.last_interaction = time.time()
 
             item = items[idx]
-            title = disambiguate_recent_name(item, items)
+            raw_title = disambiguate_recent_name(item, items)
             display_num = len(items) - idx
-            ctype = item.get("type", "folder")
             tag = _("oldest") if to_oldest else _("newest")
+            ctype, title = _inspect_container_item(item, raw_title)
             if ctype == "folder":
                 msg = _("Recent folder (%s): %s (%d of %d)") % (tag, title, display_num, len(items))
+            elif ctype == "search":
+                msg = _("Recent search (%s): %s (%d of %d)") % (tag, title, display_num, len(items))
             else:
                 msg = _("Recent playlist (%s): %s (%d of %d)") % (tag, title, display_num, len(items))
             self.controller.speech.speak(msg)
@@ -226,8 +249,13 @@ class RecentsManager:
             item = items[idx]
             self.cancel_focus()
             p = str(item.get("path", ""))
-            ctype = item.get("type", "folder")
-            if ctype == "folder" or os.path.isdir(p):
+            raw_title = disambiguate_recent_name(item, items)
+            ctype, title = _inspect_container_item(item, raw_title)
+
+            if ctype == "search":
+                self.controller.play_search_as_playlist(p)
+                return True
+            elif ctype == "folder" or os.path.isdir(p):
                 self.controller.load_folder(p)
                 return True
             else:
@@ -275,6 +303,46 @@ class RecentsManager:
 
         return False
 
+    def open_focused(self) -> bool:
+        """
+        Opens or browses the currently focused item from recents browsing.
+        For search results: opens the interactive YouTube search results dialog.
+        For folders/playlists/tracks: activates/plays.
+        """
+        if not self.is_focus_active():
+            return False
+
+        db = get_db_manager()
+
+        if self.focus_category in ("playlist", "container"):
+            items = db.get_recent_playlists()
+            idx = self.playlist_idx
+            if not items or idx < 0 or idx >= len(items):
+                return False
+            item = items[idx]
+            self.cancel_focus()
+            p = str(item.get("path", ""))
+            raw_title = disambiguate_recent_name(item, items)
+            ctype, title = _inspect_container_item(item, raw_title)
+
+            if ctype == "search":
+                self.controller.open_search_dialog(p)
+                return True
+            elif ctype == "folder" or os.path.isdir(p):
+                self.controller.load_folder(p)
+                return True
+            else:
+                if p.startswith(("http://", "https://", "youtube:")):
+                    self.controller.open_search_dialog(p)
+                else:
+                    self.controller.load_folder(p)
+                return True
+
+        elif self.focus_category == "track":
+            return self.play_focused()
+
+        return False
+
     def delete_focused(self) -> bool:
         """Removes the currently focused recent item from the database."""
         if not self.focus_active and not self.is_focus_active():
@@ -289,7 +357,8 @@ class RecentsManager:
                 return False
             item = items[idx]
             p = str(item.get("path", ""))
-            title = disambiguate_recent_name(item, items)
+            raw_title = disambiguate_recent_name(item, items)
+            _ctype, title = _inspect_container_item(item, raw_title)
             db.delete_recent_playlist(p)
             self.controller.speech.speak(_("Removed from recent history: %s") % title)
 
@@ -301,7 +370,8 @@ class RecentsManager:
                 self.playlist_idx = min(idx, len(remaining) - 1)
                 self.last_interaction = time.time()
                 new_item = remaining[self.playlist_idx]
-                new_title = disambiguate_recent_name(new_item, remaining)
+                raw_new_title = disambiguate_recent_name(new_item, remaining)
+                _ctype2, new_title = _inspect_container_item(new_item, raw_new_title)
                 display_num = len(remaining) - self.playlist_idx
                 self.controller.speech.speak(f"{new_title} ({display_num} of {len(remaining)})")
             return True

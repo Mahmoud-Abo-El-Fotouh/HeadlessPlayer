@@ -14,6 +14,14 @@ import threading
 from typing import Any, Callable, Dict, List, Optional, Sequence, Union
 
 try:
+    from . import _  # type: ignore
+except (ImportError, ValueError):
+    try:
+        _ = _  # type: ignore
+    except NameError:
+        _ = lambda text: text
+
+try:
     from .utils import (
         ALL_SUPPORTED_EXTENSIONS,
         filter_and_sort_media_files,
@@ -22,6 +30,7 @@ try:
         is_supported_media_file,
         is_video_file,
         natural_sort,
+        get_translator_for_lang,
         log_debug,
         log_exception,
     )
@@ -35,6 +44,7 @@ except ImportError:
         is_supported_media_file,
         is_video_file,
         natural_sort,
+        get_translator_for_lang,
     )
 
 try:
@@ -309,30 +319,35 @@ class Playlist:
                 return None
             return self._tracks[index]
 
-    def get_track_info(self, lang: str = "en") -> str:
+    def get_track_info(self, lang: Optional[str] = None) -> str:
         """
         Returns formatted track position information (e.g. 'Track 3 of 15').
+        Purely internationalized via gettext (.po/.mo) translation catalogs with zero hardcoded language text.
+        
+        Args:
+            lang: Optional language code (e.g. 'en', 'ar', 'fr'). If None, uses active NVDA locale.
+            
+        Returns:
+            Localized track information string.
         """
+        translate_fn = get_translator_for_lang(lang)
         with self._lock:
             total = len(self._tracks)
             if total == 0 or self._current_index < 0:
-                return "No tracks in playlist" if lang == "en" else "لا توجد مقاطع في قائمة التشغيل"
+                return translate_fn("No tracks in playlist")
 
             # In shuffle mode, announce the position in the current playlist queue
             current_num = self._current_index + 1
             cur_track = self.get_current_track()
             track_name = cur_track.display_name if cur_track else ""
 
-            if lang == "ar":
-                info = f"المقطع {current_num} من {total}"
-                if track_name:
-                    info += f": {track_name}"
-                return info
-            else:
-                info = f"Track {current_num} of {total}"
-                if track_name:
-                    info += f": {track_name}"
-                return info
+            if track_name:
+                return translate_fn("Track {current} of {total}: {title}").format(
+                    current=current_num, total=total, title=track_name
+                )
+            return translate_fn("Track {current} of {total}").format(
+                current=current_num, total=total
+            )
 
     # -------------------------------------------------------------------------
     # Navigation API
