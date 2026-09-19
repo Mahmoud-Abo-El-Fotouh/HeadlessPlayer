@@ -1,9 +1,9 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: HeadlessPlayer 1.3.2\n"
+"Project-Id-Version: HeadlessPlayer 1.3.0\n"
 "Report-Msgid-Bugs-To: https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer\n"
-"POT-Creation-Date: 2026-09-19 21:50+0300\n"
-"PO-Revision-Date: 2026-09-19 21:50+0300\n"
+"POT-Creation-Date: 2026-09-20 01:13+0300\n"
+"PO-Revision-Date: 2026-09-20 01:13+0300\n"
 "Last-Translator: Mahmoud Abo El Fotouh <mahmoudaboelfotouh.20@gmail.com>\n"
 "Language-Team: English <mahmoudaboelfotouh.20@gmail.com>\n"
 "Language: en\n"
@@ -1901,3 +1901,25 @@ msgstr "Track {current} of {total}"
 
 msgid "Track {current} of {total}: {title}"
 msgstr "Track {current} of {total}: {title}"
+
+msgid "System Diagnostics & Health Check"
+msgstr "System Diagnostics & Health Check"
+
+msgid "Inspects player components (mpv, yt-dlp, database, translation catalogs) and copies a diagnostic health report directly to clipboard to share with the developer."
+msgstr "Inspects player components (mpv, yt-dlp, database, translation catalogs) and copies a diagnostic health report directly to clipboard to share with the developer."
+
+msgid "&Copy System Health & Diagnostics Report to Clipboard..."
+msgstr "&Copy System Health & Diagnostics Report to Clipboard..."
+
+msgid "System diagnostics report successfully copied to clipboard. You can now paste and share it with the developer."
+msgstr "System diagnostics report successfully copied to clipboard. You can now paste and share it with the developer."
+
+msgid "System Diagnostics"
+msgstr "System Diagnostics"
+
+msgid "Could not generate or copy the diagnostics report to clipboard."
+msgstr "Could not generate or copy the diagnostics report to clipboard."
+
+msgid "Diagnostics Error"
+msgstr "Diagnostics Error"
+

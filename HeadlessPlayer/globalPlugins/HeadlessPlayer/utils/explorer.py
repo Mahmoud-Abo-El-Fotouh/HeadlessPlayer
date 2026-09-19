@@ -1,0 +1,483 @@
+# -*- coding: utf-8 -*-
+"""
+HeadlessPlayer NVDA Add-on - Windows Explorer COM & Selection Extraction.
+Extracts active selected media files and folders from Windows 10 Explorer,
+Windows 11 tabbed Explorer, Desktop, or NVDA focus object tree.
+"""
+
+from __future__ import annotations
+import ctypes
+import logging
+import os
+import threading
+from typing import Dict, List, Sequence
+from urllib.parse import unquote
+
+try:
+    import winUser
+except Exception:
+    winUser = None
+
+try:
+    import api
+except Exception:
+    api = None
+
+try:
+    import comtypes
+    import comtypes.client
+except Exception:
+    comtypes = None
+
+try:
+    from .common import (
+        ALL_SUPPORTED_EXTENSIONS,
+        filter_and_sort_media_files,
+        find_media_files_in_dir,
+        is_supported_media_file,
+        parse_time,
+    )
+except ImportError:
+    try:
+        from ..utils import (
+            ALL_SUPPORTED_EXTENSIONS,
+            filter_and_sort_media_files,
+            find_media_files_in_dir,
+            is_supported_media_file,
+            parse_time,
+        )
+    except ImportError:
+        from utils import (
+            ALL_SUPPORTED_EXTENSIONS,
+            filter_and_sort_media_files,
+            find_media_files_in_dir,
+            is_supported_media_file,
+            parse_time,
+        )
+
+logger = logging.getLogger("HeadlessPlayer.ExplorerUtils")
+
+# CLSID for IShellWindows
+CLSID_ShellWindows = "{9BA05972-F6A8-11CF-A442-00A0C90A8F39}"
+
+
+def _get_foreground_window() -> int:
+    """
+    Returns the HWND of the current foreground window.
+    Uses winUser if inside NVDA, ctypes otherwise.
+    """
+    if winUser and hasattr(winUser, "getForegroundWindow"):
+        try:
+            return winUser.getForegroundWindow()
+        except Exception:
+            pass
+    try:
+        return ctypes.windll.user32.GetForegroundWindow()
+    except Exception:
+        return 0
+
+
+def _is_descendant_window(parent_hwnd: int, child_hwnd: int) -> bool:
+    """
+    Checks if child_hwnd is identical to or a descendant/tab of parent_hwnd.
+    """
+    if parent_hwnd == child_hwnd:
+        return True
+    if winUser and hasattr(winUser, "isDescendantWindow"):
+        try:
+            if winUser.isDescendantWindow(parent_hwnd, child_hwnd):
+                return True
+        except Exception:
+            pass
+    try:
+        if ctypes.windll.user32.IsChild(parent_hwnd, child_hwnd):
+            return True
+    except Exception:
+        pass
+    try:
+        GA_ROOT = 2
+        r1 = ctypes.windll.user32.GetAncestor(parent_hwnd, GA_ROOT)
+        r2 = ctypes.windll.user32.GetAncestor(child_hwnd, GA_ROOT)
+        if r1 and r2 and r1 == r2:
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def _query_shell_windows_com(fg_hwnd: int) -> List[str]:
+    """Helper worker: queries Shell.Application COM interface."""
+    selected_paths: List[str] = []
+    if not comtypes or not hasattr(comtypes, "client"):
+        return selected_paths
+
+    co_inited = False
+    try:
+        try:
+            comtypes.CoInitialize()
+            co_inited = True
+        except Exception:
+            pass
+
+        shell_app = comtypes.client.CreateObject("Shell.Application")
+        windows = shell_app.Windows()
+        count = getattr(windows, "Count", 0)
+
+        matching_windows = []
+        other_windows = []
+
+        for i in range(count):
+            try:
+                w = windows.Item(i)
+                win_hwnd = getattr(w, "HWND", 0)
+                if win_hwnd and fg_hwnd and (win_hwnd == fg_hwnd or _is_descendant_window(win_hwnd, fg_hwnd) or _is_descendant_window(fg_hwnd, win_hwnd)):
+                    matching_windows.append(w)
+                else:
+                    other_windows.append(w)
+            except Exception:
+                continue
+
+        candidate_windows = matching_windows if matching_windows else other_windows
+
+        for window in candidate_windows:
+            try:
+                doc = getattr(window, "Document", None)
+                if not doc:
+                    continue
+
+                # 1.1 Selected items
+                try:
+                    sel = doc.SelectedItems()
+                    if sel and hasattr(sel, "Count") and sel.Count > 0:
+                        for idx in range(sel.Count):
+                            item = sel.Item(idx)
+                            p = getattr(item, "Path", "")
+                            if p and os.path.exists(p):
+                                selected_paths.append(os.path.abspath(p))
+                        if selected_paths:
+                            return selected_paths
+                except Exception:
+                    pass
+
+                # 1.2 Focused item
+                try:
+                    focused = getattr(doc, "FocusedItem", None)
+                    if focused:
+                        f_path = getattr(focused, "Path", "")
+                        if f_path and os.path.exists(f_path):
+                            selected_paths.append(os.path.abspath(f_path))
+                            return selected_paths
+                except Exception:
+                    pass
+
+                # 1.3 Folder location URL (if matching foreground window)
+                if matching_windows:
+                    url = getattr(window, "LocationURL", "")
+                    if url.startswith("file:///"):
+                        dir_path = unquote(url[8:]).replace("/", "\\")
+                        if os.path.isdir(dir_path):
+                            selected_paths.append(os.path.abspath(dir_path))
+                            return selected_paths
+                    elif url.startswith("file://"):
+                        # UNC network path
+                        dir_path = "\\\\" + unquote(url[7:]).replace("/", "\\")
+                        if os.path.isdir(dir_path):
+                            selected_paths.append(os.path.abspath(dir_path))
+                            return selected_paths
+
+            except Exception as e:
+                logger.debug("Error inspecting shell window via comtypes: %s", e)
+                continue
+
+    except Exception as e:
+        logger.debug("comtypes Shell.Application query error: %s", e)
+    finally:
+        if co_inited:
+            try:
+                comtypes.CoUninitialize()
+            except Exception:
+                pass
+    return selected_paths
+
+
+def get_explorer_selected_paths() -> List[str]:
+    """
+    Extracts paths of selected items or focused item in the active Windows Explorer window or Desktop.
+    Supports Windows 10, Windows 11 (with tabbed Explorer), and Desktop selections.
+    Uses comtypes.client (with 0.8s timeout protection) and NVDA focus tree.
+    
+    Returns:
+        List of absolute file/folder paths found in the active selection or open folder.
+    """
+    fg_hwnd = _get_foreground_window()
+    com_results: List[str] = []
+
+    def com_worker(container: List[str]) -> None:
+        try:
+            res = _query_shell_windows_com(fg_hwnd)
+            if res:
+                container.extend(res)
+        except Exception:
+            pass
+
+    t = threading.Thread(target=com_worker, args=(com_results,), daemon=True, name="HeadlessPlayer-ExplorerCOM")
+    t.start()
+    t.join(timeout=0.8)
+
+    if com_results:
+        return com_results
+
+    # 2. Fallback: NVDA accessibility focus object tree
+    focus_paths = _get_focus_explorer_paths()
+    if focus_paths:
+        return focus_paths
+
+    return []
+
+
+def _get_focus_explorer_paths() -> List[str]:
+    """
+    Fallback method: inspects NVDA's active focus object when COM fails
+    or when running under tabbed Windows 11 / hidden extensions.
+    """
+    paths: List[str] = []
+    if not api or not hasattr(api, "getFocusObject"):
+        return paths
+
+    try:
+        focus = api.getFocusObject()
+        if not focus:
+            return paths
+
+        # 1. If focus object exposes a file path directly
+        for attr in ("value", "description", "name"):
+            val = getattr(focus, attr, "")
+            if isinstance(val, str) and val and os.path.exists(val):
+                paths.append(os.path.abspath(val))
+                return paths
+
+        # 2. Extract focused item name
+        name = getattr(focus, "name", "") or ""
+        if not name:
+            return paths
+
+        # 3. Query all open Explorer folder directories via comtypes
+        open_dirs: List[str] = []
+        if comtypes and hasattr(comtypes, "client"):
+            try:
+                shell_app = comtypes.client.CreateObject("Shell.Application")
+                windows = shell_app.Windows()
+                for i in range(getattr(windows, "Count", 0)):
+                    try:
+                        w = windows.Item(i)
+                        doc = getattr(w, "Document", None)
+                        if doc and hasattr(doc, "Folder") and doc.Folder:
+                            p = getattr(doc.Folder.Self, "Path", "")
+                            if p and os.path.isdir(p) and p not in open_dirs:
+                                open_dirs.append(os.path.abspath(p))
+                        url = getattr(w, "LocationURL", "")
+                        if url.startswith("file:///"):
+                            p = unquote(url[8:]).replace("/", "\\")
+                            if os.path.isdir(p) and p not in open_dirs:
+                                open_dirs.append(os.path.abspath(p))
+                    except Exception:
+                        continue
+            except Exception:
+                pass
+
+        # 4. Search directories priority:
+        if open_dirs:
+            search_dirs = list(open_dirs)
+        else:
+            search_dirs = [
+                os.path.expanduser("~"),
+                os.path.join(os.path.expanduser("~"), "Desktop"),
+                os.path.join(os.path.expanduser("~"), "Downloads"),
+                os.path.join(os.path.expanduser("~"), "Music"),
+                os.path.join(os.path.expanduser("~"), "Videos"),
+                os.path.join(os.path.expanduser("~"), "Documents"),
+            ]
+
+        for d in search_dirs:
+            if not os.path.isdir(d):
+                continue
+            cand = os.path.join(d, name)
+            if os.path.exists(cand):
+                paths.append(os.path.abspath(cand))
+                return paths
+            for ext in ALL_SUPPORTED_EXTENSIONS:
+                cand_ext = os.path.join(d, f"{name}{ext}")
+                if os.path.exists(cand_ext):
+                    paths.append(os.path.abspath(cand_ext))
+                    return paths
+
+            # Filename / stem matching for hidden extensions
+            try:
+                name_clean = name.strip().lower()
+                for fname in os.listdir(d):
+                    fname_base = os.path.splitext(fname)[0].strip().lower()
+                    fname_full = fname.strip().lower()
+                    if fname_base == name_clean or fname_full == name_clean:
+                        cand_match = os.path.join(d, fname)
+                        if is_supported_media_file(cand_match) or os.path.isdir(cand_match):
+                            paths.append(os.path.abspath(cand_match))
+                            return paths
+            except Exception:
+                continue
+
+    except Exception as e:
+        logger.debug("Error inspecting NVDA focus object: %s", e)
+
+    return paths
+
+
+def filter_media_paths(
+    paths: Sequence[str],
+    allow_folders: bool = True
+) -> List[str]:
+    """
+    Filters a list of extracted paths to only include valid supported media files
+    or directories.
+    
+    Args:
+        paths: Sequence of file or folder paths.
+        allow_folders: If True, folder paths are retained.
+        
+    Returns:
+        List of valid absolute paths.
+    """
+    valid: List[str] = []
+    for p in paths:
+        if not p:
+            continue
+        abs_p = os.path.abspath(p)
+        if not os.path.exists(abs_p):
+            continue
+        if os.path.isdir(abs_p):
+            if allow_folders:
+                valid.append(abs_p)
+        elif is_supported_media_file(abs_p):
+            valid.append(abs_p)
+    return valid
+
+
+def expand_folder_paths(
+    paths: Sequence[str],
+    recursive: bool = False
+) -> List[str]:
+    """
+    Expands any folders in the given path list into their contained media files
+    sorted in natural order. Single files are preserved.
+    
+    Args:
+        paths: Sequence of file or folder paths.
+        recursive: If True, scans subdirectories recursively.
+        
+    Returns:
+        List of media file paths.
+    """
+    expanded: List[str] = []
+    for p in paths:
+        if not p or not os.path.exists(p):
+            continue
+        abs_p = os.path.abspath(p)
+        if os.path.isdir(abs_p):
+            files = find_media_files_in_dir(abs_p, recursive=recursive)
+            expanded.extend(files)
+        elif is_supported_media_file(abs_p):
+            expanded.append(abs_p)
+    return expanded
+
+
+def get_active_explorer_or_focus_paths(
+    filter_supported: bool = True,
+    expand_folders: bool = False,
+    recursive: bool = False
+) -> List[str]:
+    """
+    High-level API: Retrieves active Explorer / Desktop / Focus selections,
+    applies media filtering, and optionally expands folders.
+    """
+    raw_paths = get_explorer_selected_paths()
+    if not raw_paths:
+        return []
+
+    if filter_supported:
+        filtered = filter_media_paths(raw_paths, allow_folders=True)
+    else:
+        filtered = [os.path.abspath(p) for p in raw_paths if os.path.exists(p)]
+
+    if expand_folders:
+        return expand_folder_paths(filtered, recursive=recursive)
+
+    return filtered
+
+
+def extract_local_media_durations(paths: Sequence[str]) -> Dict[str, float]:
+    """
+    Extracts audio/video durations (in seconds) for local media file paths
+    using the native Windows Shell Property Store COM interface.
+    """
+    if not paths:
+        return {}
+
+    by_dir: Dict[str, List[str]] = {}
+    for p in paths:
+        if not p:
+            continue
+        try:
+            abs_p = os.path.abspath(p)
+            d = os.path.dirname(abs_p)
+            by_dir.setdefault(d, []).append(abs_p)
+        except Exception:
+            continue
+
+    results: Dict[str, float] = {}
+    if not comtypes or not hasattr(comtypes, "client"):
+        return results
+
+    co_inited = False
+    try:
+        try:
+            comtypes.CoInitialize()
+            co_inited = True
+        except Exception:
+            pass
+
+        shell = comtypes.client.CreateObject("Shell.Application")
+        for dir_path, file_paths in by_dir.items():
+            try:
+                ns = shell.NameSpace(dir_path)
+                if not ns:
+                    continue
+                col_len = 27
+                for col in (27, 28, 26, 29, 30):
+                    header = ns.GetDetailsOf(None, col)
+                    if header and any(k in str(header).lower() for k in ("length", "duration", "المدة", "طول", "durée", "dauer", "duración", "длительность", "duração", "durata", "duur", "czas", "süre")):
+                        col_len = col
+                        break
+
+                for fp in file_paths:
+                    try:
+                        fn = os.path.basename(fp)
+                        item = ns.ParseName(fn)
+                        if item:
+                            dur_str = ns.GetDetailsOf(item, col_len)
+                            if dur_str:
+                                sec = parse_time(str(dur_str))
+                                if sec > 0:
+                                    results[fp] = sec
+                    except Exception:
+                        continue
+            except Exception:
+                continue
+    except Exception as e:
+        logger.debug("Error extracting local media durations: %s", e)
+    finally:
+        if co_inited:
+            try:
+                comtypes.CoUninitialize()
+            except Exception:
+                pass
+
+    return results

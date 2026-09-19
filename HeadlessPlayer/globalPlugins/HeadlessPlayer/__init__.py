@@ -53,17 +53,28 @@ except Exception:
     _NVDA_GUI_AVAILABLE = False
 
 # 3. Import HeadlessPlayer Subsystems
-from .config_spec import initializeConfig, getConfig, setConfigValue, getConfigValue
-from .engine import HeadlessEngine, ALL_SUPPORTED_EXTENSIONS, SPEED_PRESETS, is_supported_media_file
-from .ipc_client import WinNamedPipeClient
-from .mpv_process import MpvProcess, find_mpv_binary, DEFAULT_PIPE_NAME
+from .utils.config_spec import initializeConfig, getConfig, setConfigValue, getConfigValue
+from .core import (
+    HeadlessEngine,
+    ALL_SUPPORTED_EXTENSIONS,
+    SPEED_PRESETS,
+    is_supported_media_file,
+    WinNamedPipeClient,
+    MpvProcess,
+    find_mpv_binary,
+    DEFAULT_PIPE_NAME,
+    SpeechFeedback,
+    get_speech_feedback,
+    set_speech_feedback,
+    PlayerController,
+    get_controller,
+    set_controller,
+)
 from .playlist import Playlist, Track, RepeatMode
-from .state_store import StateStore, get_state_store
-from .speech_feedback import SpeechFeedback, get_speech_feedback, set_speech_feedback
-from .input_layer import ModalInputLayer
-from .controller import PlayerController, get_controller, set_controller
-from .settings_panel import HeadlessPlayerSettingsPanel
-from .addon_updater import cleanup_temp_addon_packages
+from .history import StateStore, get_state_store
+from .input import ModalInputLayer
+from .gui import HeadlessPlayerSettingsPanel
+from .utils.updater import cleanup_temp_addon_packages
 
 logger = logging.getLogger("HeadlessPlayer")
 
