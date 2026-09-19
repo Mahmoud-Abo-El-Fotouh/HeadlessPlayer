@@ -1,9 +1,9 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: HeadlessPlayer 1.3.2\n"
+"Project-Id-Version: HeadlessPlayer 1.3.0\n"
 "Report-Msgid-Bugs-To: https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer\n"
-"POT-Creation-Date: 2026-09-19 21:50+0300\n"
-"PO-Revision-Date: 2026-09-19 21:50+0300\n"
+"POT-Creation-Date: 2026-09-20 01:13+0300\n"
+"PO-Revision-Date: 2026-09-20 01:13+0300\n"
 "Last-Translator: Mahmoud Abo El Fotouh <mahmoudaboelfotouh.20@gmail.com>\n"
 "Language-Team: Arabic <mahmoudaboelfotouh.20@gmail.com>\n"
 "Language: ar\n"
@@ -1900,3 +1900,25 @@ msgstr "المقطع {current} من {total}"
 
 msgid "Track {current} of {total}: {title}"
 msgstr "المقطع {current} من {total}: {title}"
+
+msgid "System Diagnostics & Health Check"
+msgstr "فحص النظام والتشخيص الذاتي"
+
+msgid "Inspects player components (mpv, yt-dlp, database, translation catalogs) and copies a diagnostic health report directly to clipboard to share with the developer."
+msgstr "يفحص مكونات المشغل (mpv، yt-dlp، قاعدة البيانات، ملفات الترجمة) وينسخ تقرير الفحص للحافظة مباشرة لمشاركته مع المطور."
+
+msgid "&Copy System Health & Diagnostics Report to Clipboard..."
+msgstr "نسخ تقرير فحص النظام والتشخيص إلى &الحافظة..."
+
+msgid "System diagnostics report successfully copied to clipboard. You can now paste and share it with the developer."
+msgstr "تم نسخ تقرير فحص النظام بنجاح إلى الحافظة. يمكنك الآن لصقه ومشاركته مع المطور."
+
+msgid "System Diagnostics"
+msgstr "تشخيص النظام"
+
+msgid "Could not generate or copy the diagnostics report to clipboard."
+msgstr "تعذر إنشاء أو نسخ تقرير التشخيص إلى الحافظة."
+
+msgid "Diagnostics Error"
+msgstr "خطأ في التشخيص"
+

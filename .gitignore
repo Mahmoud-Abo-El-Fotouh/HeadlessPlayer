@@ -22,6 +22,9 @@ share/python-wheels/
 
 # Keep bundled internal libraries and compiled translations
 !HeadlessPlayer/globalPlugins/HeadlessPlayer/lib/
+HeadlessPlayer/globalPlugins/HeadlessPlayer/lib/yt_dlp_bundled/
+HeadlessPlayer/globalPlugins/HeadlessPlayer/lib/yt_dlp_previous/
+HeadlessPlayer/globalPlugins/HeadlessPlayer/lib/yt_dlp_update_temp*/
 !HeadlessPlayer/locale/**/*.mo
 
 # PyInstaller & Logs

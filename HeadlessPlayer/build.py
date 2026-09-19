@@ -402,7 +402,7 @@ def package_addon(base_dir: str, output_dir: str, custom_label: Optional[str] = 
     if is_dev:
         EXCLUDE_FILES = {"build.py"}
     else:
-        EXCLUDE_FILES = {"build.py", "diagnostics.py", "log_manager.py", "manage_logs.py"}
+        EXCLUDE_FILES = {"build.py", "manage_logs.py"}
 
     # Guard: Ensure mpv.exe binary is present and not a tiny Git LFS text pointer
     mpv_binary_path = os.path.join(base_dir, "resources", "bin", "x64", "mpv.exe")
@@ -433,7 +433,7 @@ def package_addon(base_dir: str, output_dir: str, custom_label: Optional[str] = 
                 if os.path.abspath(full_path) == os.path.abspath(addon_filepath):
                     continue
 
-                if is_dev and file == "log_manager.py":
+                if is_dev and file in ("logger.py", "logging.py", "log_manager.py"):
                     with open(full_path, "r", encoding="utf-8", errors="replace") as lf:
                         log_code = lf.read()
                     log_code = log_code.replace("_DEV_BUILD = False", "_DEV_BUILD = True")
