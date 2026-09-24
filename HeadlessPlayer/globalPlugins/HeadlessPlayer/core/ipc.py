@@ -240,6 +240,10 @@ class WinNamedPipeClient:
         try:
             while self._running and _is_valid_handle(self.handle):
                 kernel32.ResetEvent(h_read_event)
+                ov.Internal = 0
+                ov.InternalHigh = 0
+                ov.Offset = 0
+                ov.OffsetHigh = 0
                 bytes_read.value = 0
                 success = kernel32.ReadFile(
                     self.handle,
@@ -455,6 +459,12 @@ class WinNamedPipeClient:
         """
         if not self.is_connected():
             return {"error": "not connected"}
+
+        # Prevent self-deadlock if invoked from within the IPC reader thread
+        if threading.current_thread() == self._reader_thread:
+            logger.debug("send_command invoked from reader thread; delegating asynchronously to prevent deadlock: %s", command)
+            self.send_command_async(command)
+            return {"error": "invoked_on_reader_thread", "data": None}
 
         with self._lock:
             self._req_counter += 1

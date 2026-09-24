@@ -313,10 +313,10 @@ class Playlist:
         with self._lock:
             if not file_path:
                 return None
-            is_url = file_path.startswith(("http://", "https://", "ytdl://", "custom://"))
+            is_url = file_path.startswith(("http://", "https://", "ytdl://", "custom://", "youtube:"))
             norm_target = file_path.strip() if is_url else os.path.normcase(os.path.abspath(file_path))
             for orig_idx, track in enumerate(self._tracks):
-                track_is_url = track.path.startswith(("http://", "https://", "ytdl://", "custom://"))
+                track_is_url = track.path.startswith(("http://", "https://", "ytdl://", "custom://", "youtube:"))
                 track_norm = track.path.strip() if track_is_url else os.path.normcase(track.path)
                 if track_norm == norm_target:
                     return self.jump_to_original_index(orig_idx)
@@ -655,23 +655,30 @@ class Playlist:
             if self._shuffle:
                 if self._shuffled_indices:
                     new_shuffled = []
-                    for idx in self._shuffled_indices:
-                        if idx == orig_idx:
+                    for idx_val in self._shuffled_indices:
+                        if idx_val == orig_idx:
                             continue
-                        elif idx > orig_idx:
-                            new_shuffled.append(idx - 1)
+                        elif idx_val > orig_idx:
+                            new_shuffled.append(idx_val - 1)
                         else:
-                            new_shuffled.append(idx)
+                            new_shuffled.append(idx_val)
                     self._shuffled_indices = new_shuffled
+
+                if index < self._current_index:
+                    self._current_index -= 1
+
                 if not self._tracks:
                     self._current_index = -1
                 elif self._current_index >= len(self._tracks):
                     self._current_index = len(self._tracks) - 1
             else:
-                if self._current_index >= len(self._tracks):
-                    self._current_index = max(0, len(self._tracks) - 1)
+                if index < self._current_index:
+                    self._current_index -= 1
+
                 if not self._tracks:
                     self._current_index = -1
+                elif self._current_index >= len(self._tracks):
+                    self._current_index = max(0, len(self._tracks) - 1)
 
             self._notify_listeners("playlist_updated", self)
             return removed
@@ -689,6 +696,7 @@ class Playlist:
     def clear(self) -> None:
         with self._lock:
             self._tracks.clear()
+            self._shuffle = False
             self._shuffled_indices.clear()
             self._current_index = -1
             self._notify_listeners("playlist_updated", self)
@@ -742,7 +750,7 @@ class Playlist:
                             self._tracks.append(tr)
                     elif isinstance(it, str) and it:
                         p = it
-                        if str(p).strip().lower().startswith(("http://", "https://", "ytdl://", "custom://")) or (os.path.exists(p) and is_supported_media_file(p)):
+                        if str(p).strip().lower().startswith(("http://", "https://", "ytdl://", "custom://", "youtube:")) or (os.path.exists(p) and is_supported_media_file(p)):
                             self._tracks.append(Track.from_path(p))
             self._repeat_mode = RepeatMode.from_string(data.get("repeat_mode", "off"))
             self._auto_next = bool(data.get("auto_next", True))
@@ -753,5 +761,7 @@ class Playlist:
                 self._current_index = -1
 
             should_shuffle = bool(data.get("shuffle", False))
+            self._shuffle = False
+            self._shuffled_indices = []
             if should_shuffle:
                 self.set_shuffle(True)

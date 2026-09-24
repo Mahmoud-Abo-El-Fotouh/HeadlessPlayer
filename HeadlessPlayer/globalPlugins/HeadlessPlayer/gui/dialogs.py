@@ -484,12 +484,11 @@ def generate_help_text(custom_toggle_gesture: Optional[str] = None) -> str:
     str_fast = _fmt_seconds(s_fast)
     str_ultra = _fmt_seconds(s_ultra)
 
-    def _fmt_key(raw_key: str) -> str:
-        if not raw_key:
-            return ""
-        parts = raw_key.split("+")
+    def _fmt_single_key(raw_combo: str) -> str:
+        parts = raw_combo.strip().split("+")
         formatted_parts = []
         for p in parts:
+            p = p.strip()
             low = p.lower()
             if low in ("ctrl", "control"):
                 formatted_parts.append("Ctrl")
@@ -519,6 +518,8 @@ def generate_help_text(custom_toggle_gesture: Optional[str] = None) -> str:
                 formatted_parts.append("Down Arrow")
             elif low in ("delete", "del"):
                 formatted_parts.append("Delete")
+            elif low == "tab":
+                formatted_parts.append("Tab")
             elif low == ".":
                 formatted_parts.append(".")
             elif low == ",":
@@ -528,6 +529,16 @@ def generate_help_text(custom_toggle_gesture: Optional[str] = None) -> str:
             else:
                 formatted_parts.append(p.capitalize())
         return " + ".join(formatted_parts)
+
+    def _fmt_key(raw_key: str) -> str:
+        if not raw_key:
+            return ""
+        if raw_key.strip() == ",":
+            return ","
+        sub_combos = [k.strip() for k in raw_key.split(",") if k.strip()]
+        if not sub_combos:
+            return ""
+        return ", ".join(_fmt_single_key(c) for c in sub_combos)
 
     k_play = _fmt_key(keymap.get("play_pause", "space"))
     k_stop = _fmt_key(keymap.get("stop", "s"))

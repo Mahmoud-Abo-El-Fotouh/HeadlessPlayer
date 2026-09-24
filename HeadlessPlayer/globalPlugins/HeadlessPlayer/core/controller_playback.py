@@ -6,8 +6,9 @@ Handles core media playback, seeking, volume, speed, equalization, A-B looping, 
 
 from __future__ import annotations
 import logging
+import threading
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 try:
     from .. import _  # type: ignore
@@ -28,10 +29,105 @@ from ..utils import format_time, log_debug, log_exception, log_info
 logger = logging.getLogger("HeadlessPlayer.ControllerPlayback")
 
 
+class _DiskSaveDebouncer:
+    """
+    Coalesces rapid settings/state writes (volume, bass, speed) to disk.
+    Defers disk I/O by 500ms so bursts of rapid adjustments perform a single disk commit.
+    Provides immediate synchronous flush on shutdown or stop.
+    """
+
+    def __init__(self, delay_sec: float = 0.5) -> None:
+        self.delay_sec = delay_sec
+        self._pending: Dict[str, Tuple[Any, Callable[[Any], None]]] = {}
+        self._lock = threading.Lock()
+        self._timer: Optional[threading.Timer] = None
+
+    def debounce(self, key: str, value: Any, commit_fn: Callable[[Any], None]) -> None:
+        with self._lock:
+            self._pending[key] = (value, commit_fn)
+            if self._timer is not None:
+                self._timer.cancel()
+                self._timer = None
+            self._timer = threading.Timer(self.delay_sec, self._flush_internal)
+            self._timer.daemon = True
+            self._timer.start()
+
+    def _flush_internal(self) -> None:
+        with self._lock:
+            self._timer = None
+            to_commit = dict(self._pending)
+            self._pending.clear()
+
+        for key, (val, commit_fn) in to_commit.items():
+            try:
+                commit_fn(val)
+            except Exception as e:
+                logger.debug("Error during debounced disk commit for %s: %s", key, e)
+
+    def flush(self) -> None:
+        """Immediately commits all pending disk writes synchronously."""
+        with self._lock:
+            if self._timer is not None:
+                self._timer.cancel()
+                self._timer = None
+            to_commit = dict(self._pending)
+            self._pending.clear()
+
+        for key, (val, commit_fn) in to_commit.items():
+            try:
+                commit_fn(val)
+            except Exception as e:
+                logger.debug("Error during immediate disk flush for %s: %s", key, e)
+
+    def cancel(self) -> None:
+        """Cancels any pending timer and clears pending writes without committing."""
+        with self._lock:
+            if self._timer is not None:
+                self._timer.cancel()
+                self._timer = None
+            self._pending.clear()
+
+
 class ControllerPlaybackMixin:
     """
     Mixin providing playback control, seeking, volume, speed, and looping operations.
     """
+
+    @property
+    def disk_debouncer(self) -> _DiskSaveDebouncer:
+        if not hasattr(self, "_disk_save_debouncer") or self._disk_save_debouncer is None:
+            self._disk_save_debouncer = _DiskSaveDebouncer(delay_sec=0.5)
+        return self._disk_save_debouncer
+
+    def _debounce_volume_save(self, volume: int) -> None:
+        def commit(vol: int) -> None:
+            self.state_store.save_volume(int(vol))
+            setConfigValue("volume", int(vol))
+            saveConfig()
+        self.disk_debouncer.debounce("volume", int(volume), commit)
+
+    def _debounce_bass_save(self, gain: float) -> None:
+        def commit(g: float) -> None:
+            self.state_store.save_setting("bass_gain", float(g))
+            setConfigValue("bassGain", float(g))
+            saveConfig()
+        self.disk_debouncer.debounce("bass", float(gain), commit)
+
+    def _debounce_speed_save(self, speed: float) -> None:
+        def commit(s: float) -> None:
+            self.state_store.save_speed(s)
+            setConfigValue("defaultSpeed", float(s))
+        self.disk_debouncer.debounce("speed", float(speed), commit)
+
+    def flush_pending_disk_saves(self) -> None:
+        """Flushes any coalesced volume, bass, or speed settings to disk immediately."""
+        if hasattr(self, "_disk_save_debouncer") and self._disk_save_debouncer is not None:
+            self._disk_save_debouncer.flush()
+
+    def cancel_pending_disk_saves(self) -> None:
+        """Cancels any coalesced volume, bass, or speed settings without writing to disk."""
+        if hasattr(self, "_disk_save_debouncer") and self._disk_save_debouncer is not None:
+            self._disk_save_debouncer.cancel()
 
     def toggle_play_pause(self) -> bool:
         """
@@ -56,19 +152,30 @@ class ControllerPlaybackMixin:
                     return self.play_track(cur_track)
                 return False
 
-            if not getattr(self.engine, "is_loaded", False) and not getattr(self.engine, "path", None):
-                cur_track = self.playlist.get_current_track()
+            cur_track = self.playlist.get_current_track()
+            is_stream = bool(cur_track and getattr(cur_track, "is_stream", False))
+            is_unloaded = (
+                not getattr(self.engine, "is_loaded", False)
+                or getattr(self.engine, "eof_reached", False)
+                or (is_stream and getattr(self, "_stream_ended", False))
+            )
+            if is_unloaded:
                 if cur_track:
-                    return self.play_track(cur_track)
+                    resume_pos = self._pending_resume_pos
+                    self._pending_resume_pos = None
+                    self._stream_ended = False
+                    if resume_pos is None or resume_pos < 0.0:
+                        resume_pos = 0.0
+                    return self.play_track(cur_track, resume_pos=resume_pos)
                 self.speech.announce_no_media()
                 return False
 
             dur = getattr(self.engine, "duration", 0.0) or 0.0
             cur_pos = getattr(self.engine, "time_pos", 0.0) or 0.0
             if dur > 5.0 and cur_pos >= (dur - 1.0):
-                cur_track = self.playlist.get_current_track()
                 if cur_track:
-                    return self.play_track(cur_track)
+                    self._stream_ended = False
+                    return self.play_track(cur_track, resume_pos=0.0)
                 self.engine.seek_absolute(0.0)
                 self.engine.resume()
                 self.speech.announce_playback_state("playing")
@@ -94,10 +201,22 @@ class ControllerPlaybackMixin:
             if getattr(self, "_is_resolving_stream", False):
                 self.speech.speak(_("Loading stream, please wait..."))
                 return False
-            if not self.engine.is_running or not getattr(self.engine, "path", None):
-                cur_track = self.playlist.get_current_track()
+            cur_track = self.playlist.get_current_track()
+            is_stream = bool(cur_track and getattr(cur_track, "is_stream", False))
+            is_unloaded = (
+                not self.engine.is_running
+                or not getattr(self.engine, "is_loaded", False)
+                or getattr(self.engine, "eof_reached", False)
+                or (is_stream and getattr(self, "_stream_ended", False))
+            )
+            if is_unloaded:
                 if cur_track:
-                    return self.play_track(cur_track)
+                    resume_pos = self._pending_resume_pos
+                    self._pending_resume_pos = None
+                    self._stream_ended = False
+                    if resume_pos is None or resume_pos < 0.0:
+                        resume_pos = 0.0
+                    return self.play_track(cur_track, resume_pos=resume_pos)
                 return False
             res = self.engine.resume()
             self.speech.announce_playback_state("playing")
@@ -117,6 +236,7 @@ class ControllerPlaybackMixin:
 
     def stop(self) -> bool:
         """Stops playback, rewinds to start (0:00), clears saved position, and announces stopped."""
+        self.flush_pending_disk_saves()
         log_info("CONTROLLER", "stop invoked: is_running=%s, last_loaded=%s", self.engine.is_running, self._last_loaded_path)
         with self._lock:
             if hasattr(self.speech, "cancel_debounced_seek"):
@@ -126,6 +246,7 @@ class ControllerPlaybackMixin:
                 self._resolving_track_path = None
                 self._stream_play_generation += 1
             self._stream_auto_retries = 0
+            self._stream_ended = False
             cur_path = self._last_loaded_path or getattr(self.engine, "path", None)
             if not cur_path:
                 cur_track = self.playlist.get_current_track()
@@ -134,6 +255,7 @@ class ControllerPlaybackMixin:
             if cur_path:
                 self.state_store.clear_position(cur_path)
             self._pending_resume_pos = 0.0
+            self._explicit_stop_cleared = True
 
             if not self.engine.is_running:
                 self.speech.announce_playback_state("stopped")
@@ -163,9 +285,7 @@ class ControllerPlaybackMixin:
                 self.start()
             new_vol = self.engine.adjust_volume(delta)
             self.speech.announce_volume(new_vol)
-            self.state_store.save_volume(int(new_vol))
-            setConfigValue("volume", int(new_vol))
-            saveConfig()
+            self._debounce_volume_save(int(new_vol))
             return new_vol
 
     def adjust_bass(self, delta: float) -> float:
@@ -174,9 +294,7 @@ class ControllerPlaybackMixin:
             if not self.engine.is_running:
                 self.start()
             new_gain = self.engine.adjust_bass(delta)
-            self.state_store.save_setting("bass_gain", float(new_gain))
-            setConfigValue("bassGain", float(new_gain))
-            saveConfig()
+            self._debounce_bass_save(float(new_gain))
             if new_gain:
                 self.speech.speak(_("Bass: %s dB") % (f"+{new_gain:g}" if new_gain > 0 else f"{new_gain:g}"))
             else:
@@ -190,9 +308,7 @@ class ControllerPlaybackMixin:
                 self.start()
             new_vol = self.engine.set_volume(volume)
             self.speech.announce_volume(new_vol)
-            self.state_store.save_volume(int(new_vol))
-            setConfigValue("volume", int(new_vol))
-            saveConfig()
+            self._debounce_volume_save(int(new_vol))
             return new_vol
 
     def seek(self, delta_sec: float) -> bool:
@@ -201,9 +317,23 @@ class ControllerPlaybackMixin:
             if not self.engine.is_running:
                 return False
 
-            dur = self.engine.duration
-            cur_pos = self.engine.time_pos
-            target_pos = cur_pos + delta_sec
+            cur_track = self.playlist.get_current_track()
+            dur = self.engine.duration or (getattr(cur_track, "duration", 0.0) or 0.0)
+            cur_pos = self.engine.time_pos or 0.0
+            target_pos = max(0.0, min(dur, cur_pos + delta_sec)) if dur > 0 else max(0.0, cur_pos + delta_sec)
+
+            is_unloaded = (not getattr(self.engine, "is_loaded", False) or getattr(self.engine, "eof_reached", False) or getattr(self, "_stream_ended", False))
+            if is_unloaded and cur_track:
+                self._pending_resume_pos = target_pos
+                with self.engine._lock:
+                    self.engine.time_pos = target_pos
+                self.speech.on_seek_performed(
+                    delta_sec=delta_sec,
+                    current_pos=target_pos,
+                    duration=dur,
+                    play_click=True
+                )
+                return True
 
             res = self.engine.seek(delta_sec)
             new_pos = self.engine.time_pos
@@ -221,9 +351,19 @@ class ControllerPlaybackMixin:
         with self._lock:
             if not self.engine.is_running:
                 return False
-            res = self.engine.seek_percent(percent)
-            dur = self.engine.duration
+            cur_track = self.playlist.get_current_track()
+            dur = self.engine.duration or (getattr(cur_track, "duration", 0.0) or 0.0)
             target_pos = (percent / 100.0) * dur if dur > 0 else 0.0
+
+            is_unloaded = (not getattr(self.engine, "is_loaded", False) or getattr(self.engine, "eof_reached", False) or getattr(self, "_stream_ended", False))
+            if is_unloaded and cur_track:
+                self._pending_resume_pos = target_pos
+                with self.engine._lock:
+                    self.engine.time_pos = target_pos
+                self.speech.announce_percent_jump(percent, target_pos)
+                return True
+
+            res = self.engine.seek_percent(percent)
             self.speech.announce_percent_jump(percent, target_pos)
             return res
 
@@ -232,6 +372,12 @@ class ControllerPlaybackMixin:
         with self._lock:
             if not self.engine.is_running:
                 return False
+            is_unloaded = (not getattr(self.engine, "is_loaded", False) or getattr(self.engine, "eof_reached", False) or getattr(self, "_stream_ended", False))
+            if is_unloaded:
+                self._pending_resume_pos = pos_sec
+                with self.engine._lock:
+                    self.engine.time_pos = pos_sec
+                return True
             return self.engine.seek_absolute(pos_sec)
 
     def jump_to_track_start(self) -> bool:
@@ -239,6 +385,15 @@ class ControllerPlaybackMixin:
         with self._lock:
             if not self.engine.is_running:
                 return False
+            is_unloaded = (not getattr(self.engine, "is_loaded", False) or getattr(self.engine, "eof_reached", False) or getattr(self, "_stream_ended", False))
+            cur_track = self.playlist.get_current_track()
+            if is_unloaded and cur_track:
+                self._pending_resume_pos = 0.0
+                with self.engine._lock:
+                    self.engine.time_pos = 0.0
+                self.speech.announce_percent_jump(0, 0.0)
+                return True
+
             res = self.engine.seek_absolute(0.0)
             self.speech.announce_percent_jump(0, 0.0)
             return res
@@ -251,14 +406,13 @@ class ControllerPlaybackMixin:
             dur = self.engine.duration
             if dur and dur > 2.0:
                 target = max(0.0, dur - 1.0)
-                res = self.engine.seek_absolute(target)
-                self.speech.speak(_("Track end"))
-                return res
             elif dur and dur > 0:
-                res = self.engine.seek_absolute(dur)
-                self.speech.speak(_("Track end"))
-                return res
-            return False
+                target = max(0.0, min(dur - 0.1, dur * 0.95))
+            else:
+                return False
+            res = self.engine.seek_absolute(target)
+            self.speech.speak(_("Track end"))
+            return res
 
     def adjust_speed(self, delta: float) -> float:
         """Fine-tunes speed (+/-0.1x) with speech feedback."""
@@ -267,9 +421,7 @@ class ControllerPlaybackMixin:
                 self.start()
             new_speed = self.engine.adjust_speed(delta)
             self.speech.announce_speed(new_speed, is_preset=False)
-            self.state_store.save_speed(new_speed)
-            setConfigValue("defaultSpeed", float(new_speed))
-            saveConfig()
+            self._debounce_speed_save(new_speed)
             return new_speed
 
     def cycle_speed_preset(self, forward: bool = True) -> float:
@@ -279,9 +431,7 @@ class ControllerPlaybackMixin:
                 self.start()
             new_speed = self.engine.cycle_speed_preset(forward=forward)
             self.speech.announce_speed(new_speed, is_preset=True)
-            self.state_store.save_speed(new_speed)
-            setConfigValue("defaultSpeed", float(new_speed))
-            saveConfig()
+            self._debounce_speed_save(new_speed)
             return new_speed
 
     def set_speed(self, speed: float) -> float:
@@ -291,9 +441,7 @@ class ControllerPlaybackMixin:
                 self.start()
             new_speed = self.engine.set_speed(speed)
             self.speech.announce_speed(new_speed, is_preset=False)
-            self.state_store.save_speed(new_speed)
-            setConfigValue("defaultSpeed", float(new_speed))
-            saveConfig()
+            self._debounce_speed_save(new_speed)
             return new_speed
 
     def set_ab_point_a(self) -> float:
@@ -312,9 +460,12 @@ class ControllerPlaybackMixin:
                 return 0.0, False
             pos, is_valid = self.engine.set_ab_point_b()
             if is_valid:
-                self.speech.announce_point_b(pos)
                 if self.engine.ab_loop_a is not None:
                     self.speech.announce_ab_loop_active(self.engine.ab_loop_a, pos)
+                else:
+                    self.speech.announce_point_b(pos)
+            else:
+                self.speech.speak(_("Point B must be set after Point A"))
             return pos, is_valid
 
     def toggle_repeat(self) -> str:
@@ -332,14 +483,30 @@ class ControllerPlaybackMixin:
                 or (getattr(self.engine, "_cached_ab_a", None) is not None and getattr(self.engine, "_cached_ab_b", None) is not None)
             )
             if has_ab:
-                res = self.engine.toggle_repeat()
-                if res == "ab_loop_on":
+                # Cycle: Active A-B Loop -> Track Repeat -> Playlist Repeat -> Repeat Off -> Active A-B Loop
+                if self.engine.ab_loop_active:
+                    self.engine.toggle_repeat()  # deactivates A-B loop in mpv
+                    self.playlist.set_repeat_mode(RepeatMode.TRACK)
+                    self.engine.set_track_repeat(True)
+                    self.speech.announce_repeat_mode("track")
+                    return "track_repeat_on"
+                elif self.playlist.repeat_mode == RepeatMode.TRACK:
+                    self.playlist.set_repeat_mode(RepeatMode.PLAYLIST)
+                    self.engine.set_track_repeat(False)
+                    self.speech.announce_repeat_mode("playlist")
+                    return "playlist_repeat_on"
+                elif self.playlist.repeat_mode == RepeatMode.PLAYLIST:
+                    self.playlist.set_repeat_mode(RepeatMode.OFF)
+                    self.engine.set_track_repeat(False)
+                    self.speech.announce_repeat_mode("off")
+                    return "off"
+                else:
+                    # Repeat is off -> reactivate A-B loop
+                    res = self.engine.toggle_repeat()
                     a = self.engine.ab_loop_a if self.engine.ab_loop_a is not None else getattr(self.engine, "_cached_ab_a", 0.0)
                     b = self.engine.ab_loop_b if self.engine.ab_loop_b is not None else getattr(self.engine, "_cached_ab_b", 0.0)
                     self.speech.announce_ab_loop_active(a or 0.0, b or 0.0)
-                elif res == "ab_loop_off":
-                    self.speech.announce_repeat_mode("off")
-                return res
+                    return "ab_loop_on"
             else:
                 new_mode = self.playlist.cycle_repeat_mode()
                 if new_mode == RepeatMode.TRACK:
@@ -375,6 +542,7 @@ class ControllerPlaybackMixin:
                 res = self.engine.next_chapter()
                 if res:
                     self._active_native_chapter_idx = target_idx
+                    self._suppress_auto_chapter_count = getattr(self, "_suppress_auto_chapter_count", 0) + 1
                     self._suppress_next_auto_chapter = True
                     chap_info = self.engine.get_chapter_info(target_idx) if hasattr(self.engine, "get_chapter_info") else None
                     chap_num = target_idx + 1
@@ -398,6 +566,7 @@ class ControllerPlaybackMixin:
                     target_sec = float(target_ch.get("start_time", 0.0))
                     title = target_ch.get("title", f"Chapter {next_idx + 1}")
                     self._active_stream_chapter_idx = next_idx
+                    self._suppress_auto_chapter_count = getattr(self, "_suppress_auto_chapter_count", 0) + 1
                     self._suppress_next_auto_chapter = True
                     self.engine.seek_absolute(target_sec)
                     self.speech.announce_chapter(next_idx + 1, title, start_time=target_sec)
@@ -423,9 +592,13 @@ class ControllerPlaybackMixin:
                 else:
                     target_idx = max(0, cur_chap - 1)
 
-                res = self.engine.prev_chapter()
+                if target_idx == cur_chap:
+                    res = self.engine.seek_absolute(cur_start)
+                else:
+                    res = self.engine.prev_chapter()
                 if res:
                     self._active_native_chapter_idx = target_idx
+                    self._suppress_auto_chapter_count = getattr(self, "_suppress_auto_chapter_count", 0) + 1
                     self._suppress_next_auto_chapter = True
                     chap_info = self.engine.get_chapter_info(target_idx) if hasattr(self.engine, "get_chapter_info") else None
                     chap_num = target_idx + 1
@@ -453,6 +626,7 @@ class ControllerPlaybackMixin:
                 target_sec = float(target_ch.get("start_time", 0.0))
                 title = target_ch.get("title", f"Chapter {target_idx + 1}")
                 self._active_stream_chapter_idx = target_idx
+                self._suppress_auto_chapter_count = getattr(self, "_suppress_auto_chapter_count", 0) + 1
                 self._suppress_next_auto_chapter = True
                 self.engine.seek_absolute(target_sec)
                 self.speech.announce_chapter(target_idx + 1, title, start_time=target_sec)
@@ -471,12 +645,17 @@ class ControllerPlaybackMixin:
                 total = len(self._stream_audio_tracks)
                 self._stream_audio_track_idx = (self._stream_audio_track_idx + 1) % total
                 target = self._stream_audio_tracks[self._stream_audio_track_idx]
+                target_url = target.get("url") or target.get("manifest_url")
+                if not target_url:
+                    self.speech.announce_no_other_audio_tracks()
+                    return False
+
                 cur_pos = self.engine.get_elapsed_time()
                 is_paused = getattr(self.engine, "paused", False)
 
                 self._pending_resume_pos = cur_pos if cur_pos >= 0.5 else None
                 self._silence_resume_announcement = True
-                self.engine.load_stream(target["url"], target.get("http_headers"))
+                self.engine.load_stream(target_url, target.get("http_headers"))
                 if is_paused:
                     self.engine.pause()
 

@@ -48,6 +48,7 @@ from .resolver import (
     _RESOLVE_CACHE_TTL,
     get_manual_cookies_file,
     login_cookies_enabled,
+    is_bot_error,
     is_cookie_error,
     check_youtube_cookies_validity,
     resolve_stream,
@@ -60,6 +61,7 @@ from .search import (
     search_youtube,
     fetch_listing,
     probe_url,
+    clear_listing_cache,
 )
 
 __all__ = [
@@ -100,6 +102,7 @@ __all__ = [
     "_RESOLVE_CACHE_TTL",
     "get_manual_cookies_file",
     "login_cookies_enabled",
+    "is_bot_error",
     "is_cookie_error",
     "check_youtube_cookies_validity",
     "resolve_stream",

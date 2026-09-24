@@ -63,13 +63,23 @@ def get_category_display_name(category: str) -> str:
         "preview": _("preview recap"),
         "filler": _("filler segment"),
     }
+    if not category:
+        return _("sponsor segment")
+    if "," in category:
+        parts = [c.strip() for c in category.split(",") if c.strip()]
+        translated = [mapping.get(p.lower(), _("sponsor segment")) for p in parts]
+        deduped = []
+        for t in translated:
+            if t not in deduped:
+                deduped.append(t)
+        return ", ".join(deduped)
     return mapping.get(category.lower(), _("sponsor segment"))
 
 
 # Regex patterns to extract standard YouTube 11-char video IDs from YouTube URLs or raw ID string
 YOUTUBE_ID_PATTERNS = [
     re.compile(
-        r'(?:https?:\/\/)?(?:[a-zA-Z0-9_-]+\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|v\/|live\/)|youtu\.be\/)([0-9A-Za-z_-]{11})',
+        r'(?:https?:\/\/)?(?:[a-zA-Z0-9_-]+\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|v\/|live\/)|youtu\.be\/|youtube:)([0-9A-Za-z_-]{11})',
         re.IGNORECASE
     ),
     re.compile(r'^([0-9A-Za-z_-]{11})$'),
@@ -78,7 +88,7 @@ YOUTUBE_ID_PATTERNS = [
 
 def extract_youtube_id(url_or_id: Optional[str]) -> Optional[str]:
     """
-    Extracts the 11-character YouTube video ID from a URL or raw ID string.
+    Extracts the 11-character YouTube video ID from a URL, canonical youtube:ID, or raw ID string.
     Strictly validates domain to avoid false matches on non-YouTube URLs (e.g. SoundCloud).
     """
     if not url_or_id:
@@ -94,6 +104,11 @@ def extract_youtube_id(url_or_id: Optional[str]) -> Optional[str]:
                 return None
         except Exception:
             return None
+
+    if s.lower().startswith("youtube:"):
+        candidate = s[8:].strip()
+        if re.match(r'^[0-9A-Za-z_-]{11}$', candidate):
+            return candidate
 
     for pattern in YOUTUBE_ID_PATTERNS:
         match = pattern.search(s)
@@ -213,7 +228,7 @@ def fetch_sponsor_segments(
             logger.debug("SponsorBlock Hash Prefix request failed for %s: %s, falling back to direct", vid, e)
 
     # 3. Direct query fallback (if hash prefix failed or returned nothing)
-    if not segments and not use_hash_prefix:
+    if not segments:
         try:
             api_url = f"https://sponsor.ajay.app/api/skipSegments?videoID={vid}&categories={encoded_cats}"
             req = urllib.request.Request(api_url, headers=headers)

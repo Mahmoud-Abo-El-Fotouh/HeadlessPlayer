@@ -64,15 +64,22 @@ class ControllerStreamingMixin:
 
         self._exit_player_mode_for_dialog()
 
+        def _on_sub(url: str) -> None:
+            self._restore_player_mode_after_dialog()
+            self._on_url_or_search_submitted(url)
+
+        def _on_cancel() -> None:
+            self._restore_player_mode_after_dialog()
+
         prompt_url_input(
-            on_submit=self._on_url_or_search_submitted,
-            on_cancelled=None,
+            on_submit=_on_sub,
+            on_cancelled=_on_cancel,
             suspend_capture=self._suspend_input,
             resume_capture=self._resume_input,
         )
 
     def _canonical_current_track_path(self) -> Optional[str]:
-        """Returns the stable, canonical URL or file path for the active track, never an ephemeral proxy URL."""
+        """Returns the stable, canonical URL or file path for the active track."""
         cur_track = self.playlist.get_current_track()
         cand = (cur_track.path if (cur_track and cur_track.path) else None) or self._last_loaded_path
         if cand and not ("127.0.0.1" in str(cand) or "localhost" in str(cand)):
@@ -125,17 +132,22 @@ class ControllerStreamingMixin:
             self.speech.speak(_("No online stream is playing."))
             return
         info = self._current_stream_info or {}
-        url = str(info.get("direct_url") or "")
+        url = str(info.get("stream_url") or info.get("direct_url") or info.get("audio_url") or "")
+        if url.startswith("http://127.0.0.1") or url.startswith("http://localhost"):
+            url = str(info.get("direct_url") or info.get("audio_url") or "")
+            if url.startswith("http://127.0.0.1") or url.startswith("http://localhost"):
+                url = ""
+
         if not url or (info.get("webpage_url") and info.get("id") and info.get("id") not in cur.path):
             try:
-                info = stream_engine.resolve_stream(cur.path)
-                url = str(info.get("direct_url") or "")
+                resolved = stream_engine.resolve_stream(cur.path)
+                url = str(resolved.get("stream_url") or resolved.get("direct_url") or resolved.get("audio_url") or "")
+                if url.startswith("http://127.0.0.1") or url.startswith("http://localhost"):
+                    url = str(resolved.get("direct_url") or resolved.get("audio_url") or "")
+                    if url.startswith("http://127.0.0.1") or url.startswith("http://localhost"):
+                        url = ""
             except Exception as e:
                 logger.error("copy_direct_url resolve failed: %s", e)
-                url = ""
-        if not url:
-            url = str(info.get("stream_url") or "")
-            if url.startswith("http://127.0.0.1"):
                 url = ""
         if not url:
             self.speech.speak(_("The direct audio link is not available yet."))
@@ -251,7 +263,13 @@ class ControllerStreamingMixin:
 
     def _stream_error_message(self, exc: Exception) -> str:
         """Builds an accurate spoken error message for a streaming failure."""
-        if stream_engine.is_cookie_error(str(exc)):
+        err_str = str(exc)
+        if getattr(stream_engine, "is_bot_error", lambda s: False)(err_str) or "bot" in err_str.lower():
+            return _(
+                "YouTube requires sign-in verification for this content. "
+                "Please configure valid sign-in cookies in HeadlessPlayer settings."
+            )
+        if stream_engine.is_cookie_error(err_str):
             return _(
                 "Could not read sign-in cookies from your browser. "
                 "Set a manual cookies.txt file in HeadlessPlayer settings instead."
@@ -294,15 +312,22 @@ class ControllerStreamingMixin:
         tracks = []
         for it in playable_items:
             meta = dict(getattr(it, "metadata", {}) or {})
-            meta.update({"is_live": bool(getattr(it, "is_live", False)), "listing": listing_title})
-            tracks.append(
-                Track(
-                    path=getattr(it, "url", None) or getattr(it, "path", ""),
-                    title=getattr(it, "title", ""),
-                    duration=getattr(it, "duration", None),
-                    metadata=meta,
-                )
+            is_vid = bool(getattr(it, "kind", "") in (stream_engine.ITEM_VIDEO, stream_engine.ITEM_SHORTS) or (getattr(it, "extra", None) and getattr(it, "extra", {}).get("has_video")))
+            meta.update({
+                "is_live": bool(getattr(it, "is_live", False)),
+                "listing": listing_title,
+                "kind": getattr(it, "kind", "video"),
+                "is_video": is_vid,
+            })
+            t = Track(
+                path=getattr(it, "url", None) or getattr(it, "path", ""),
+                title=getattr(it, "title", ""),
+                duration=getattr(it, "duration", None),
+                metadata=meta,
             )
+            if is_vid:
+                t.is_video = True
+            tracks.append(t)
 
         with self._lock:
             first = self.playlist.load_stream_tracks(tracks, start_index=start_index, append=False)
@@ -454,21 +479,40 @@ class ControllerStreamingMixin:
                         if not playable:
                             self._active_stream_has_more = False
                         else:
+                            existing_paths = {t.path for t in self.playlist.tracks if t and t.path}
+                            existing_ids = set()
+                            for p in existing_paths:
+                                vid = extract_youtube_id(p)
+                                if vid:
+                                    existing_ids.add(vid)
+
                             new_tracks = []
                             for it in playable:
+                                p = getattr(it, "url", None) or getattr(it, "path", "")
+                                if not p or p in existing_paths:
+                                    continue
+                                vid = extract_youtube_id(p)
+                                if vid and vid in existing_ids:
+                                    continue
+                                existing_paths.add(p)
+                                if vid:
+                                    existing_ids.add(vid)
+
                                 meta = dict(getattr(it, "metadata", {}) or {})
                                 meta.update({"is_live": bool(getattr(it, "is_live", False))})
                                 new_tracks.append(
                                     Track(
-                                        path=getattr(it, "url", None) or getattr(it, "path", ""),
+                                        path=p,
                                         title=getattr(it, "title", ""),
                                         duration=getattr(it, "duration", None),
                                         metadata=meta,
                                     )
                                 )
-                            self.playlist.load_stream_tracks(new_tracks, append=True)
+                            if new_tracks:
+                                self.playlist.load_stream_tracks(new_tracks, append=True)
                             self._active_stream_next_idx = start_idx + len(new_items)
-                            self._active_stream_has_more = len(new_items) >= bsize
+                            tolerance = 5 if bsize >= 20 else 1
+                            self._active_stream_has_more = len(new_items) >= max(1, bsize - tolerance)
             except Exception as ex:
                 logger.debug("Stream queue auto-extend failed (%s, target=%s): %s", stype, target, ex)
             finally:
@@ -477,7 +521,7 @@ class ControllerStreamingMixin:
 
         threading.Thread(target=worker, daemon=True, name="HeadlessPlayer-QueueExtend").start()
 
-    def _play_stream_track(self, track: Track) -> bool:
+    def _play_stream_track(self, track: Track, resume_pos: Optional[float] = None) -> bool:
         """Starts asynchronous resolution and playback of an online stream track."""
         with self._lock:
             if getattr(self, "_is_resolving_stream", False) and getattr(self, "_resolving_track_path", None) == track.path:
@@ -494,7 +538,9 @@ class ControllerStreamingMixin:
             generation = self._stream_play_generation
             self._current_stream_chapters = list(getattr(track, "chapters", [])) if getattr(track, "chapters", None) else []
 
-            if self._pending_resume_pos is None or self._pending_resume_pos < 0.5:
+            if resume_pos is not None:
+                self._pending_resume_pos = resume_pos if resume_pos >= 0.5 else None
+            else:
                 cfg = getConfig()
                 if cfg.get("resumePosition", True) and not track.metadata.get("is_live"):
                     saved_pos = self.state_store.get_position(
@@ -504,8 +550,6 @@ class ControllerStreamingMixin:
                     self._pending_resume_pos = saved_pos if (saved_pos and saved_pos >= 1.0) else None
                 else:
                     self._pending_resume_pos = None
-
-            self._last_loaded_path = track.path
 
             orig_idx = self.playlist.current_index + 1
             total = self.playlist.count
@@ -536,7 +580,8 @@ class ControllerStreamingMixin:
                     self._resolving_track_path = None
             if not stale:
                 self.engine.stop()
-                if stream_engine.is_cookie_error(str(e)):
+                err_str = str(e)
+                if getattr(stream_engine, "is_bot_error", lambda s: False)(err_str) or stream_engine.is_cookie_error(err_str) or "bot" in err_str.lower():
                     self.speech.speak(self._stream_error_message(e))
                 else:
                     self.speech.speak(_(
@@ -569,6 +614,7 @@ class ControllerStreamingMixin:
 
             success = self.engine.load_stream(info["stream_url"], info.get("http_headers"))
             if success:
+                self._last_loaded_path = track.path
                 self.state_store.save_recent_file(track.path)
                 self._load_sponsor_segments_for_url(track.path or info.get("webpage_url") or info.get("id"))
 

@@ -104,6 +104,7 @@ class HeadlessEngine:
         self.eof_reached: bool = False
         self.is_loaded: bool = False
         self.bass_gain: float = 0.0
+        self._last_manual_seek_time: float = 0.0
 
         # SponsorBlock segment auto-skipping
         self.sponsor_segments: List[Tuple[float, float, str]] = []
@@ -173,24 +174,30 @@ class HeadlessEngine:
     def shutdown(self) -> None:
         """Clean shutdown of IPC client and mpv daemon."""
         with self._lock:
-            if self._ipc:
-                try:
-                    self._ipc.send_command_async(["quit"])
-                    self._ipc.close()
-                except Exception as e:
-                    logger.debug("Error closing IPC client: %s", e)
-                self._ipc = None
-
-            if self._process:
-                try:
-                    self._process.stop(timeout_sec=1.5)
-                except Exception as e:
-                    logger.debug("Error stopping mpv process: %s", e)
-                self._process = None
-
+            ipc = self._ipc
+            self._ipc = None
+            proc = self._process
+            self._process = None
             self.is_loaded = False
             self.core_idle = True
-            logger.info("HeadlessEngine shut down.")
+            self.path = ""
+            self.filename = ""
+            self.media_title = ""
+
+        if ipc:
+            try:
+                ipc.send_command_async(["quit"])
+                ipc.close()
+            except Exception as e:
+                logger.debug("Error closing IPC client: %s", e)
+
+        if proc:
+            try:
+                proc.stop(timeout_sec=1.5)
+            except Exception as e:
+                logger.debug("Error stopping mpv process: %s", e)
+
+        logger.info("HeadlessEngine shut down.")
 
     def _setup_property_observers(self) -> None:
         """Register observers for all playback properties."""
@@ -259,6 +266,8 @@ class HeadlessEngine:
                     return
                 if reason == "eof":
                     self.eof_reached = True
+                    self.is_loaded = False
+                    self.core_idle = True
                 elif reason in ("stop", "quit", "error"):
                     self.is_loaded = False
                     self.core_idle = True
@@ -295,10 +304,14 @@ class HeadlessEngine:
                 self.paused = bool(data)
             elif name == "time-pos" and data is not None:
                 try:
-                    self.time_pos = float(data)
-                    # Reset last skipped sponsor segment if user seeks back before it
-                    if self._last_skipped_segment and self.time_pos < (self._last_skipped_segment[0] - 1.0):
-                        self._last_skipped_segment = None
+                    now = time.time()
+                    last_seek = getattr(self, "_last_manual_seek_time", 0.0)
+                    if (now - last_seek) >= 0.25:
+                        self.time_pos = float(data)
+                    # Reset last skipped sponsor segment if user seeks before it or moves past it
+                    if self._last_skipped_segment:
+                        if self.time_pos < self._last_skipped_segment[0] or self.time_pos >= (self._last_skipped_segment[1] + 1.0):
+                            self._last_skipped_segment = None
 
                     # Emergency watchdog for A-B loop:
                     # mpv handles A-B looping natively and gaplessly when ab-loop-a/b are set.
@@ -326,7 +339,7 @@ class HeadlessEngine:
                                         "SponsorBlock: skipping %s segment [%.2f -> %.2f] at pos %.2f",
                                         seg_cat, seg_start, target_end, self.time_pos
                                     )
-                                    self.seek_absolute(target_end)
+                                    self.seek_absolute(target_end, is_internal_skip=True)
                                     if self.on_sponsor_skipped:
                                         cb_to_call = (self.on_sponsor_skipped, seg_cat, seg_start, target_end)
                                     break
@@ -357,13 +370,13 @@ class HeadlessEngine:
             elif name == "path":
                 self.path = str(data) if data is not None else ""
             elif name == "ab-loop-a":
-                val = float(data) if (data is not None and data != "no") else None
+                val = float(data) if (data is not None and data is not False and data != "no" and str(data).lower() != "false") else None
                 self.ab_loop_a = val
                 if val is not None:
                     self._cached_ab_a = val
                 self._update_ab_active_state()
             elif name == "ab-loop-b":
-                val = float(data) if (data is not None and data != "no") else None
+                val = float(data) if (data is not None and data is not False and data != "no" and str(data).lower() != "false") else None
                 self.ab_loop_b = val
                 if val is not None:
                     self._cached_ab_b = val
@@ -412,6 +425,10 @@ class HeadlessEngine:
         Load a media file or URL for playback.
         If append is True, appends to mpv's playlist; otherwise replaces current playback.
         """
+        if not file_path or "\x00" in file_path:
+            logger.warning("Rejected invalid file_path (empty or contains null byte): %r", file_path)
+            return False
+
         if not self.is_running:
             if not self.start():
                 return False
@@ -448,7 +465,7 @@ class HeadlessEngine:
         Applies (or clears) custom HTTP request headers for network streams.
         Must be called before load_file for URLs that require Referer/User-Agent.
         """
-        if not self.is_running:
+        if not self.is_running or not self._ipc:
             return
         field_list = []
         if headers:
@@ -459,6 +476,9 @@ class HeadlessEngine:
 
     def load_stream(self, stream_url: str, headers: Optional[Dict[str, str]] = None) -> bool:
         """Loads a resolved network stream URL, applying its HTTP headers first."""
+        if not stream_url or "\x00" in stream_url:
+            logger.warning("Rejected invalid stream_url (empty or contains null byte): %r", stream_url)
+            return False
         if not self.is_running:
             if not self.start():
                 return False
@@ -501,6 +521,9 @@ class HeadlessEngine:
             self.paused = False
             self.is_loaded = False
             self.core_idle = True
+            self.path = ""
+            self.filename = ""
+            self.media_title = ""
             self.ab_loop_a = None
             self.ab_loop_b = None
             self._cached_ab_a = None
@@ -581,6 +604,22 @@ class HeadlessEngine:
     # Granular Seek Controls
     # -------------------------------------------------------------------------
 
+    def _check_and_release_ab_on_manual_seek(self) -> None:
+        """Automatically deactivates active A-B loop if user seeks outside [Point A, Point B]."""
+        if self.ab_loop_active and self.ab_loop_b is not None:
+            if self.time_pos > self.ab_loop_b or (self.ab_loop_a is not None and self.time_pos < self.ab_loop_a):
+                self.ab_loop_active = False
+                if self.ab_loop_a is not None:
+                    self._cached_ab_a = self.ab_loop_a
+                if self.ab_loop_b is not None:
+                    self._cached_ab_b = self.ab_loop_b
+                self.ab_loop_a = None
+                self.ab_loop_b = None
+                if self._ipc and self._ipc.is_connected():
+                    self._ipc.send_command_async(["set_property", "ab-loop-a", "no"])
+                    self._ipc.send_command_async(["set_property", "ab-loop-b", "no"])
+                logger.info("Manual seek outside A-B boundary automatically released active A-B loop.")
+
     def seek(self, delta_sec: float, absolute: bool = False) -> bool:
         """
         High-resolution seek.
@@ -590,24 +629,41 @@ class HeadlessEngine:
         if absolute:
             return self.seek_absolute(delta_sec)
         with self._lock:
-            # Optimistically adjust cached time_pos clamped to [0, duration]
-            if self.duration > 0:
-                self.time_pos = max(0.0, min(self.duration, self.time_pos + delta_sec))
+            self._last_manual_seek_time = time.time()
+            if self.ab_loop_active and self.ab_loop_a is not None and self.ab_loop_b is not None:
+                target_pos = self.time_pos + delta_sec
+                if self.ab_loop_a <= target_pos <= self.ab_loop_b:
+                    self.time_pos = target_pos
+                elif target_pos < self.ab_loop_a and abs(delta_sec) <= 10.0:
+                    self.time_pos = self.ab_loop_a
+                else:
+                    self.time_pos = max(0.0, min(self.duration, target_pos) if self.duration > 0 else target_pos)
             else:
-                self.time_pos = max(0.0, self.time_pos + delta_sec)
+                if self.duration > 0:
+                    self.time_pos = max(0.0, min(self.duration, self.time_pos + delta_sec))
+                else:
+                    self.time_pos = max(0.0, self.time_pos + delta_sec)
             self._last_skipped_segment = None
+            self._check_and_release_ab_on_manual_seek()
         if not self._ipc or not self._ipc.is_connected():
             return False
+        if self.duration > 0 and delta_sec > 0 and (self.time_pos + delta_sec) >= self.duration:
+            clamped = max(0.0, self.duration - 0.5)
+            self.time_pos = clamped
+            return self._ipc.send_command_async(["seek", clamped, "absolute+exact"])
         return self._ipc.send_command_async(["seek", delta_sec, "relative"])
 
-    def seek_absolute(self, pos_sec: float) -> bool:
+    def seek_absolute(self, pos_sec: float, is_internal_skip: bool = False) -> bool:
         """Seek to absolute position in seconds, clamped between 0 and duration."""
         with self._lock:
+            self._last_manual_seek_time = time.time()
             if self.duration > 0:
                 self.time_pos = max(0.0, min(self.duration, float(pos_sec)))
             else:
                 self.time_pos = max(0.0, float(pos_sec))
-            self._last_skipped_segment = None
+            if not is_internal_skip:
+                self._last_skipped_segment = None
+            self._check_and_release_ab_on_manual_seek()
         if not self._ipc or not self._ipc.is_connected():
             return False
         return self._ipc.send_command_async(["seek", self.time_pos, "absolute+exact"])
@@ -619,9 +675,11 @@ class HeadlessEngine:
         """
         target_pct = max(0.0, min(100.0, float(percent)))
         with self._lock:
+            self._last_manual_seek_time = time.time()
             if self.duration > 0:
                 self.time_pos = (target_pct / 100.0) * self.duration
             self._last_skipped_segment = None
+            self._check_and_release_ab_on_manual_seek()
         if not self._ipc or not self._ipc.is_connected():
             return False
         return self._ipc.send_command_async(["seek", target_pct, "absolute-percent"])
@@ -738,8 +796,28 @@ class HeadlessEngine:
         pos = max(0.0, round(float(pos), 2))
 
         with self._lock:
-            if self.ab_loop_a is None or pos <= self.ab_loop_a:
-                logger.warning("Point B (%.2fs) must be greater than Point A (%s)", pos, self.ab_loop_a)
+            if self.ab_loop_a is None:
+                logger.warning("Point A must be set before Point B")
+                return pos, False
+
+            if pos < self.ab_loop_a:
+                if (self.ab_loop_a - pos) >= 0.2:
+                    old_a = self.ab_loop_a
+                    self.ab_loop_a = pos
+                    self._cached_ab_a = pos
+                    self.ab_loop_b = old_a
+                    self._cached_ab_b = old_a
+                    self.ab_loop_active = True
+                    self._ipc.send_command_async(["set_property", "ab-loop-a", pos])
+                    self._ipc.send_command_async(["set_property", "ab-loop-b", old_a])
+                    logger.info("Smart swapped A-B points: Point A=%.2fs, Point B=%.2fs", pos, old_a)
+                    self.seek_absolute(pos)
+                    return old_a, True
+                else:
+                    logger.warning("Point B interval too small (%s vs %s)", pos, self.ab_loop_a)
+                    return pos, False
+            elif pos < (self.ab_loop_a + 0.2):
+                logger.warning("Point B (%.2fs) must be at least 0.2s greater than Point A (%s)", pos, self.ab_loop_a)
                 return pos, False
 
             self.ab_loop_b = pos
@@ -843,7 +921,7 @@ class HeadlessEngine:
     def get_current_chapter_title(self) -> Optional[str]:
         """Get the title of the current chapter if chapter metadata exists."""
         with self._lock:
-            if not self.chapter_list or self.chapter < 0 or self.chapter >= len(self.chapter_list):
+            if not self.chapter_list or self.chapter is None or self.chapter < 0 or self.chapter >= len(self.chapter_list):
                 return None
             item = self.chapter_list[self.chapter]
             return item.get("title") if isinstance(item, dict) else None
@@ -851,7 +929,7 @@ class HeadlessEngine:
     def get_current_chapter_start_time(self) -> Optional[float]:
         """Get the start time (in seconds) of the current chapter if available."""
         with self._lock:
-            if not self.chapter_list or self.chapter < 0 or self.chapter >= len(self.chapter_list):
+            if not self.chapter_list or self.chapter is None or self.chapter < 0 or self.chapter >= len(self.chapter_list):
                 return None
             item = self.chapter_list[self.chapter]
             if isinstance(item, dict):
@@ -894,7 +972,7 @@ class HeadlessEngine:
             cur_idx = 0
             found = False
             for idx, t in enumerate(tracks):
-                if self.aid is not None and t.get("id") == self.aid:
+                if self.aid is not None and (t.get("id") == self.aid or str(t.get("id")) == str(self.aid)):
                     cur_idx = idx
                     found = True
                     break
@@ -910,7 +988,7 @@ class HeadlessEngine:
             target_aid = next_track.get("id", next_idx + 1)
             self.aid = target_aid
             for t in tracks:
-                t["selected"] = (t.get("id") == target_aid)
+                t["selected"] = (t.get("id") == target_aid or str(t.get("id")) == str(target_aid))
 
         self._ipc.send_command_async(["set_property", "aid", target_aid])
         logger.info("Switched audio track to ID %s: %s", target_aid, next_track)
@@ -920,7 +998,7 @@ class HeadlessEngine:
         """Get details about the currently selected audio track."""
         with self._lock:
             for track in self.audio_tracks:
-                if track.get("selected") or track.get("id") == self.aid:
+                if track.get("selected") or (self.aid is not None and str(track.get("id")) == str(self.aid)):
                     return track
             return self.audio_tracks[0] if self.audio_tracks else None
 

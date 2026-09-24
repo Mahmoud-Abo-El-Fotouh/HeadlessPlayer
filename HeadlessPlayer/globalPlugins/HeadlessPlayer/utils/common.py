@@ -27,24 +27,30 @@ try:
 except Exception:
     wx = None
 
+try:
+    import addonHandler
+    addonHandler.initTranslation()
+except Exception:
+    pass
+
+if "_" not in globals():
+    try:
+        _ = gettext.gettext
+    except Exception:
+        def _(s: str) -> str:
+            return s
+
 # Supported media file extensions (lowercase with leading dot)
 SUPPORTED_AUDIO_EXTENSIONS = frozenset({
-    ".mp3",
-    ".wav",
-    ".flac",
-    ".m4a",
-    ".ogg",
-    ".opus",
-    ".aac",
+    ".mp3", ".wav", ".flac", ".m4a", ".aac", ".ogg", ".oga", ".opus",
+    ".wma", ".aiff", ".aif", ".ape", ".ac3", ".dts", ".mka", ".mid",
+    ".midi", ".alac", ".wv", ".spx", ".mpc", ".amr", ".caf", ".au", ".snd"
 })
 
 SUPPORTED_VIDEO_EXTENSIONS = frozenset({
-    ".mp4",
-    ".mkv",
-    ".avi",
-    ".webm",
-    ".mov",
-    ".ts",
+    ".mp4", ".mkv", ".avi", ".webm", ".mov", ".wmv", ".flv", ".ts",
+    ".m2ts", ".mts", ".vob", ".ogv", ".3gp", ".3g2", ".m4v", ".mpg",
+    ".mpeg", ".f4v", ".rm", ".rmvb", ".divx"
 })
 
 ALL_SUPPORTED_EXTENSIONS = SUPPORTED_AUDIO_EXTENSIONS | SUPPORTED_VIDEO_EXTENSIONS
@@ -366,10 +372,10 @@ def get_media_dialog_wildcard() -> str:
     all_media_pattern = f"{all_audio_pattern};{all_video_pattern}"
 
     return (
-        f"Media Files ({all_media_pattern})|{all_media_pattern}|"
-        f"Audio Files ({all_audio_pattern})|{all_audio_pattern}|"
-        f"Video Files ({all_video_pattern})|{all_video_pattern}|"
-        f"All Files (*.*)|*.*"
+        f"{_('Media Files')} ({all_media_pattern})|{all_media_pattern}|"
+        f"{_('Audio Files')} ({all_audio_pattern})|{all_audio_pattern}|"
+        f"{_('Video Files')} ({all_video_pattern})|{all_video_pattern}|"
+        f"{_('All Files')} (*.*)|*.*"
     )
 
 

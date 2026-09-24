@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: HeadlessPlayer 1.3.0\n"
 "Report-Msgid-Bugs-To: https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer\n"
-"POT-Creation-Date: 2026-09-20 01:13+0300\n"
-"PO-Revision-Date: 2026-09-20 01:13+0300\n"
+"POT-Creation-Date: 2026-09-24 22:59+0300\n"
+"PO-Revision-Date: 2026-09-24 22:59+0300\n"
 "Last-Translator: Mahmoud Abo El Fotouh <mahmoudaboelfotouh.20@gmail.com>\n"
 "Language-Team: English <mahmoudaboelfotouh.20@gmail.com>\n"
 "Language: en\n"
@@ -830,6 +830,9 @@ msgstr "Mark end of loop (Point B)."
 
 msgid "Mark start of loop (Point A)."
 msgstr "Mark start of loop (Point A)."
+
+msgid "Point B must be set after Point A"
+msgstr "Point B must be set after Point A"
 
 msgid "Medium (AAC ~128 kbps - Standard)"
 msgstr "Medium (AAC ~128 kbps - Standard)"
@@ -1926,3 +1929,112 @@ msgstr "Could not generate or copy the diagnostics report to clipboard."
 msgid "Diagnostics Error"
 msgstr "Diagnostics Error"
 
+
+msgid "Fast Seek Backward"
+msgstr "Fast Seek Backward"
+
+msgid "Fast Seek Forward"
+msgstr "Fast Seek Forward"
+
+msgid "First Track in Playlist"
+msgstr "First Track in Playlist"
+
+msgid "Jump to end of current track"
+msgstr "Jump to end of current track"
+
+msgid "Jump to start of current track"
+msgstr "Jump to start of current track"
+
+msgid "Last Track in Playlist"
+msgstr "Last Track in Playlist"
+
+msgid "Next Chapter"
+msgstr "Next Chapter"
+
+msgid "Normal Seek Backward"
+msgstr "Normal Seek Backward"
+
+msgid "Normal Seek Forward"
+msgstr "Normal Seek Forward"
+
+msgid "Open HeadlessPlayer Settings Panel"
+msgstr "Open HeadlessPlayer Settings Panel"
+
+msgid "Previous Chapter"
+msgstr "Previous Chapter"
+
+msgid "Recent Playlists: Jump to Newest"
+msgstr "Recent Playlists: Jump to Newest"
+
+msgid "Recent Playlists: Jump to Oldest"
+msgstr "Recent Playlists: Jump to Oldest"
+
+msgid "Recent Playlists: Next / Newer"
+msgstr "Recent Playlists: Next / Newer"
+
+msgid "Recent Playlists: Previous / Older"
+msgstr "Recent Playlists: Previous / Older"
+
+msgid "Recent Tracks: Jump to Newest"
+msgstr "Recent Tracks: Jump to Newest"
+
+msgid "Recent Tracks: Jump to Oldest"
+msgstr "Recent Tracks: Jump to Oldest"
+
+msgid "Recent Tracks: Next / Newer"
+msgstr "Recent Tracks: Next / Newer"
+
+msgid "Recent Tracks: Previous / Older"
+msgstr "Recent Tracks: Previous / Older"
+
+msgid "Remove Focused Recent Item from History"
+msgstr "Remove Focused Recent Item from History"
+
+msgid "Slow / Precise Seek Backward"
+msgstr "Slow / Precise Seek Backward"
+
+msgid "Slow / Precise Seek Forward"
+msgstr "Slow / Precise Seek Forward"
+
+msgid "Ultrafast Seek Backward"
+msgstr "Ultrafast Seek Backward"
+
+msgid "Ultrafast Seek Forward"
+msgstr "Ultrafast Seek Forward"
+
+msgid "%s (%d of %d)"
+msgstr "%s (%d of %d)"
+
+msgid "All Files"
+msgstr "All Files"
+
+msgid "Audio Files"
+msgstr "Audio Files"
+
+msgid "Media Files"
+msgstr "Media Files"
+
+msgid "Video Files"
+msgstr "Video Files"
+
+msgid "Generating system diagnostics report, please wait..."
+msgstr "Generating system diagnostics report, please wait..."
+
+msgid "Generating diagnostics report..."
+msgstr "Generating diagnostics report..."
+
+msgid "Could not open settings dialog"
+msgstr "Could not open settings dialog"
+
+msgid "Could not open export dialog."
+msgstr "Could not open export dialog."
+
+msgid "TikTok Audio"
+msgstr "TikTok Audio"
+
+
+msgid "This playlist requires valid sign-in cookies. Please configure or update your cookies.txt file in HeadlessPlayer settings."
+msgstr "This playlist requires valid sign-in cookies. Please configure or update your cookies.txt file in HeadlessPlayer settings."
+
+msgid "This feed requires valid sign-in cookies. Please configure or update your cookies.txt file in HeadlessPlayer settings."
+msgstr "This feed requires valid sign-in cookies. Please configure or update your cookies.txt file in HeadlessPlayer settings."

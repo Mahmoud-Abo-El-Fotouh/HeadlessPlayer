@@ -48,7 +48,8 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "ytdlpCookiesFile": "",
     "ytdlpUpdateChannel": "stable",
     "searchResultsCount": 20,
-    "maxStreamPlaylistItems": 300,
+    "maxStreamPlaylistItems": 50,
+    "youtubeExtractorClient": "tv_embedded",
     "sponsorBlockEnabled": True,
     "announceSponsorSkip": True,
     "sponsorBlockCategories": "sponsor,selfpromo,interaction,intro,outro",
@@ -141,11 +142,16 @@ def initializeConfig() -> None:
     for key, default_val in DEFAULT_CONFIG.items():
         if db.get_setting(key) is None:
             db.set_setting(key, default_val)
-    # Populate any missing default keymap shortcuts
+    # Populate any missing default keymap shortcuts and migrate legacy next/prev shortcuts
     for action, default_key in DEFAULT_KEYMAP.items():
         config_key = f"key_{action}"
-        if db.get_setting(config_key) is None:
+        stored = db.get_setting(config_key)
+        if stored is None:
             db.set_setting(config_key, default_key)
+        elif action == "next_track" and stored == "pagedown":
+            db.set_setting(config_key, "pagedown,tab")
+        elif action == "prev_track" and stored == "pageup":
+            db.set_setting(config_key, "pageup,shift+tab")
 
 
 def getConfig() -> Dict[str, Any]:
@@ -248,7 +254,12 @@ def getKeymap() -> Dict[str, str]:
                 legacy_key = config_key.replace("recent_playlist_", "recent_container_")
                 val = db.get_setting(legacy_key)
             if val is not None and isinstance(val, str):
-                keymap[action] = val.strip().lower()
+                cleaned = val.strip().lower()
+                if action == "next_track" and cleaned == "pagedown":
+                    cleaned = "pagedown,tab"
+                elif action == "prev_track" and cleaned == "pageup":
+                    cleaned = "pageup,shift+tab"
+                keymap[action] = cleaned
     except Exception:
         pass
     return keymap

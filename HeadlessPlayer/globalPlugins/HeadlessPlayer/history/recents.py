@@ -44,11 +44,14 @@ def _inspect_container_item(item: Dict[str, Any], title: str) -> tuple[str, str]
     if ctype not in ("folder", "search"):
         if not p.startswith(("http://", "https://", "youtube:", "ytdl://", "custom://")) and not os.path.exists(p):
             ctype = "search"
-        elif "YouTube results for:" in t or "نتائج بحث يوتيوب" in t:
+        elif any(kw in t for kw in ("YouTube results for:", "نتائج يوتيوب عن:", "نتائج بحث يوتيوب")):
             ctype = "search"
 
     if ctype == "search":
-        for prefix in ("YouTube results for: ", "نتائج بحث يوتيوب لـ: ", "نتائج بحث يوتيوب لـ : "):
+        for prefix in (
+            "YouTube results for: ", "نتائج يوتيوب عن: ", "نتائج يوتيوب عن : ",
+            "نتائج بحث يوتيوب لـ: ", "نتائج بحث يوتيوب لـ : ", "نتائج بحث يوتيوب: "
+        ):
             if title.startswith(prefix):
                 title = title[len(prefix):].strip()
                 break
@@ -97,14 +100,14 @@ class RecentsManager:
         self.cancel_focus()
 
     def playlist_next(self) -> None:
-        """Move forward (towards newer / end) in recent playlists."""
-        self.navigate("playlist", delta=-1)
+        """Move forward (towards older items) in recent playlists."""
+        self.navigate("playlist", delta=1)
 
     container_next = playlist_next
 
     def playlist_prev(self) -> None:
-        """Move backward (towards older / start) in recent playlists."""
-        self.navigate("playlist", delta=1)
+        """Move backward (towards newer items) in recent playlists."""
+        self.navigate("playlist", delta=-1)
 
     container_prev = playlist_prev
 
@@ -121,12 +124,12 @@ class RecentsManager:
     container_last = playlist_last
 
     def track_next(self) -> None:
-        """Move forward (towards newer / end) in recent tracks."""
-        self.navigate("track", delta=-1)
+        """Move forward (towards older items) in recent tracks."""
+        self.navigate("track", delta=1)
 
     def track_prev(self) -> None:
-        """Move backward (towards older / start) in recent tracks."""
-        self.navigate("track", delta=1)
+        """Move backward (towards newer items) in recent tracks."""
+        self.navigate("track", delta=-1)
 
     def track_first(self) -> None:
         """Jump to first / oldest track in recent history."""
@@ -392,7 +395,7 @@ class RecentsManager:
                 raw_new_title = disambiguate_recent_name(new_item, remaining)
                 _ctype2, new_title = _inspect_container_item(new_item, raw_new_title)
                 display_num = len(remaining) - self.playlist_idx
-                self.controller.speech.speak(f"{new_title} ({display_num} of {len(remaining)})")
+                self.controller.speech.speak(_("%s (%d of %d)") % (new_title, display_num, len(remaining)))
             return True
 
         elif self.focus_category == "track":
@@ -416,7 +419,7 @@ class RecentsManager:
                 new_item = remaining[self.track_idx]
                 new_title = disambiguate_recent_name(new_item, remaining)
                 display_num = len(remaining) - self.track_idx
-                self.controller.speech.speak(f"{new_title} ({display_num} of {len(remaining)})")
+                self.controller.speech.speak(_("%s (%d of %d)") % (new_title, display_num, len(remaining)))
             return True
 
         return False

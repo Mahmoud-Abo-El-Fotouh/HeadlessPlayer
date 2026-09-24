@@ -49,6 +49,7 @@ try:
         DEFAULT_KEYMAP,
         getKeymap,
         setKeymap,
+        parseKeymapKeys,
     )
 except ImportError:
     from ..config_spec import (
@@ -57,6 +58,7 @@ except ImportError:
         DEFAULT_KEYMAP,
         getKeymap,
         setKeymap,
+        parseKeymapKeys,
     )
 
 try:
@@ -249,7 +251,7 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
         """Formats a keymap value which may hold multiple comma-separated shortcuts."""
         if not key_id:
             return _("(Not Set)")
-        keys = [k.strip() for k in key_id.split(",") if k.strip()]
+        keys = parseKeymapKeys(key_id)
         if not keys:
             return _("(Not Set)")
         return _(" and ").join(self._format_single_key_display(k) for k in keys)
@@ -261,9 +263,7 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
         otherwise it replaces all current shortcuts for the action.
         """
         key_id = key_id.strip().lower()
-        existing = [
-            k.strip() for k in self.current_keymap.get(action_id, "").split(",") if k.strip()
-        ]
+        existing = parseKeymapKeys(self.current_keymap.get(action_id, ""))
         as_secondary = bool(getattr(self, "secondaryChk", None) and self.secondaryChk.GetValue())
 
         if as_secondary and existing:
@@ -308,7 +308,7 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
         conflicts = []
         for act_id, k_val in self.current_keymap.items():
             if act_id != action_id:
-                keys = [k.strip().lower() for k in k_val.split(",") if k.strip()]
+                keys = parseKeymapKeys(k_val)
                 if target_norm in keys:
                     act_name = act_id
                     for a_id, a_name in ACTION_DISPLAY_NAMES:
@@ -343,7 +343,7 @@ class HeadlessPlayerShortcutsDialog(_WxDialog):
 
         # Remove key from conflicting actions
         for act_id, _ in conflicts:
-            existing = [k.strip() for k in self.current_keymap.get(act_id, "").split(",") if k.strip()]
+            existing = parseKeymapKeys(self.current_keymap.get(act_id, ""))
             remaining = [k for k in existing if k.lower() != target_norm]
             self.current_keymap[act_id] = ",".join(remaining)
 

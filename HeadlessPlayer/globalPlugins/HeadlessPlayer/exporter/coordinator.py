@@ -47,37 +47,42 @@ class ExportCoordinator:
     def __init__(self, controller: Any) -> None:
         self.controller = controller
         self.is_busy: bool = False
+        self._dialog_open: bool = False
 
     def export_range(self) -> Tuple[Optional[float], Optional[float], str]:
         """
         Returns (start, end, scenario): both points, A + current position as B,
         or nothing selected.
         """
-        a = self.controller.engine.ab_loop_a
-        b = self.controller.engine.ab_loop_b
-        if a is not None and b is not None and b > a:
+        engine = self.controller.engine
+        a = engine.ab_loop_a
+        b = engine.ab_loop_b
+        if a is not None and b is not None and float(b) > float(a):
             return float(a), float(b), "ab"
         if a is not None:
-            pos = float(self.controller.engine.time_pos or 0.0)
-            if pos > float(a) + 0.5:
-                try:
-                    self.controller.engine.set_ab_point_b(pos)
-                except Exception:
-                    pass
-                return float(a), pos, "a_auto"
+            pos = engine.time_pos
+            if pos is not None and pos > float(a) + 0.01:
+                return float(a), float(pos), "a_auto"
         return None, None, "none"
 
     def export_source(self, cur: Any) -> Any:
         """Describes media export source for the given track item."""
         info = None
+        target_path = cur.path
         if getattr(cur, "is_stream", False) and getattr(self.controller, "_current_stream_info", None):
             st_info = self.controller._current_stream_info
             vid_id = str(st_info.get("id") or "")
             wp_url = str(st_info.get("webpage_url") or "")
             last_loaded = getattr(self.controller, "_last_loaded_path", None)
-            if (vid_id and vid_id in (cur.path or "")) or (wp_url and wp_url == (cur.path or "")) or (cur.path == last_loaded):
+            if (vid_id and vid_id in (cur.path or "")) or (wp_url and wp_url == (cur.path or "")) or (cur.path == last_loaded) or ("googlevideo.com" in (cur.path or "")):
                 info = st_info
-        return clip_exporter.describe_source(cur.path, cur.display_name, info)
+                if wp_url:
+                    target_path = wp_url
+        if not info and getattr(cur, "is_stream", False) and isinstance(getattr(cur, "metadata", None), dict):
+            info = cur.metadata.get("stream_info")
+            if info and info.get("webpage_url"):
+                target_path = info.get("webpage_url")
+        return clip_exporter.describe_source(target_path, cur.display_name, info)
 
     def export_clip(self) -> None:
         """
@@ -88,12 +93,14 @@ class ExportCoordinator:
         if not cur or not cur.path:
             self.controller.speech.speak(_("Nothing is currently loaded."))
             return
-        if self.is_busy:
+        if self.is_busy or self._dialog_open:
             self.controller.speech.speak(_("An export is already in progress, please wait."))
             return
         if self.controller._current_track_is_live_stream():
             self.controller.speech.speak(_("Live streams cannot be exported."))
             return
+
+        self._dialog_open = True
         start, end, scenario = self.export_range()
         if scenario == "a_auto":
             self.controller.speech.speak(_("End point set at the current position."))
@@ -115,6 +122,7 @@ class ExportCoordinator:
             try:
                 source = self.export_source(cur)
             except Exception as e:
+                self._dialog_open = False
                 if "LIVE" in str(e):
                     self.controller._speak_async(_("Live streams cannot be exported."))
                 else:
@@ -127,17 +135,29 @@ class ExportCoordinator:
             defaults = clip_exporter.get_default_settings()
 
             def on_submit(res: Dict[str, Any]) -> None:
+                self._dialog_open = False
+                self.controller._restore_player_mode_after_dialog()
                 if res.get("remember"):
                     clip_exporter.remember_settings(res)
                 self.run_export(source, res, start, end, res.get("filename", ""), res.get("folder", ""))
 
-            self.controller._exit_player_mode_for_dialog()
-            prompt_export_dialog(
-                source, start, end, defaults, on_submit, None,
-                suspend_capture=self.controller._suspend_input,
-                resume_capture=self.controller._resume_input,
-                intro_message=intro
-            )
+            def on_cancelled() -> None:
+                self._dialog_open = False
+                self.controller._restore_player_mode_after_dialog()
+
+            try:
+                self.controller._exit_player_mode_for_dialog()
+                prompt_export_dialog(
+                    source, start, end, defaults, on_submit, on_cancelled,
+                    suspend_capture=self.controller._suspend_input,
+                    resume_capture=self.controller._resume_input,
+                    intro_message=intro
+                )
+            except Exception as e:
+                self._dialog_open = False
+                self.controller._restore_player_mode_after_dialog()
+                logger.error("Failed to show export dialog: %s", e, exc_info=True)
+                self.controller._speak_async(_("Could not open export dialog."))
 
         threading.Thread(target=worker, daemon=True, name="HeadlessPlayer-ExportPrep").start()
 

@@ -133,13 +133,14 @@ class Track:
             title=data.get("title"),
             duration=data.get("duration"),
             metadata=data.get("metadata"),
+            is_stream=data.get("is_stream"),
         )
 
     @staticmethod
     def _normalize_track_key(p: Optional[str]) -> str:
         if not p:
             return ""
-        if p.startswith(("http://", "https://", "ytdl://", "custom://")):
+        if p.startswith(("http://", "https://", "ytdl://", "custom://", "youtube:")):
             return p.strip()
         try:
             return os.path.normcase(p)
