@@ -18,6 +18,7 @@ import logging
 import os
 import re
 import subprocess
+import sys
 import threading
 import time
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -130,12 +131,34 @@ def remember_settings(settings: Dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 _INVALID_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
+_WINDOWS_RESERVED_NAMES = frozenset({
+    "CON", "PRN", "AUX", "NUL",
+    "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+    "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+})
 
 
 def safe_filename(name: str, max_len: int = 100) -> str:
     name = _INVALID_CHARS.sub(" ", name or "").strip().rstrip(".")
     name = re.sub(r"\s+", " ", name)
-    return (name or "clip")[:max_len].strip()
+    if not name:
+        return "clip"
+    root, ext = os.path.splitext(name)
+    if root.upper() in _WINDOWS_RESERVED_NAMES:
+        root = f"{root}_clip"
+        name = root + ext if ext else root
+    if len(name) <= max_len:
+        return name
+    if ext and len(ext) <= 8:
+        max_root = max(1, max_len - len(ext))
+        final_root = root[:max_root].strip()
+        if final_root.upper() in _WINDOWS_RESERVED_NAMES:
+            final_root = f"{final_root}_clip"
+        return final_root + ext
+    final_name = name[:max_len].strip()
+    if final_name.upper() in _WINDOWS_RESERVED_NAMES:
+        final_name = f"{final_name}_clip"
+    return final_name
 
 
 def fmt_clock(sec: float) -> str:
@@ -179,7 +202,8 @@ class ExportSource:
     """
 
     def __init__(self, kind: str, path: str, title: str, has_video: bool, audio_url: str = "",
-                 video_options: Optional[List[Any]] = None, duration: float = 0.0) -> None:
+                 video_options: Optional[List[Any]] = None, duration: float = 0.0,
+                 http_headers: Optional[Dict[str, str]] = None) -> None:
         self.kind = kind
         self.path = path
         self.title = title
@@ -187,6 +211,7 @@ class ExportSource:
         self.audio_url = audio_url
         self.video_options = list(video_options or [])
         self.duration = float(duration or 0.0)
+        self.http_headers = dict(http_headers or {})
 
 
 _VIDEO_EXT = {".mp4", ".mkv", ".avi", ".webm", ".mov", ".wmv", ".flv", ".ts", ".m2ts", ".vob", ".ogv", ".3gp", ".mpg", ".mpeg", ".m4v"}
@@ -202,11 +227,17 @@ def describe_source(path: str, title: str = "", stream_info: Optional[Dict[str, 
     audio_url = ""
     dur = 0.0
     has_video = False
-    video_options: List[Tuple[str, str, int]] = []
-    is_yt = ("youtube.com" in low or "youtu.be" in low or low.startswith("youtube:"))
+    video_options: List[Tuple[str, str, int, bool]] = []
+    http_headers: Dict[str, str] = {}
+    is_yt = ("youtube.com" in low or "youtu.be" in low or low.startswith("youtube:") or "googlevideo.com" in low)
+    if stream_info:
+        wp = str(stream_info.get("webpage_url") or "").lower()
+        if "youtube.com" in wp or "youtu.be" in wp:
+            is_yt = True
 
     if stream_info and stream_info.get("stream_url"):
-        audio_url = str(stream_info["stream_url"])
+        audio_url = str(stream_info.get("audio_url") or stream_info["stream_url"])
+        http_headers = dict(stream_info.get("http_headers") or {})
         dur = float(stream_info.get("duration") or 0.0)
         has_video = bool(stream_info.get("has_video"))
         video_options = list(stream_info.get("video_options") or [])
@@ -214,8 +245,9 @@ def describe_source(path: str, title: str = "", stream_info: Optional[Dict[str, 
             title = str(stream_info["title"])
     else:
         try:
-            res = stream_engine.resolve_stream(path)
-            audio_url = str(res.get("stream_url") or "")
+            res = stream_engine.resolve_stream(path, prefer_audio=False)
+            audio_url = str(res.get("audio_url") or res.get("stream_url") or "")
+            http_headers = dict(res.get("http_headers") or {})
             dur = float(res.get("duration") or 0.0)
             has_video = bool(res.get("has_video"))
             video_options = list(res.get("video_options") or [])
@@ -224,12 +256,31 @@ def describe_source(path: str, title: str = "", stream_info: Optional[Dict[str, 
         except Exception:
             audio_url = path
 
+    # If stream info has few/no video options for YouTube, attempt fresh resolution using canonical URL
+    if is_yt and len(video_options) <= 1 and stream_engine is not None:
+        target_resolve_url = path
+        if ("googlevideo.com" in low or ("youtube.com" not in low and "youtu.be" not in low)) and stream_info and stream_info.get("webpage_url"):
+            target_resolve_url = stream_info["webpage_url"]
+        try:
+            res = stream_engine.resolve_stream(target_resolve_url, prefer_audio=False)
+            if res.get("video_options") and len(res["video_options"]) > len(video_options):
+                video_options = list(res["video_options"])
+                has_video = True
+                if res.get("audio_url"):
+                    audio_url = str(res["audio_url"])
+                elif not audio_url and res.get("stream_url"):
+                    audio_url = str(res["stream_url"])
+                if res.get("http_headers"):
+                    http_headers = dict(res["http_headers"])
+        except Exception:
+            pass
+
     if not has_video and (os.path.splitext(low.split("?")[0])[1] in _VIDEO_EXT):
         has_video = True
 
     name = title or os.path.basename(path.split("?")[0]) or "stream"
     kind = "youtube" if is_yt else "stream"
-    return ExportSource(kind, path, name, has_video, audio_url, video_options, dur)
+    return ExportSource(kind, path, name, has_video, audio_url, video_options, dur, http_headers=http_headers)
 
 
 # ---------------------------------------------------------------------------
@@ -273,46 +324,82 @@ def build_command(source: ExportSource, settings: Dict[str, Any], start: Optiona
     if end is not None:
         cmd.append(f"--end={float(end):.3f}")
 
+    headers = getattr(source, "http_headers", None)
+    if headers and isinstance(headers, dict):
+        header_fields = []
+        for k, v in headers.items():
+            if k and v is not None:
+                header_fields.append(f"{k}: {v}")
+        if header_fields:
+            cmd.append(f"--http-header-fields={','.join(header_fields)}")
+
+    src_target = (source.audio_url or source.path or "").split("?")[0]
+    src_ext = os.path.splitext(src_target)[1].lower()
+
     if fmt == "mp3":
-        cmd += ["--no-video", "--oac=libmp3lame", "--oacopts=b=128k" if story else "--oacopts=b=192k"]
+        if src_ext == ".mp3":
+            cmd += ["--no-video", "--oac=copy"]
+        else:
+            cmd += ["--no-video", "--oac=libmp3lame", "--oacopts=b=128k" if story else "--oacopts=b=192k"]
         inputs = [source.audio_url or source.path]
     elif fmt == "m4a":
-        cmd += ["--no-video", "--oac=aac", "--oacopts=b=96k" if story else "--oacopts=b=160k"]
+        if src_ext in (".m4a", ".aac"):
+            cmd += ["--no-video", "--oac=copy"]
+        else:
+            cmd += ["--no-video", "--oac=aac", "--oacopts=b=96k" if story else "--oacopts=b=160k"]
+        inputs = [source.audio_url or source.path]
+    elif not source.has_video and not bool(settings.get("audio_to_video")):
+        # Audio source without story video requested: export clean audio-only MP4 container
+        if src_ext in (".m4a", ".aac"):
+            cmd += ["--no-video", "--oac=copy"]
+        else:
+            cmd += ["--no-video", "--oac=aac", "--oacopts=b=96k" if story else "--oacopts=b=160k"]
         inputs = [source.audio_url or source.path]
     else:
-        cmd += ["--ovc=libx264", "--oac=aac", "--oacopts=b=96k" if story else "--oacopts=b=160k"]
-        cmd.append("--ovcopts=preset=veryfast,crf=28" if story else "--ovcopts=preset=veryfast,crf=21")
-        cmd.append("--ofopts=movflags=+faststart")
-        want_waveform = bool(settings.get("audio_to_video")) or not source.has_video
-        if not want_waveform and (source.kind in ("youtube", "stream") and source.video_options):
-            label = str(settings.get("video_quality") or "")
-            chosen = next((v for v in source.video_options if v[0] == label), None)
-            if chosen is None:
-                cands = sorted(source.video_options, key=lambda v: v[2], reverse=True)
-                if story:
-                    cands = [v for v in cands if v[2] <= STORY_MAX_HEIGHT] or cands
-                chosen = cands[0] if cands else None
-            if chosen:
-                if len(chosen) >= 4:
-                    combined = bool(chosen[3])
+        want_waveform = bool(settings.get("audio_to_video")) and not source.has_video
+        can_stream_copy_video = (
+            not want_waveform
+            and not story
+            and source.kind == "local"
+            and src_ext == ".mp4"
+            and source.has_video
+        )
+        if can_stream_copy_video:
+            cmd += ["--ovc=copy", "--oac=copy"]
+            inputs = [source.path]
+        else:
+            cmd += ["--ovc=libx264", "--oac=aac", "--oacopts=b=96k" if story else "--oacopts=b=160k"]
+            cmd.append("--ovcopts=preset=veryfast,crf=28" if story else "--ovcopts=preset=veryfast,crf=21")
+            cmd.append("--ofopts=movflags=+faststart")
+            if not want_waveform and (source.kind in ("youtube", "stream") and source.video_options):
+                label = str(settings.get("video_quality") or "")
+                chosen = next((v for v in source.video_options if v[0] == label), None)
+                if chosen is None:
+                    cands = sorted(source.video_options, key=lambda v: v[2], reverse=True)
+                    if story:
+                        cands = [v for v in cands if v[2] <= STORY_MAX_HEIGHT] or cands
+                    chosen = cands[0] if cands else None
+                if chosen:
+                    if len(chosen) >= 4:
+                        combined = bool(chosen[3])
+                    else:
+                        combined = "with audio" in str(chosen[0]).lower()
+                    inputs = [chosen[1]]
+                    if not combined and source.audio_url:
+                        cmd.append(f"--audio-file={source.audio_url}")
+                    vf = [f"scale=-2:{STORY_MAX_HEIGHT}"] if (story and chosen[2] > STORY_MAX_HEIGHT) else []
+                    vf.append("format=yuv420p")
+                    cmd.append("--vf=lavfi=[" + ",".join(vf) + "]")
                 else:
-                    combined = "with audio" in str(chosen[0]).lower()
-                inputs = [chosen[1]]
-                if not combined and source.audio_url:
-                    cmd.append(f"--audio-file={source.audio_url}")
-                vf = [f"scale=-2:{STORY_MAX_HEIGHT}"] if (story and chosen[2] > STORY_MAX_HEIGHT) else []
+                    inputs = [source.audio_url or source.path]
+            elif not want_waveform:
+                inputs = [source.path]
+                vf = [f"scale=-2:'min({STORY_MAX_HEIGHT},ih)'"] if story else []
                 vf.append("format=yuv420p")
                 cmd.append("--vf=lavfi=[" + ",".join(vf) + "]")
             else:
+                cmd.append(WAVEFORM_GRAPH)
                 inputs = [source.audio_url or source.path]
-        elif not want_waveform:
-            inputs = [source.path]
-            vf = [f"scale=-2:'min({STORY_MAX_HEIGHT},ih)'"] if story else []
-            vf.append("format=yuv420p")
-            cmd.append("--vf=lavfi=[" + ",".join(vf) + "]")
-        else:
-            cmd.append(WAVEFORM_GRAPH)
-            inputs = [source.audio_url or source.path]
     cmd.append(f"--o={dest}")
     cmd += inputs
     return cmd
@@ -323,9 +410,13 @@ def export(source: ExportSource, settings: Dict[str, Any], start: Optional[float
     folder = folder or get_export_folder()
     os.makedirs(folder, exist_ok=True)
     fmt = settings.get("format", "mp3")
-    if not filename.lower().endswith("." + fmt):
-        filename = os.path.splitext(filename)[0] + "." + fmt
-    dest = unique_path(folder, safe_filename(filename, 150))
+    ext = "." + fmt.lstrip(".")
+    if filename.lower().endswith(ext):
+        base_name = filename[:-len(ext)]
+    else:
+        base_name = os.path.splitext(filename)[0]
+    safe_base = safe_filename(base_name, 150 - len(ext))
+    dest = unique_path(folder, safe_base + ext)
     cmd = build_command(source, settings, start, end, dest)
     log_debug("EXPORT", "mpv export: %s", " ".join(c if len(c) < 90 else c[:90] + "..." for c in cmd))
     t0 = time.time()

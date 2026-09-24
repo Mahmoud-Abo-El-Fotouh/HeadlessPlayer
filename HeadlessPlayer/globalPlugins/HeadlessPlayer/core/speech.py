@@ -88,15 +88,25 @@ logger = logging.getLogger("HeadlessPlayer.SpeechFeedback")
 SEEK_DEBOUNCE_INTERVAL: float = 0.250  # 250 milliseconds
 
 
+class _DebounceHandle:
+    """Lightweight reusable timer handle for debounced speech announcements."""
+    def __init__(self, speech: Any) -> None:
+        self._speech = speech
+        self.is_active = True
+
+    def cancel(self) -> None:
+        self.is_active = False
+
+
 class SpeechFeedback:
     """
-    Coordinates spoken and braille feedback for HeadlessPlayer actions and queries.
-    Manages rapid seek event coalescing (debouncing) with immediate auditory tactile clicks.
+    Accessible Speech & Braille Output Manager with granular verbosity controls,
+    rapid seek announcement debouncing, relative jump summaries, and acoustic tactile audio clicks.
     """
 
     def __init__(
         self,
-        debounce_interval: float = SEEK_DEBOUNCE_INTERVAL,
+        debounce_interval: float = 0.05,
         ui_module: Any = None,
         speech_module: Any = None
     ) -> None:
@@ -105,12 +115,20 @@ class SpeechFeedback:
         self._speech = speech_module or speech
         self._lock = threading.RLock()
 
-        # Rapid seek debouncing state
-        self._seek_timer: Optional[threading.Timer] = None
+        # Rapid seek debouncing state managed by a single reusable background worker
+        self._seek_timer: Optional[_DebounceHandle] = None
         self._seek_accum_delta: float = 0.0
         self._seek_last_target_pos: float = 0.0
         self._seek_last_duration: float = 0.0
         self._seek_last_time: float = 0.0
+        self._worker_stopped: bool = False
+        self._seek_event = threading.Event()
+        self._worker_thread = threading.Thread(
+            target=self._debounce_worker_loop,
+            daemon=True,
+            name="HeadlessPlayer-SpeechDebounceWorker"
+        )
+        self._worker_thread.start()
 
         # Message history for inspection and unit testing
         self.message_history: list[str] = []
@@ -313,6 +331,22 @@ class SpeechFeedback:
     # Rapid Seek Debouncing & Feedback
     # -------------------------------------------------------------------------
 
+    def _debounce_worker_loop(self) -> None:
+        """Dedicated background loop that monitors seek debouncing timeouts without thread churn."""
+        while not self._worker_stopped:
+            self._seek_event.wait(timeout=0.02)
+            with self._lock:
+                if self._worker_stopped:
+                    break
+                if self._seek_timer is None:
+                    self._seek_event.clear()
+                    continue
+                now = time.time()
+                elapsed = now - self._seek_last_time
+                if elapsed >= self.debounce_interval - 0.005:
+                    self._flush_debounced_seek()
+                    self._seek_event.clear()
+
     def on_seek_performed(
         self,
         delta_sec: float,
@@ -321,62 +355,44 @@ class SpeechFeedback:
         play_click: bool = True
     ) -> None:
         """
-        Handles seek navigation events and coalesces rapid seeks into a single spoken announcement after 250ms of inactivity.
+        Handles seek navigation events and coalesces rapid seeks into a single spoken announcement after debounce_interval of inactivity.
         """
         # Check verbosity setting
         if not self.is_announcement_enabled("seek"):
             return
 
         with self._lock:
-            # Cancel active debounce timer
-            if self._seek_timer is not None:
-                try:
-                    self._seek_timer.cancel()
-                except Exception:
-                    pass
-                self._seek_timer = None
-
             # Accumulate seek delta
             self._seek_accum_delta += delta_sec
             self._seek_last_target_pos = max(0.0, float(current_pos))
             self._seek_last_duration = max(0.0, float(duration))
             self._seek_last_time = time.time()
 
-            # Schedule delayed speech announcement
-            self._seek_timer = threading.Timer(
-                self.debounce_interval,
-                self._flush_debounced_seek
-            )
-            self._seek_timer.daemon = True
-            self._seek_timer.start()
+            if self._seek_timer is None:
+                self._seek_timer = _DebounceHandle(self)
+            self._seek_event.set()
 
     def _flush_debounced_seek(self) -> None:
         """
         Dispatches the accumulated seek announcement once debouncing timer expires.
         """
         with self._lock:
-            now = time.time()
-            elapsed = now - getattr(self, "_seek_last_time", 0.0)
-            if elapsed < self.debounce_interval - 0.01:
-                rem = max(0.05, self.debounce_interval - elapsed)
-                self._seek_timer = threading.Timer(rem, self._flush_debounced_seek)
-                self._seek_timer.daemon = True
-                self._seek_timer.start()
-                return
-
             self._seek_timer = None
             delta = self._seek_accum_delta
             target_pos = self._seek_last_target_pos
             duration = self._seek_last_duration
             self._seek_accum_delta = 0.0
 
-        if delta == 0.0 and target_pos == 0.0 and duration == 0.0:
+        if abs(delta) < 0.01:
             return
 
-        # Format relative delta: e.g. "5s", "30s", "05:00"
+        # Format relative delta: e.g. "0.5s", "5s", "30s", "05:00"
         abs_delta = abs(delta)
-        if abs_delta < 60.0 and abs_delta == int(abs_delta):
-            delta_str = f"{int(abs_delta)}s"
+        if abs_delta < 60.0:
+            if abs_delta == int(abs_delta):
+                delta_str = f"{int(abs_delta)}s"
+            else:
+                delta_str = f"{round(abs_delta, 2):g}s"
         else:
             delta_str = format_time(abs_delta)
 
@@ -402,11 +418,14 @@ class SpeechFeedback:
                     pass
                 self._seek_timer = None
             self._seek_accum_delta = 0.0
+            self._seek_event.clear()
 
     def cleanup(self) -> None:
         """
         Cleans up active resources and cancels pending timers.
         """
+        self._worker_stopped = True
+        self._seek_event.set()
         self.cancel_debounced_seek()
 
     def announce_percent_jump(self, percent: int, target_pos: float) -> None:

@@ -69,7 +69,7 @@ def prompt_export_dialog(
     """Shows the exporter dialog on the wx main thread."""
 
     # Resolve module globals dynamically in case wx or gui were patched in unit tests
-    mod = sys.modules.get("globalPlugins.HeadlessPlayer.export_dialog", sys.modules[__name__])
+    mod = sys.modules.get("globalPlugins.HeadlessPlayer.exporter.dialog") or sys.modules.get("globalPlugins.HeadlessPlayer.export_dialog", sys.modules[__name__])
     cur_wx = getattr(mod, "wx", wx)
     cur_gui = getattr(mod, "gui", gui)
     cur_guiHelper = getattr(mod, "guiHelper", guiHelper)
@@ -123,7 +123,15 @@ def prompt_export_dialog(
             if vq_labels:
                 vqChoice = helper.addLabeledControl(_("&Video quality (YouTube):"), cur_wx.Choice, choices=vq_labels)
                 want = str(defaults.get("video_quality") or "")
-                vqChoice.SetSelection(vq_labels.index(want) if want in vq_labels else 0)
+                if want in vq_labels:
+                    vqChoice.SetSelection(vq_labels.index(want))
+                else:
+                    pref_idx = 0
+                    for pref in ("720p", "1080p", "480p", "360p"):
+                        if pref in vq_labels:
+                            pref_idx = vq_labels.index(pref)
+                            break
+                    vqChoice.SetSelection(pref_idx)
 
             wavChk = None
             if not getattr(source, "has_video", False):
@@ -136,6 +144,8 @@ def prompt_export_dialog(
             rememberChk = helper.addItem(cur_wx.CheckBox(dlg, label=_("&Remember these settings for Quick Export (Shift+D)")))
             rememberChk.SetValue(True)
 
+            known_exts = {v.lower() for v, _l in fmts} | {"mp3", "m4a", "mp4", "wav", "flac", "opus", "mkv", "avi", "webm"}
+
             def _ext() -> str:
                 i = fmtChoice.GetSelection()
                 if isinstance(i, int) and 0 <= i < len(fmts):
@@ -144,9 +154,15 @@ def prompt_export_dialog(
 
             def _refresh_name(evt: Any = None) -> None:
                 cur = nameCtrl.GetValue().strip()
-                root = os.path.splitext(cur)[0] if cur else ""
+                root = cur
+                if cur:
+                    for ke in known_exts:
+                        if cur.lower().endswith("." + ke):
+                            root = cur[:-(len(ke) + 1)].rstrip(".")
+                            break
                 if not root:
-                    root = os.path.splitext(ce.suggest_filename(source.title, start, end, _ext()))[0]
+                    suggested = ce.suggest_filename(source.title, start, end, "")
+                    root = suggested.rstrip(".")
                 nameCtrl.SetValue(root + "." + _ext())
                 is_video = _ext() == "mp4"
                 if vqChoice is not None:

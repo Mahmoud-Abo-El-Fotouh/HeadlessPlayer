@@ -94,11 +94,14 @@ def _get_ytdlp() -> Any:
 
 
 def reset_ytdlp_state() -> None:
-    """Clears cached import errors to allow retry after updates or environment fixes."""
+    """Clears cached import errors and purges sys.modules to allow fresh import after updates."""
     global _ytdlp_module, _ytdlp_import_error
     with _ytdlp_import_lock:
         _ytdlp_module = None
         _ytdlp_import_error = None
+        for k in list(sys.modules.keys()):
+            if k == "yt_dlp" or k.startswith("yt_dlp."):
+                sys.modules.pop(k, None)
 
 
 def is_available() -> bool:

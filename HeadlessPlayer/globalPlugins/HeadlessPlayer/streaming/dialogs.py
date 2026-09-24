@@ -69,6 +69,31 @@ from .engine import (
 )
 from ..utils import format_time, log_debug, log_exception
 
+try:
+    from .sponsorblock import extract_youtube_id
+except ImportError:
+    try:
+        from ..streaming.sponsorblock import extract_youtube_id
+    except ImportError:
+        def extract_youtube_id(url_or_id: Optional[str]) -> Optional[str]:
+            return None
+
+
+def _canonical_item_key(item: Any) -> str:
+    """Returns a canonical identity key for a StreamItem to prevent duplicate entries."""
+    if not item:
+        return ""
+    url = getattr(item, "url", "") or ""
+    vid = extract_youtube_id(url)
+    if vid:
+        return f"yt:{vid}"
+    if url:
+        u = url.strip()
+        if "#" in u:
+            u = u.split("#", 1)[0]
+        return u.rstrip("/")
+    return getattr(item, "title", "") or ""
+
 logger = logging.getLogger("HeadlessPlayer.UrlDialogs")
 
 
@@ -412,6 +437,10 @@ def _item_display(item: StreamItem) -> str:
 def _channel_sections(channel: StreamItem) -> List[StreamItem]:
     """Builds synthetic browsable sections for a channel."""
     base = channel.url.rstrip("/")
+    for sub in ("/videos", "/shorts", "/playlists", "/streams", "/featured", "/community"):
+        if base.lower().endswith(sub):
+            base = base[:-len(sub)].rstrip("/")
+            break
     return [
         StreamItem(ITEM_LISTING, base + "/videos", _("Videos of %s") % channel.title),
         StreamItem(ITEM_LISTING, base + "/shorts", _("Shorts of %s") % channel.title),
@@ -440,7 +469,8 @@ class _Level:
         self.source_target = source_target
         self.batch_size = max(1, batch_size)
         self.next_start_idx = len(items) + 1
-        self.has_more = bool(has_more and len(items) >= self.batch_size)
+        tolerance = 5 if self.batch_size >= 20 else 1
+        self.has_more = bool(has_more and len(items) >= max(1, self.batch_size - tolerance))
         self.is_fetching = False
 
 
@@ -540,6 +570,7 @@ class _ResultsDialog(_DialogBase):
         self.controller = controller
         self._stack: List[_Level] = []
         bsize = batch_size if batch_size is not None else max(len(items), 20)
+        tolerance = 5 if bsize >= 20 else 1
         self._level = _Level(
             title,
             items,
@@ -547,7 +578,7 @@ class _ResultsDialog(_DialogBase):
             source_type=source_type,
             source_target=source_target,
             batch_size=bsize,
-            has_more=bool(items and len(items) >= bsize),
+            has_more=bool(items and len(items) >= max(1, bsize - tolerance)),
         )
         self._display_items: List[StreamItem] = []
         self._busy = False
@@ -636,17 +667,29 @@ class _ResultsDialog(_DialogBase):
         self.listCtrl.Focus(idx)
 
     def _refresh_list(self, select: int = 0) -> None:
-        self.listCtrl.DeleteAllItems()
-        level = self._level
-        display_items = list(level.items)
-        if level.has_more and level.source_type in ("search", "listing"):
-            display_items.append(StreamItem(LOAD_MORE_KIND, "", _("— [Load more items...] —")))
-        self._display_items = display_items
-        for i, it in enumerate(display_items):
-            self.listCtrl.InsertItem(i, _item_display(it))
-        if display_items:
-            select = max(0, min(select, len(display_items) - 1))
-            self._set_selection(select)
+        if hasattr(self.listCtrl, "Freeze"):
+            try:
+                self.listCtrl.Freeze()
+            except Exception:
+                pass
+        try:
+            self.listCtrl.DeleteAllItems()
+            level = self._level
+            display_items = list(level.items)
+            if level.has_more and level.source_type in ("search", "listing"):
+                display_items.append(StreamItem(LOAD_MORE_KIND, "", _("— [Load more items...] —")))
+            self._display_items = display_items
+            for i, it in enumerate(display_items):
+                self.listCtrl.InsertItem(i, _item_display(it))
+            if display_items:
+                select = max(0, min(select, len(display_items) - 1))
+                self._set_selection(select)
+        finally:
+            if hasattr(self.listCtrl, "Thaw"):
+                try:
+                    self.listCtrl.Thaw()
+                except Exception:
+                    pass
         self.SetTitle(self._level.title or _("YouTube Search Results"))
         self.backBtn.Enable(bool(self._stack))
         self._update_buttons()
@@ -784,9 +827,16 @@ class _ResultsDialog(_DialogBase):
                     _ui_message(_("No more items found."))
             return
 
-        # Deduplicate against already-displayed items
-        existing_urls = {it.url for it in level.items}
-        filtered = [it for it in new_items if it.url not in existing_urls]
+        # Deduplicate against already-displayed items using canonical keys
+        existing_keys = {_canonical_item_key(it) for it in level.items}
+        filtered: List[StreamItem] = []
+        for it in new_items:
+            k = _canonical_item_key(it)
+            if k and k in existing_keys:
+                continue
+            if k:
+                existing_keys.add(k)
+            filtered.append(it)
 
         log_debug("DIALOG", "_on_page_loaded: deduplicated items from %d to %d (existing items: %d)",
                   len(new_items), len(filtered), len(level.items))
@@ -794,8 +844,9 @@ class _ResultsDialog(_DialogBase):
         # Always advance next_start_idx so we don't re-fetch the same page
         level.next_start_idx = start_idx + len(new_items)
 
-        # has_more: True only if we got a FULL page
-        level.has_more = len(new_items) >= bsize
+        # has_more: True if we got a reasonably full page (allowing for geo-blocked/filtered items)
+        tolerance = 5 if bsize >= 20 else 1
+        level.has_more = len(new_items) >= max(1, bsize - tolerance)
 
         if not filtered:
             # All duplicates — nothing new to show
@@ -814,42 +865,63 @@ class _ResultsDialog(_DialogBase):
         level.items.extend(filtered)
 
         if self._level is level and hasattr(self, "listCtrl") and self.listCtrl:
-            list_count_before = self.listCtrl.GetItemCount()
-            had_placeholder = list_count_before > prev_count
-            log_debug("DIALOG", "_on_page_loaded updating listCtrl: prev_items=%d, new_items=%d, total_now=%d, list_before=%d, had_placeholder=%s",
-                      prev_count, len(filtered), len(level.items), list_count_before, had_placeholder)
+            if hasattr(self.listCtrl, "Freeze"):
+                try:
+                    self.listCtrl.Freeze()
+                except Exception:
+                    pass
+            try:
+                list_count_before = self.listCtrl.GetItemCount()
+                had_placeholder = list_count_before > prev_count
+                log_debug("DIALOG", "_on_page_loaded updating listCtrl: prev_items=%d, new_items=%d, total_now=%d, list_before=%d, had_placeholder=%s",
+                          prev_count, len(filtered), len(level.items), list_count_before, had_placeholder)
 
-            if had_placeholder:
-                # Remove the old placeholder from the end
-                self.listCtrl.DeleteItem(self.listCtrl.GetItemCount() - 1)
+                initial_sel = self.listCtrl.GetFirstSelected()
+                was_on_placeholder = had_placeholder and (initial_sel == list_count_before - 1)
+                if had_placeholder:
+                    placeholder_idx = list_count_before - 1
+                    if was_on_placeholder:
+                        # Shifting selection off the placeholder being deleted prevents NVDA
+                        # from announcing an orphaned 'None' accessible object.
+                        self._set_selection(max(0, placeholder_idx - 1))
+                    # Remove the old placeholder from the end
+                    self.listCtrl.DeleteItem(placeholder_idx)
 
-            # Append all new unique items directly to wx.ListCtrl without resetting content
-            for it in filtered:
-                self.listCtrl.InsertItem(self.listCtrl.GetItemCount(), _item_display(it))
+                # Append all new unique items directly to wx.ListCtrl without resetting content
+                for it in filtered:
+                    self.listCtrl.InsertItem(self.listCtrl.GetItemCount(), _item_display(it))
 
-            # Add new placeholder if more pages exist
-            if level.has_more and level.source_type in ("search", "listing"):
-                self.listCtrl.InsertItem(self.listCtrl.GetItemCount(), _item_display(StreamItem(LOAD_MORE_KIND, "", _("— [Load more items...] —"))))
+                # Add new placeholder if more pages exist
+                if level.has_more and level.source_type in ("search", "listing"):
+                    self.listCtrl.InsertItem(self.listCtrl.GetItemCount(), _item_display(StreamItem(LOAD_MORE_KIND, "", _("— [Load more items...] —"))))
 
-            # Update internal display_items
-            display_items = list(level.items)
-            if level.has_more and level.source_type in ("search", "listing"):
-                display_items.append(StreamItem(LOAD_MORE_KIND, "", _("— [Load more items...] —")))
-            self._display_items = display_items
+                # Update internal display_items
+                display_items = list(level.items)
+                if level.has_more and level.source_type in ("search", "listing"):
+                    display_items.append(StreamItem(LOAD_MORE_KIND, "", _("— [Load more items...] —")))
+                self._display_items = display_items
+            finally:
+                if hasattr(self.listCtrl, "Thaw"):
+                    try:
+                        self.listCtrl.Thaw()
+                    except Exception:
+                        pass
 
-            current_sel = self.listCtrl.GetFirstSelected()
-            if manual or current_sel >= prev_count:
+            if manual or was_on_placeholder or initial_sel >= prev_count:
                 target_sel = prev_count
                 log_debug("DIALOG", "_on_page_loaded moving selection to target_sel=%d (new listCtrl count: %d)",
                           target_sel, self.listCtrl.GetItemCount())
                 self._set_selection(target_sel)
-                if hasattr(self, "FindFocus") and self.FindFocus() is self.listCtrl:
-                    self.listCtrl.SetFocus()
+                try:
+                    if hasattr(self, "FindFocus") and self.FindFocus() is self.listCtrl:
+                        self.listCtrl.SetFocus()
+                except Exception:
+                    pass
                 self._update_buttons()
                 _ui_message(_("%d more items loaded: %s") % (len(filtered), _item_display(level.items[target_sel])))
             else:
                 log_debug("DIALOG", "_on_page_loaded silently expanded list to %d items (user remains on item %d)",
-                          self.listCtrl.GetItemCount(), current_sel)
+                          self.listCtrl.GetItemCount(), initial_sel)
                 self._update_buttons()
 
     def onActivate(self, evt: Any) -> None:
@@ -886,9 +958,13 @@ class _ResultsDialog(_DialogBase):
             lvl_items = [it for it in self._level.items if it.kind in (ITEM_VIDEO, ITEM_SHORTS)]
             if not lvl_items:
                 lvl_items = self._level.items
+            try:
+                start_idx = lvl_items.index(item)
+            except (ValueError, IndexError):
+                start_idx = max(0, min(sel, len(lvl_items) - 1))
             self._close_and(lambda: self.controller.play_stream_items(
                 lvl_items,
-                start_index=sel,
+                start_index=start_idx,
                 listing_title=self._level.title,
                 source_target=source_target,
                 source_type=source_type,
@@ -965,11 +1041,16 @@ class _ResultsDialog(_DialogBase):
         threading.Thread(target=worker, daemon=True, name="HeadlessPlayer-Listing").start()
 
     def _on_listing_failed(self, error_text: str = "") -> None:
-        if not self or not hasattr(self, "listCtrl") or not self.listCtrl:
+        try:
+            if not self or not hasattr(self, "listCtrl") or not self.listCtrl:
+                return
+            if not getattr(self.listCtrl, "thisown", True):
+                return
+        except (RuntimeError, Exception):
             return
         self._busy = False
         low = str(error_text).lower()
-        if "sign in to confirm" in low or "bot" in low:
+        if getattr(stream_engine, "is_bot_error", lambda s: False)(error_text) or "sign in to confirm" in low or "bot" in low:
             _ui_message(_(
                 "YouTube requires sign-in verification for this content. "
                 "Please configure valid sign-in cookies in HeadlessPlayer settings."
@@ -983,12 +1064,12 @@ class _ResultsDialog(_DialogBase):
             _ui_message(_("Could not load this item. Check your connection or update yt-dlp from settings."))
 
     def _on_listing_loaded(self, item: StreamItem, title: str, sub_items: List[StreamItem], batch_size: int = 50) -> None:
-        if not self or not hasattr(self, "listCtrl") or not self.listCtrl:
-            return
         try:
+            if not self or not hasattr(self, "listCtrl") or not self.listCtrl:
+                return
             if not getattr(self.listCtrl, "thisown", True):
                 return
-        except Exception:
+        except (RuntimeError, Exception):
             return
         self._busy = False
         if not sub_items:
@@ -997,6 +1078,7 @@ class _ResultsDialog(_DialogBase):
         is_queue = item.kind in (ITEM_PLAYLIST, ITEM_LISTING) and any(
             it.kind in (ITEM_VIDEO, ITEM_SHORTS) for it in sub_items
         )
+        tolerance = 5 if batch_size >= 20 else 1
         self._push_level(_Level(
             title or item.title,
             sub_items,
@@ -1004,7 +1086,7 @@ class _ResultsDialog(_DialogBase):
             source_type="listing",
             source_target=item.url,
             batch_size=batch_size,
-            has_more=bool(sub_items and len(sub_items) >= batch_size),
+            has_more=bool(sub_items and len(sub_items) >= max(1, batch_size - tolerance)),
         ))
 
     def _push_level(self, level: _Level) -> None:

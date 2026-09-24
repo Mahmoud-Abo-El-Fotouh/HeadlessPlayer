@@ -64,14 +64,24 @@ def login_cookies_enabled() -> bool:
     return bool(get_manual_cookies_file() or browser_valid)
 
 
-def is_cookie_error(err_str: str) -> bool:
-    """Detects whether an extractor failure is due to expired or missing login cookies."""
+def is_bot_error(err_str: str) -> bool:
+    """Detects whether an extractor failure is due to YouTube bot verification challenge."""
     e = (err_str or "").lower()
     return any(p in e for p in [
         "sign in to confirm you’re not a bot",
         "sign in to confirm you're not a bot",
         "confirm you?re not a bot",
         "confirm you're not a bot",
+        "bot verification",
+    ])
+
+
+def is_cookie_error(err_str: str) -> bool:
+    """Detects whether an extractor failure is due to expired or missing login cookies."""
+    e = (err_str or "").lower()
+    if is_bot_error(err_str):
+        return False
+    return any(p in e for p in [
         "could not decrypt cookies",
         "dpapi decryption failed",
         "app-bound encryption prevented cookie access",
@@ -138,6 +148,8 @@ def _base_ydl_opts(use_cookies: bool = True, target_url: str = "") -> Dict[str, 
         "no_warnings": True,
         "skip_download": True,
         "simulate": True,
+        "socket_timeout": 5,
+        "retries": 1,
     }
 
     if use_cookies:
@@ -151,13 +163,36 @@ def _base_ydl_opts(use_cookies: bool = True, target_url: str = "") -> Dict[str, 
 
     is_yt = bool(not target_url or is_youtube_url(target_url) or "youtube" in target_url or "ytsearch" in target_url)
     if is_yt:
-        if not use_cookies:
-            opts["extractor_args"] = {"youtube": {"player_client": ["tv_embedded"]}}
+        if "/feed/subscriptions" in target_url:
+            opts["extractor_args"] = {
+                "youtube": {"player_client": ["ios", "web"]},
+                "youtubetab": {"skip": ["authcheck"]},
+            }
+        elif "/feed/channels" in target_url:
+            # Subscribed channels feed works with default client; skip:authcheck breaks YoutubeTabIE
+            opts["extractor_args"] = {}
+        elif any(p in target_url for p in ("/feed/recommended", "/feed/history")):
+            opts["extractor_args"] = {
+                "youtube": {"player_client": ["web"]},
+            }
+        elif not use_cookies:
+            client = cfg.get("youtubeExtractorClient", "tv_embedded")
+            client_list = [c.strip() for c in client.split(",") if c.strip()] if isinstance(client, str) else []
+            opts["extractor_args"] = {
+                "youtube": {
+                    "player_client": client_list or ["tv_embedded"],
+                    "skip": ["hls"],
+                }
+            }
         else:
-            client = cfg.get("youtubeExtractorClient", "web")
-            if client:
-                client_list = [c.strip() for c in client.split(",") if c.strip()]
-                opts["extractor_args"] = {"youtube": {"player_client": client_list or ["web"]}}
+            client = cfg.get("youtubeExtractorClientAuth", "android,ios")
+            client_list = [c.strip() for c in client.split(",") if c.strip()] if isinstance(client, str) else []
+            opts["extractor_args"] = {
+                "youtube": {
+                    "player_client": client_list or ["android", "ios"],
+                    "skip": ["hls"],
+                }
+            }
 
     return opts
 
@@ -177,22 +212,97 @@ def clear_resolve_cache() -> None:
         _resolve_cache.clear()
 
 
+def _resolve_tiktok(url: str, prefer_audio: bool = True) -> Optional[Dict[str, Any]]:
+    """
+    Directly resolves TikTok video and audio streams via TikWM API.
+    Bypasses yt-dlp anti-bot challenges and solves unexpected response errors.
+    """
+    import urllib.request
+    import urllib.parse
+    import json
+
+    try:
+        clean_url = url.strip()
+        # Follow redirects for short TikTok links (vm.tiktok.com, vt.tiktok.com, /t/)
+        if any(p in clean_url for p in ("vm.tiktok.com", "vt.tiktok.com", "/t/")):
+            try:
+                redir_req = urllib.request.Request(
+                    clean_url,
+                    headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+                )
+                with urllib.request.urlopen(redir_req, timeout=10) as redir_resp:
+                    clean_url = redir_resp.geturl()
+            except Exception as e_redir:
+                logger.debug("TikTok redirect resolution failed: %s", e_redir)
+
+        encoded = urllib.parse.quote(clean_url, safe="")
+        api_url = f"https://www.tikwm.com/api/?url={encoded}"
+        req = urllib.request.Request(
+            api_url,
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "application/json",
+            }
+        )
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            data = json.loads(resp.read().decode("utf-8", errors="replace"))
+
+        if data.get("code") != 0 or not data.get("data"):
+            return None
+
+        d = data["data"]
+        play_url = d.get("play") or d.get("wmplay") or ""
+        music_url = d.get("music") or (d.get("music_info") or {}).get("play") or ""
+        title = d.get("title") or "TikTok Video"
+        author_info = d.get("author") or {}
+        author = author_info.get("nickname") or author_info.get("unique_id") or ""
+        dur = float(d.get("duration") or 0.0)
+
+        # play_url has the full audiovisual track; music_url is often just a short 15s sample
+        chosen_url = play_url or music_url
+        if not chosen_url:
+            return None
+
+        video_options = []
+        if play_url:
+            video_options.append(("HD (No Watermark)", play_url, 1080, True))
+
+        audio_tracks = []
+        if music_url:
+            audio_tracks.append({
+                "id": "music",
+                "title": _("TikTok Audio"),
+                "url": music_url,
+                "http_headers": {},
+            })
+
+        return {
+            "stream_url": chosen_url,
+            "http_headers": {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"},
+            "title": title,
+            "uploader": author,
+            "duration": dur,
+            "is_live": False,
+            "webpage_url": clean_url,
+            "chapters": [],
+            "audio_tracks": audio_tracks,
+            "has_video": bool(play_url),
+            "video_options": video_options,
+        }
+    except Exception as e:
+        logger.debug("TikWM resolution failed for %s: %s", url, e)
+        return None
+
+
 def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
     """
     Resolves a media page URL into a direct playable stream URL.
     Prefers audio-only streams; falls back to combined audio+video streams.
-
-    Returns dict with keys:
+    Result dictionary keys:
         stream_url, http_headers, title, duration, is_live, webpage_url, chapters, audio_tracks, has_video, video_options
-    Raises RuntimeError on failure.
     """
-    ytdlp = _get_ytdlp()
-
-    try:
-        cfg = getConfig()
-        quality = str(cfg.get("streamAudioQuality", "high")).lower()
-    except Exception:
-        quality = "high"
+    cfg = getConfig()
+    quality = str(cfg.get("streamAudioQuality") or cfg.get("streamQuality") or "high").lower()
 
     cache_key = f"{url}::audio={prefer_audio}::quality={quality}"
     now = time.time()
@@ -201,37 +311,83 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
         if cached and (now - cached[0]) < _RESOLVE_CACHE_TTL:
             return dict(cached[1])
 
+    if "tiktok.com" in url.lower():
+        tt_res = _resolve_tiktok(url, prefer_audio=prefer_audio)
+        if tt_res:
+            with _resolve_cache_lock:
+                _resolve_cache[cache_key] = (now, tt_res)
+            return dict(tt_res)
+
+    ytdlp = _get_ytdlp()
+
+    if quality == "low":
+        format_selector = (
+            "bestaudio[abr<=70]/"
+            "bestaudio[ext=webm][abr<=70]/"
+            "bestaudio[ext=m4a][abr<=70]/"
+            "bestaudio[abr<=96]/"
+            "bestaudio/"
+            "best[height<=360][acodec!=none]/"
+            "best[acodec!=none]/"
+            "best"
+        )
+    elif quality == "medium":
+        format_selector = (
+            "bestaudio[acodec^=mp4a][abr<=140]/"
+            "bestaudio[ext=m4a]/"
+            "bestaudio[abr<=140]/"
+            "bestaudio/"
+            "best[height<=480][acodec!=none]/"
+            "best[acodec!=none]/"
+            "best"
+        )
+    else:
+        format_selector = (
+            "bestaudio[acodec=opus][abr>=150]/"
+            "bestaudio[abr>=150]/"
+            "bestaudio/"
+            "best[height<=480][acodec!=none]/"
+            "best[acodec!=none]/"
+            "best"
+        )
+
     def _extract(use_cookies: bool):
         opts = _base_ydl_opts(use_cookies=use_cookies, target_url=url)
-        if quality == "low":
-            format_selector = (
-                "bestaudio[abr<=70]/"
-                "bestaudio[ext=webm][abr<=70]/"
-                "bestaudio[abr<=96]/"
-                "bestaudio/"
-                "best[height<=360][acodec!=none]/"
-                "best[acodec!=none]/"
-                "best"
-            )
-        elif quality == "medium":
-            format_selector = (
-                "bestaudio[acodec^=mp4a][abr<=140]/"
-                "bestaudio[ext=m4a]/"
-                "bestaudio[abr<=140]/"
-                "bestaudio/"
-                "best[height<=480][acodec!=none]/"
-                "best[acodec!=none]/"
-                "best"
-            )
-        else:
-            format_selector = (
-                "bestaudio[acodec=opus][abr>=150]/"
-                "bestaudio[abr>=150]/"
-                "bestaudio/"
-                "best[height<=480][acodec!=none]/"
-                "best[acodec!=none]/"
-                "best"
-            )
+        is_yt_target = bool(is_youtube_url(url) or "youtube" in url or "youtu.be" in url)
+        if not prefer_audio and is_yt_target:
+            opts["extractor_args"] = {
+                "youtube": {
+                    "player_client": ["tv_embedded"],
+                }
+            }
+            opts.update({
+                "noplaylist": True,
+                "format": "bestvideo+bestaudio/best",
+                "ignoreerrors": False,
+            })
+            opts.pop("cookiefile", None)
+            opts.pop("cookiesfrombrowser", None)
+            with ytdlp.YoutubeDL(opts) as ydl:
+                return ydl.extract_info(url, download=False)
+
+        if prefer_audio and is_yt_target:
+            # Fast audio stream resolution: skips hanging HLS manifests from manifest.googlevideo.com.
+            # Delivers all 5 audio bitrates (48k, 54k, 71k, 129k, 160k) in ~1.3s.
+            if not use_cookies:
+                opts["extractor_args"] = {
+                    "youtube": {
+                        "player_client": ["tv_embedded"],
+                        "skip": ["hls"],
+                    }
+                }
+            else:
+                opts["extractor_args"] = {
+                    "youtube": {
+                        "player_client": ["android", "ios"],
+                        "skip": ["hls"],
+                    }
+                }
+
         opts.update({
             "noplaylist": True,
             "format": format_selector if prefer_audio else "best",
@@ -252,7 +408,31 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
         try:
             info = _extract(use_cookies=True)
         except Exception as e:
-            raise first_error or e
+            if not first_error:
+                first_error = e
+
+    # Fallback for audio playback if primary extraction failed:
+    # Retry with android client skipping webpage & configs
+    is_yt_target = bool(is_youtube_url(url) or "youtube" in url or "youtu.be" in url)
+    if not info and prefer_audio and is_yt_target:
+        try:
+            logger.info("Primary audio extraction failed for %s; retrying with android fast player", url)
+            opts_fb = _base_ydl_opts(use_cookies=False, target_url=url)
+            opts_fb["extractor_args"] = {
+                "youtube": {
+                    "player_client": ["android"],
+                    "player_skip": ["webpage", "configs"],
+                }
+            }
+            opts_fb.update({
+                "noplaylist": True,
+                "format": format_selector if prefer_audio else "best",
+                "ignoreerrors": False,
+            })
+            with ytdlp.YoutubeDL(opts_fb) as ydl:
+                info = ydl.extract_info(url, download=False)
+        except Exception as e_fb:
+            logger.debug("Android fallback also failed: %s", e_fb)
 
     if not info:
         if first_error:
@@ -266,12 +446,32 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
         info = entries[0]
 
     stream_url = info.get("url")
+    best_audio_url = ""
+    for f in (info.get("formats") or []):
+        f_url = f.get("url") or f.get("manifest_url")
+        if f_url and f.get("acodec") not in (None, "none") and str(f.get("acodec")).lower() != "none":
+            if f.get("vcodec") in (None, "none") or str(f.get("vcodec")).lower() == "none":
+                best_audio_url = f_url
+                break
+            elif not best_audio_url:
+                best_audio_url = f_url
+
     if not stream_url and info.get("requested_formats"):
         fmts = info["requested_formats"]
-        audio = next((f for f in fmts if f.get("acodec") not in (None, "none")), None)
-        chosen = audio or fmts[0]
+        if prefer_audio:
+            audio = next((f for f in fmts if f.get("acodec") not in (None, "none")), None)
+            chosen = audio or fmts[0]
+        else:
+            video = next((f for f in fmts if f.get("vcodec") not in (None, "none")), None)
+            chosen = video or fmts[0]
+            if not best_audio_url:
+                audio = next((f for f in fmts if f.get("acodec") not in (None, "none")), None)
+                if audio:
+                    best_audio_url = audio.get("url") or ""
         stream_url = chosen.get("url")
         info = {**info, "http_headers": chosen.get("http_headers") or info.get("http_headers")}
+    if not stream_url and best_audio_url:
+        stream_url = best_audio_url
     if not stream_url:
         raise RuntimeError("No playable stream URL found")
 
@@ -326,34 +526,55 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
             parsed_chapters[-1]["end_time"] = dur
 
     audio_tracks: List[Dict[str, Any]] = []
+    seen_track_ids = set()
     requested = info.get("requested_formats") or []
     if requested:
         for fmt in requested:
-            if fmt.get("acodec") not in (None, "none"):
+            if fmt.get("acodec") not in (None, "none") and str(fmt.get("acodec")).lower() != "none":
+                fid = fmt.get("format_id", "")
+                if fid and fid not in seen_track_ids:
+                    seen_track_ids.add(fid)
+                    f_url = fmt.get("url") or fmt.get("manifest_url") or stream_url or ""
+                    audio_tracks.append({
+                        "id": fid,
+                        "title": fmt.get("format_note") or fmt.get("ext", "audio"),
+                        "lang": fmt.get("language") or "",
+                        "url": f_url,
+                        "http_headers": fmt.get("http_headers") or info.get("http_headers") or {},
+                    })
+    for fmt in (info.get("formats") or []):
+        f_url = fmt.get("url") or fmt.get("manifest_url")
+        if f_url and fmt.get("vcodec") in (None, "none") and fmt.get("acodec") not in (None, "none") and str(fmt.get("acodec")).lower() != "none":
+            fid = fmt.get("format_id", "")
+            if fid and fid not in seen_track_ids:
+                seen_track_ids.add(fid)
                 audio_tracks.append({
-                    "id": fmt.get("format_id", ""),
+                    "id": fid,
                     "title": fmt.get("format_note") or fmt.get("ext", "audio"),
                     "lang": fmt.get("language") or "",
+                    "url": f_url,
+                    "http_headers": fmt.get("http_headers") or info.get("http_headers") or {},
                 })
 
     # Video options for video streams / quality switcher
     formats = info.get("formats") or []
-    video_options: List[Tuple[str, str]] = []
+    video_options: List[Tuple[str, str, int, bool]] = []
+    seen_labels = set()
     for f in formats:
         h = f.get("height")
-        f_url = f.get("url")
-        if h and f_url and f.get("vcodec") not in (None, "none"):
+        f_url = f.get("url") or f.get("manifest_url") or stream_url or ""
+        if h and f_url and f.get("vcodec") not in (None, "none") and str(f.get("vcodec")).lower() != "none":
             lbl = f"{h}p"
             fps = f.get("fps")
             if fps and fps > 30:
-                lbl += f"{fps}"
-            video_options.append((lbl, f_url))
+                lbl += f"{int(fps)}"
+            if lbl not in seen_labels:
+                seen_labels.add(lbl)
+                has_audio = bool(f.get("acodec") not in (None, "none") and str(f.get("acodec")).lower() != "none")
+                video_options.append((lbl, f_url, int(h), has_audio))
 
     if video_options:
-        def _get_h(opt_tuple):
-            digits = "".join(c for c in opt_tuple[0] if c.isdigit())
-            return int(digits) if digits else 0
-        video_options.sort(key=_get_h, reverse=True)
+        video_options.sort(key=lambda opt: opt[2], reverse=True)
 
     has_video = bool(
         video_options
@@ -362,9 +583,12 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
     )
 
     res = {
+        "id": str(info.get("id") or ""),
         "stream_url": stream_url,
+        "audio_url": best_audio_url or (stream_url if prefer_audio else ""),
         "http_headers": info.get("http_headers") or {},
         "title": str(info.get("title") or "Online Stream"),
+        "uploader": str(info.get("uploader") or info.get("channel") or ""),
         "duration": dur,
         "is_live": bool(info.get("is_live") or info.get("live_status") == "is_live"),
         "webpage_url": str(info.get("webpage_url") or url),

@@ -9,6 +9,7 @@ import logging
 import os
 import re
 import sys
+import threading
 import time
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -181,6 +182,17 @@ def search_youtube(
     return items
 
 
+_listing_cache: Dict[str, Tuple[float, str, List[StreamItem]]] = {}
+_listing_cache_lock = threading.Lock()
+_LISTING_CACHE_TTL = 15 * 60  # 15 minutes
+
+
+def clear_listing_cache() -> None:
+    """Clears the in-memory continuation tokens and listings cache."""
+    with _listing_cache_lock:
+        _listing_cache.clear()
+
+
 def fetch_listing(
     url: str,
     limit: Optional[int] = None,
@@ -203,6 +215,13 @@ def fetch_listing(
     start_index = max(1, int(start_index))
     end_index = start_index + limit - 1
 
+    cache_key = f"{url.strip()}::{start_index}::{limit}"
+    now = time.time()
+    with _listing_cache_lock:
+        cached = _listing_cache.get(cache_key)
+        if cached and (now - cached[0]) < _LISTING_CACHE_TTL:
+            return cached[1], list(cached[2])
+
     # Special handling for subscriptions shorts
     if url.rstrip("/") == "https://www.youtube.com/feed/subscriptions/shorts":
         scan_limit = max(start_index + limit + 100, limit * 3)
@@ -224,7 +243,11 @@ def fetch_listing(
                 def _fetch_single_channel_shorts(ch_item):
                     try:
                         ch_shorts_url = ch_item.url.rstrip("/") + "/shorts"
-                        return fetch_listing(ch_shorts_url, limit=10, start_index=1)
+                        _sub_t, ch_items = fetch_listing(ch_shorts_url, limit=10, start_index=1)
+                        for it in ch_items:
+                            if not it.uploader:
+                                it.uploader = ch_item.title
+                        return _sub_t, ch_items
                     except Exception:
                         return "", []
 
@@ -243,36 +266,47 @@ def fetch_listing(
                 logger.debug("Failed to aggregate channel shorts: %s", ex)
 
         sliced_shorts = shorts[start_index - 1 : end_index]
-        return _("Shorts from your subscriptions"), sliced_shorts
+        res_title = _("Shorts from your subscriptions")
+        with _listing_cache_lock:
+            _listing_cache[cache_key] = (now, res_title, sliced_shorts)
+        return res_title, sliced_shorts
 
     ytdlp = _get_ytdlp()
 
     url = _prepare_listing_url(url)
+
     opts = _base_ydl_opts(target_url=url)
-    opts.update({
-        "extract_flat": True,
-        "playlist_items": f"{start_index}-{end_index}",
-    })
+    opts["extract_flat"] = True
+    opts["playlist_items"] = f"{start_index}-{end_index}"
+
     try:
         with ytdlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=False)
     except Exception as e:
-        is_private = any(p in url for p in [
+        if "playlist?list=wl" in url.lower() or "playlist?list=ll" in url.lower():
+            logger.warning("Personal playlist %s unavailable: %s", url, e)
+            raise RuntimeError(
+                _("This playlist requires valid sign-in cookies. Please configure or update your cookies.txt file in HeadlessPlayer settings.")
+            ) from e
+        is_private = any(p in url.lower() for p in (
             "/feed/subscriptions",
             "/feed/channels",
             "/feed/recommended",
             "/feed/history",
             "/feed/library",
-            "playlist?list=WL",
-            "playlist?list=LL",
-        ])
-        if not is_private and login_cookies_enabled():
+            "playlist?list=wl",
+            "playlist?list=ll",
+        ))
+        if is_private:
+            logger.warning("Personal feed %s unavailable: %s", url, e)
+            raise RuntimeError(
+                _("This feed requires valid sign-in cookies. Please configure or update your cookies.txt file in HeadlessPlayer settings.")
+            ) from e
+        if login_cookies_enabled():
             logger.warning("Listing fetch with cookies failed (%s); retrying without cookies", e)
             opts_no_cookies = _base_ydl_opts(use_cookies=False, target_url=url)
-            opts_no_cookies.update({
-                "extract_flat": True,
-                "playlist_items": f"{start_index}-{end_index}",
-            })
+            opts_no_cookies["extract_flat"] = True
+            opts_no_cookies["playlist_items"] = f"{start_index}-{end_index}"
             with ytdlp.YoutubeDL(opts_no_cookies) as ydl:
                 info = ydl.extract_info(url, download=False)
         else:
@@ -282,25 +316,29 @@ def fetch_listing(
         return "", []
 
     title = str(info.get("title") or "")
+    parent_uploader = info.get("channel") or info.get("uploader") or info.get("title")
     entries = info.get("entries")
     items: List[StreamItem] = []
     if entries is None:
-        item = StreamItem.from_flat_entry(info)
+        item = StreamItem.from_flat_entry(info, default_uploader=parent_uploader)
         if item:
             items.append(item)
     else:
         for entry in entries:
             if not isinstance(entry, dict):
                 continue
-            item = StreamItem.from_flat_entry(entry)
+            item = StreamItem.from_flat_entry(entry, default_uploader=parent_uploader)
             if item:
                 items.append(item)
+
+    with _listing_cache_lock:
+        _listing_cache[cache_key] = (now, title, items)
     return title, items
 
 
 def probe_url(url: str, limit: int = 300) -> Tuple[str, List[StreamItem], bool]:
     """
-    Probes an arbitrary URL (YouTube or any other supported site).
+    Probes an arbitrary URL (YouTube, TikTok, or any other supported site).
 
     Returns:
         (title, items, is_multi):
@@ -308,6 +346,23 @@ def probe_url(url: str, limit: int = 300) -> Tuple[str, List[StreamItem], bool]:
         (playlist / channel / site section); items then holds the entries.
         When False, items holds a single playable StreamItem for the URL.
     """
+    if "tiktok.com" in url.lower():
+        try:
+            from .resolver import resolve_stream
+            res = resolve_stream(url, prefer_audio=False)
+            canonical_url = res.get("webpage_url") or url
+            item = StreamItem(
+                kind=ITEM_VIDEO,
+                url=canonical_url,
+                title=res.get("title") or url,
+                duration=res.get("duration"),
+                uploader=res.get("uploader"),
+                extra={"has_video": True, "stream_info": res},
+            )
+            return res.get("title") or "TikTok Video", [item], False
+        except Exception as e:
+            logger.warning("Direct TikTok probe failed: %s", e)
+
     title, items = fetch_listing(url, limit=limit)
     if len(items) > 1:
         return title, items, True

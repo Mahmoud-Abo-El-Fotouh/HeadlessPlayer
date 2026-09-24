@@ -35,13 +35,14 @@ class ControllerNavigationMixin:
     Mixin providing queue navigation, folder/file discovery, Explorer capture, and Recents browsing.
     """
 
-    def play_track(self, track: Track) -> bool:
+    def play_track(self, track: Track, resume_pos: Optional[float] = None) -> bool:
         """Loads and begins playback of a specific track (local file or online stream)."""
         if not track or not track.path:
             return False
 
+        self._stream_ended = False
         if getattr(track, "is_stream", False):
-            return self._play_stream_track(track)
+            return self._play_stream_track(track, resume_pos=resume_pos)
 
         with self._lock:
             self._is_resolving_stream = False
@@ -52,22 +53,24 @@ class ControllerNavigationMixin:
             self._active_stream_has_more = False
             self._current_stream_chapters = list(getattr(track, "chapters", [])) if getattr(track, "chapters", None) else []
             self._stream_play_generation += 1
+            self._explicit_stop_cleared = False
             target_path = track.path
 
             if self._last_loaded_path and self._last_loaded_path != target_path:
                 self.save_current_position(target_path=self._last_loaded_path)
 
-            if self._pending_resume_pos is None or self._pending_resume_pos < 0.5:
+            if resume_pos is not None:
+                self._pending_resume_pos = resume_pos if resume_pos >= 0.5 else None
+            elif self._pending_resume_pos is not None and self._pending_resume_pos >= 0.5:
+                pass
+            else:
                 cfg = getConfig()
                 if cfg.get("resumePosition", True):
                     saved_pos = self.state_store.get_position(
                         target_path,
                         current_duration=getattr(track, "duration", None)
                     )
-                    if saved_pos and saved_pos >= 1.0:
-                        self._pending_resume_pos = saved_pos
-                    else:
-                        self._pending_resume_pos = None
+                    self._pending_resume_pos = saved_pos if (saved_pos and saved_pos >= 1.0) else None
                 else:
                     self._pending_resume_pos = None
 
@@ -212,7 +215,19 @@ class ControllerNavigationMixin:
         with self._lock:
             track = self.playlist.load_file_with_folder(file_path, append=append)
             if track:
-                self.state_store.save_setting("last_browse_dir", os.path.dirname(file_path))
+                parent_dir = os.path.dirname(os.path.abspath(file_path))
+                self.state_store.save_setting("last_browse_dir", parent_dir)
+                try:
+                    from ..history.database import get_db_manager
+                    db = get_db_manager()
+                    folder_title = os.path.basename(parent_dir) or parent_dir
+                    db.save_recent_container(
+                        path=parent_dir,
+                        title=folder_title,
+                        container_type="folder"
+                    )
+                except Exception as e:
+                    logger.debug("Failed to record recent container for loaded file: %s", e)
                 self.speech.announce_loaded_files(self.playlist.count, total_duration=self.playlist.total_duration)
                 self.play_track(track)
                 self._check_auto_enter_player_mode()
@@ -224,7 +239,19 @@ class ControllerNavigationMixin:
         with self._lock:
             count = self.playlist.load_folder(folder_path, append=append)
             if count > 0:
-                self.state_store.save_setting("last_browse_dir", folder_path)
+                norm_folder = os.path.abspath(folder_path)
+                self.state_store.save_setting("last_browse_dir", norm_folder)
+                try:
+                    from ..history.database import get_db_manager
+                    db = get_db_manager()
+                    folder_title = os.path.basename(os.path.normpath(folder_path)) or folder_path
+                    db.save_recent_container(
+                        path=norm_folder,
+                        title=folder_title,
+                        container_type="folder"
+                    )
+                except Exception as e:
+                    logger.debug("Failed to record recent container for loaded folder: %s", e)
                 self.speech.announce_loaded_files(count, total_duration=self.playlist.total_duration)
                 cur = self.playlist.get_current_track()
                 if cur:
@@ -254,6 +281,18 @@ class ControllerNavigationMixin:
 
                 first_track = self.playlist.load_file_with_folder(paths[0], append=False)
                 if first_track:
+                    parent_dir = os.path.dirname(os.path.abspath(paths[0]))
+                    try:
+                        from ..history.database import get_db_manager
+                        db = get_db_manager()
+                        folder_title = os.path.basename(parent_dir) or parent_dir
+                        db.save_recent_container(
+                            path=parent_dir,
+                            title=folder_title,
+                            container_type="folder"
+                        )
+                    except Exception as e:
+                        logger.debug("Failed to record recent container for explorer file: %s", e)
                     self.speech.announce_loaded_files(self.playlist.count, total_duration=self.playlist.total_duration)
                     self.play_track(first_track)
                     self._check_auto_enter_player_mode()
@@ -262,6 +301,19 @@ class ControllerNavigationMixin:
             else:
                 count = self.playlist.load_paths(paths, append=False)
                 if count > 0:
+                    for p in paths:
+                        if os.path.isdir(p):
+                            try:
+                                from ..history.database import get_db_manager
+                                db = get_db_manager()
+                                norm_p = os.path.abspath(p)
+                                db.save_recent_container(
+                                    path=norm_p,
+                                    title=os.path.basename(norm_p) or norm_p,
+                                    container_type="folder"
+                                )
+                            except Exception as e:
+                                logger.debug("Failed to record recent container for explorer dir: %s", e)
                     self.speech.announce_loaded_files(count, total_duration=self.playlist.total_duration)
                     first_track = self.playlist.get_current_track()
                     if first_track:
@@ -288,13 +340,13 @@ class ControllerNavigationMixin:
 
     def recent_playlist_next(self) -> None:
         """Ctrl + .: Move forward (towards newer / end) in recent playlists."""
-        self.recents_manager.playlist_next()
+        self.recents_manager.playlist_prev()
 
     recent_container_next = recent_playlist_next
 
     def recent_playlist_prev(self) -> None:
         """Ctrl + ,: Move backward (towards older / start) in recent playlists."""
-        self.recents_manager.playlist_prev()
+        self.recents_manager.playlist_next()
 
     recent_container_prev = recent_playlist_prev
 
@@ -312,11 +364,11 @@ class ControllerNavigationMixin:
 
     def recent_track_next(self) -> None:
         """.: Move forward (towards newer / end) in recent tracks."""
-        self.recents_manager.track_next()
+        self.recents_manager.track_prev()
 
     def recent_track_prev(self) -> None:
         """,: Move backward (towards older / start) in recent tracks."""
-        self.recents_manager.track_prev()
+        self.recents_manager.track_next()
 
     def recent_track_first(self) -> None:
         """Shift + ,: Jump to first / oldest track in recent history."""

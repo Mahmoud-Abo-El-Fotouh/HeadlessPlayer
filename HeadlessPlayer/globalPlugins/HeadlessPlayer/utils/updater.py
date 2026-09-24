@@ -49,26 +49,79 @@ GITHUB_REPO = "Mahmoud-Abo-El-Fotouh/HeadlessPlayer"
 USER_AGENT = "NVDA-Addon-HeadlessPlayer-Updater"
 
 
+class Version(tuple):
+    """
+    Comparable tuple representing semantic version.
+    Ensures pre-release versions (e.g., 1.3.0-beta.1) sort strictly before final releases (1.3.0).
+    """
+    def __new__(cls, *args, is_prerelease=False, prerelease_tag="", prerelease_num=0):
+        instance = super().__new__(cls, args)
+        instance.is_prerelease = is_prerelease
+        instance.prerelease_tag = prerelease_tag
+        instance.prerelease_num = prerelease_num
+        return instance
+
+    def __lt__(self, other):
+        if not isinstance(other, tuple):
+            return NotImplemented
+        s_core = self[:3] + (0,) * max(0, 3 - len(self[:3]))
+        o_core = other[:3] + (0,) * max(0, 3 - len(other[:3]))
+        if s_core != o_core:
+            return s_core < o_core
+        s_pre = getattr(self, "is_prerelease", False)
+        o_pre = getattr(other, "is_prerelease", False)
+        if s_pre != o_pre:
+            return s_pre and not o_pre
+        if s_pre and o_pre:
+            s_tag = getattr(self, "prerelease_tag", "")
+            o_tag = getattr(other, "prerelease_tag", "")
+            if s_tag != o_tag:
+                return s_tag < o_tag
+            return getattr(self, "prerelease_num", 0) < getattr(other, "prerelease_num", 0)
+        s_rem = self[3:]
+        o_rem = other[3:]
+        max_rem = max(len(s_rem), len(o_rem))
+        s_rem_pad = s_rem + (0,) * (max_rem - len(s_rem))
+        o_rem_pad = o_rem + (0,) * (max_rem - len(o_rem))
+        return s_rem_pad < o_rem_pad
+
+    def __gt__(self, other):
+        if not isinstance(other, tuple):
+            return NotImplemented
+        return other < self
+
+    def __le__(self, other):
+        return self < other or self == other
+
+    def __ge__(self, other):
+        return self > other or self == other
+
+
 def parse_version(ver_str: str) -> Tuple[int, ...]:
-    """Parses a version string (e.g. 'v1.2.2', '1.2.1') into a comparable tuple of ints padded with trailing zeros."""
+    """Parses a version string (e.g. 'v1.2.2', '1.2.1', '1.3.0-beta.1') into a comparable Version tuple."""
     if not ver_str:
-        return (0, 0, 0)
+        return Version(0, 0, 0)
     clean = re.sub(r'^[vV]', '', str(ver_str).strip())
+    pre_match = re.search(r'[-_.]?(alpha|beta|rc|dev|preview)(\.?\d+)?', clean, re.IGNORECASE)
+    is_pre = False
+    pre_tag = ""
+    pre_num = 0
+    if pre_match:
+        is_pre = True
+        pre_tag = pre_match.group(1).lower()
+        if pre_match.group(2):
+            pre_num_str = re.sub(r'\D', '', pre_match.group(2))
+            pre_num = int(pre_num_str) if pre_num_str else 0
     parts = re.findall(r'\d+', clean)
     int_parts = [int(p) for p in parts] if parts else [0, 0, 0]
     while len(int_parts) < 3:
         int_parts.append(0)
-    return tuple(int_parts)
+    return Version(*int_parts, is_prerelease=is_pre, prerelease_tag=pre_tag, prerelease_num=pre_num)
 
 
 def is_newer_version(latest_ver: str, current_ver: str) -> bool:
-    """Returns True if latest_ver is strictly newer than current_ver, with length normalization."""
-    t_latest = parse_version(latest_ver)
-    t_cur = parse_version(current_ver)
-    max_len = max(len(t_latest), len(t_cur))
-    p_latest = t_latest + (0,) * (max_len - len(t_latest))
-    p_cur = t_cur + (0,) * (max_len - len(t_cur))
-    return p_latest > p_cur
+    """Returns True if latest_ver is strictly newer than current_ver with SemVer pre-release support."""
+    return parse_version(latest_ver) > parse_version(current_ver)
 
 
 def get_current_addon_version() -> str:
@@ -230,6 +283,17 @@ def download_addon_file(
         if not os.path.isfile(part_path) or os.path.getsize(part_path) == 0:
             raise IOError("Downloaded file is empty")
 
+        import zipfile
+        try:
+            with zipfile.ZipFile(part_path) as zf:
+                bad_file = zf.testzip()
+                if bad_file is not None:
+                    raise IOError(f"Corrupted zip archive: {bad_file}")
+                if "manifest.ini" not in zf.namelist():
+                    raise IOError("Invalid NVDA addon package: manifest.ini missing")
+        except zipfile.BadZipFile as bzf:
+            raise IOError(f"Downloaded file is not a valid zip package: {bzf}")
+
         if os.path.exists(dest_path):
             try:
                 os.remove(dest_path)
@@ -384,12 +448,16 @@ class AddonUpdateDialog(_WxDialog):
         installed = False
         try:
             ah = sys.modules.get("addonHandler", addonHandler)
-            if ah is not None and hasattr(ah, "installAddonPackage"):
-                bundle = ah.AddonBundle(file_path)
-                ah.installAddonPackage(bundle)
-                installed = True
+            if ah is not None:
+                bundle = ah.AddonBundle(file_path) if hasattr(ah, "AddonBundle") else file_path
+                if hasattr(ah, "installAddonBundle"):
+                    ah.installAddonBundle(bundle)
+                    installed = True
+                elif hasattr(ah, "installAddonPackage"):
+                    ah.installAddonPackage(bundle)
+                    installed = True
         except Exception as e:
-            logger.debug("addonHandler.installAddonPackage attempt: %s", e)
+            logger.debug("addonHandler install attempt: %s", e)
 
         if not installed:
             try:
@@ -398,7 +466,11 @@ class AddonUpdateDialog(_WxDialog):
             except Exception as e:
                 logger.error("Could not start add-on file via os.startfile: %s", e)
 
-        self.EndModal(wx.ID_OK)
+        if wx and hasattr(self, 'EndModal'):
+            try:
+                self.EndModal(getattr(wx, 'ID_OK', 5100))
+            except Exception:
+                pass
 
     def _on_download_failed(self, error_msg: str) -> None:
         self._is_downloading = False
@@ -427,11 +499,13 @@ def cleanup_temp_addon_packages() -> None:
         if not os.path.isdir(temp_dir):
             return
         for fname in os.listdir(temp_dir):
-            if fname.startswith("HeadlessPlayer") and fname.endswith(".nvda-addon"):
+            if fname.startswith("HeadlessPlayer") and (
+                fname.endswith(".nvda-addon") or fname.endswith(".part") or fname.endswith(".download")
+            ):
                 fpath = os.path.join(temp_dir, fname)
                 try:
                     os.remove(fpath)
-                    logger.debug("Cleaned up temp addon package: %s", fpath)
+                    logger.debug("Cleaned up temp addon package or partial download: %s", fpath)
                 except Exception:
                     pass
     except Exception as e:

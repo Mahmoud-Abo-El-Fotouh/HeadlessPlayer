@@ -33,8 +33,8 @@ except (ImportError, ValueError):
         except NameError:
             _ = lambda text: text
 
-# Default pipe endpoint
-DEFAULT_PIPE_NAME = r"\\.\pipe\nvda_headless_player"
+# Default pipe endpoint (PID-isolated per NVDA session)
+DEFAULT_PIPE_NAME = rf"\\.\pipe\nvda_headless_player_{os.getpid()}"
 
 # Windows Process Creation Flags
 CREATE_NO_WINDOW = 0x08000000
@@ -218,11 +218,13 @@ def get_default_mpv_args(pipe_name: str = DEFAULT_PIPE_NAME) -> List[str]:
         "--force-window=no",
         f"--input-ipc-server={pipe_name}",
         "--audio-pitch-correction=yes",
+        "--gapless-audio=yes",
         "--volume-max=150",
         "--hr-seek=yes",
         "--hr-seek-framedrop=no",
         "--demuxer-max-bytes=100M",
-        "--demuxer-readahead-secs=30",
+        "--demuxer-readahead-secs=15",
+        "--cache-pause-initial=no",
         "--stream-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5",
         "--demuxer-lavf-o=reconnect=1,reconnect_streamed=1,reconnect_delay_max=5",
         "--network-timeout=15",

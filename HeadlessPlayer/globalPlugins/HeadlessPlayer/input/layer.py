@@ -83,6 +83,7 @@ from .gestures import *
 logger = logging.getLogger(__name__)
 
 # Virtual Key Codes (Win32)
+VK_BACK = 0x08
 VK_TAB = 0x09
 VK_RETURN = 0x0D
 VK_ESCAPE = 0x1B
@@ -182,6 +183,7 @@ VK_Z = 0x5A
 VK_TAB = 0x09
 
 # OEM Bracket keys (English [ and ] / Arabic ج and د)
+VK_OEM_3 = 0xC0  # 192 - English '`' / Arabic 'ذ'
 VK_OEM_4 = 0xDB  # 219 - English '[' / Arabic 'ج'
 VK_OEM_6 = 0xDD  # 221 - English ']' / Arabic 'د'
 VK_DELETE = 0x2E # 46 - Delete key
@@ -425,6 +427,7 @@ class ModalInputLayer:
         log_debug("INPUT", "set_player_mode: active=%s, announce=%s", active, announce)
 
         if active:
+            release_all_modifiers()
             try:
                 if not is_64bit_os():
                     addon_root = getattr(self.controller, "addon_root", None) if self.controller else None
@@ -601,6 +604,7 @@ class ModalInputLayer:
             return True
 
         main_key = (getattr(gesture, "mainKeyName", "") or "").lower()
+        vk = getattr(gesture, "vkCode", 0)
         raw_mods = getattr(gesture, "modifierNames", None) or getattr(gesture, "modifiers", None) or []
         mods = {str(m).lower() for m in raw_mods}
         has_ctrl = "control" in mods or "ctrl" in mods
@@ -612,7 +616,6 @@ class ModalInputLayer:
             return True
 
         # Silence speech immediately when bare Control key is pressed (standard NVDA behavior)
-        vk = getattr(gesture, "vkCode", 0)
         if main_key in ("control", "ctrl", "leftcontrol", "rightcontrol", "left_control", "right_control") or vk in (0x11, 0xA2, 0xA3):
             if not (has_shift or has_alt):
                 if _NVDA_SPEECH_AVAILABLE and speech:
@@ -633,15 +636,16 @@ class ModalInputLayer:
             self.set_player_mode(False)
             return False
 
-        # Dispatch player command
+        # Dispatch player command (Escape exits Player Mode)
         log_info("INPUT", "Intercepted gesture: key='%s', vk=0x%02X, mods=%s", main_key, vk, sorted(list(mods)))
         handled = self.dispatch_gesture(gesture)
         if handled:
             log_info("INPUT", "Gesture handled successfully: key='%s'", main_key)
             return False  # Handled and consumed
 
-        # Unmapped key: swallow completely
-        log_info("INPUT", "Unmapped key pressed: key='%s', vk=0x%02X", main_key, vk)
+        # Strict modal capture: all unmapped keys and shortcuts swallowed completely.
+        # User presses Escape (or toggle gesture) to exit Player Mode.
+        log_info("INPUT", "Unmapped key pressed and swallowed: key='%s', vk=0x%02X", main_key, vk)
         return False
 
     def _is_toggle_gesture(self, gesture: Any) -> bool:
@@ -770,6 +774,10 @@ class ModalInputLayer:
                 # Special keys
                 elif target_base in ("space", "spacebar") and (main_key in ("space", "spacebar") or vk == VK_SPACE):
                     return True
+                elif target_base in ("enter", "return") and (main_key in ("enter", "return") or vk == VK_RETURN):
+                    return True
+                elif target_base in ("backspace", "back") and (main_key in ("backspace", "back") or vk == VK_BACK):
+                    return True
                 elif target_base in ("escape", "esc") and (main_key in ("escape", "esc") or vk == VK_ESCAPE):
                     return True
                 elif target_base == "tab" and (main_key == "tab" or vk == VK_TAB):
@@ -803,6 +811,12 @@ class ModalInputLayer:
 
             if custom_key in ("control", "ctrl") and (main_key in ("control", "ctrl") or vk in (0x11, 0xA2, 0xA3)):
                 return True
+
+        # Fallback for Tab and Shift+Tab for next_track and prev_track
+        if action_name == "next_track" and (main_key == "tab" or vk == VK_TAB) and not mods:
+            return True
+        if action_name == "prev_track" and (main_key == "tab" or vk == VK_TAB) and mods == ["shift"]:
+            return True
 
         return False
 

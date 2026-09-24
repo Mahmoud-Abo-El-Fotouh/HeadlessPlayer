@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: HeadlessPlayer 1.3.0\n"
 "Report-Msgid-Bugs-To: https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer\n"
-"POT-Creation-Date: 2026-09-20 01:13+0300\n"
-"PO-Revision-Date: 2026-09-20 01:13+0300\n"
+"POT-Creation-Date: 2026-09-24 22:59+0300\n"
+"PO-Revision-Date: 2026-09-24 22:59+0300\n"
 "Last-Translator: Mahmoud Abo El Fotouh <mahmoudaboelfotouh.20@gmail.com>\n"
 "Language-Team: Arabic <mahmoudaboelfotouh.20@gmail.com>\n"
 "Language: ar\n"
@@ -830,6 +830,9 @@ msgstr "تحديد نهاية المقطع (النقطة B)."
 
 msgid "Mark start of loop (Point A)."
 msgstr "تحديد بداية المقطع (النقطة A)."
+
+msgid "Point B must be set after Point A"
+msgstr "يجب تعيين النقطة B بعد النقطة A"
 
 msgid "Medium (AAC ~128 kbps - Standard)"
 msgstr "متوسط (AAC ~128 kbps - قياسي)"
@@ -1922,3 +1925,108 @@ msgstr "تعذر إنشاء أو نسخ تقرير التشخيص إلى الح�
 msgid "Diagnostics Error"
 msgstr "خطأ في التشخيص"
 
+
+msgid "Fast Seek Backward"
+msgstr "تقديم سريع للخلف"
+
+msgid "Fast Seek Forward"
+msgstr "تقديم سريع للأمام"
+
+msgid "First Track in Playlist"
+msgstr "المقطع الأول في قائمة التشغيل"
+
+msgid "Jump to end of current track"
+msgstr "الانتقال إلى نهاية المقطع الحالي"
+
+msgid "Jump to start of current track"
+msgstr "الانتقال إلى بداية المقطع الحالي"
+
+msgid "Last Track in Playlist"
+msgstr "المقطع الأخير في قائمة التشغيل"
+
+msgid "Next Chapter"
+msgstr "الفصل التالي"
+
+msgid "Normal Seek Backward"
+msgstr "تقديم عادي للخلف"
+
+msgid "Normal Seek Forward"
+msgstr "تقديم عادي للأمام"
+
+msgid "Open HeadlessPlayer Settings Panel"
+msgstr "فتح لوحة إعدادات HeadlessPlayer"
+
+msgid "Previous Chapter"
+msgstr "الفصل السابق"
+
+msgid "Recent Playlists: Jump to Newest"
+msgstr "قوائم التشغيل الحديثة: الانتقال إلى الأحدث"
+
+msgid "Recent Playlists: Jump to Oldest"
+msgstr "قوائم التشغيل الحديثة: الانتقال إلى الأقدم"
+
+msgid "Recent Playlists: Next / Newer"
+msgstr "قوائم التشغيل الحديثة: التالي / الأحدث"
+
+msgid "Recent Playlists: Previous / Older"
+msgstr "قوائم التشغيل الحديثة: السابق / الأقدم"
+
+msgid "Recent Tracks: Jump to Newest"
+msgstr "المقاطع الحديثة: الانتقال إلى الأحدث"
+
+msgid "Recent Tracks: Jump to Oldest"
+msgstr "المقاطع الحديثة: الانتقال إلى الأقدم"
+
+msgid "Recent Tracks: Next / Newer"
+msgstr "المقاطع الحديثة: التالي / الأحدث"
+
+msgid "Recent Tracks: Previous / Older"
+msgstr "المقاطع الحديثة: السابق / الأقدم"
+
+msgid "Remove Focused Recent Item from History"
+msgstr "حذف العنصر الحديث المركز عليه من السجل"
+
+msgid "Slow / Precise Seek Backward"
+msgstr "تقديم بطيء / دقيق للخلف"
+
+msgid "Slow / Precise Seek Forward"
+msgstr "تقديم بطيء / دقيق للأمام"
+
+msgid "Ultrafast Seek Backward"
+msgstr "تقديم فائق السرعة للخلف"
+
+msgid "Ultrafast Seek Forward"
+msgstr "تقديم فائق السرعة للأمام"
+
+msgid "%s (%d of %d)"
+msgstr "%s (%d من %d)"
+
+msgid "All Files"
+msgstr "كافة الملفات"
+
+msgid "Audio Files"
+msgstr "الملفات الصوتية"
+
+msgid "Media Files"
+msgstr "ملفات الوسائط"
+
+msgid "Video Files"
+msgstr "ملفات الفيديو"
+
+msgid "Generating system diagnostics report, please wait..."
+msgstr "جارٍ إنشاء تقرير تشخيص النظام، يرجى الانتظار..."
+
+msgid "Generating diagnostics report..."
+msgstr "جارٍ إنشاء تقرير التشخيص..."
+
+msgid "Could not open settings dialog"
+msgstr "تعذر فتح نافذة الإعدادات"
+
+msgid "Could not open export dialog."
+msgstr "تعذر فتح نافذة التصدير."
+
+msgid "TikTok Audio"
+msgstr "صوت تيك توك"
+
+msgid "This playlist requires valid sign-in cookies. Please configure or update your cookies.txt file in HeadlessPlayer settings."
+msgstr "هذه القائمة تتطلب ملف تعريف ارتباط (cookies.txt) صالح لتسجيل الدخول. يرجى تهيئة أو تحديث ملف الكوكيز في إعدادات HeadlessPlayer."

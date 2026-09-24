@@ -496,7 +496,7 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
             wx.SpinCtrl,
             min=10,
             max=1000,
-            initial=int(cfg.get("maxStreamPlaylistItems", 300))
+            initial=int(cfg.get("maxStreamPlaylistItems", 50))
         )
 
         self.cookiesBrowserChoices: List[Tuple[str, str]] = [
@@ -922,9 +922,21 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
         """Opens the accessible Player Mode shortcuts customization dialog."""
         if not wx:
             return
+        if gui and hasattr(gui, "mainFrame") and hasattr(gui.mainFrame, "prePopup"):
+            try:
+                gui.mainFrame.prePopup()
+            except Exception:
+                pass
         dlg = HeadlessPlayerShortcutsDialog(self)
-        dlg.ShowModal()
-        dlg.Destroy()
+        try:
+            dlg.ShowModal()
+        finally:
+            dlg.Destroy()
+            if gui and hasattr(gui, "mainFrame") and hasattr(gui.mainFrame, "postPopup"):
+                try:
+                    gui.mainFrame.postPopup()
+                except Exception:
+                    pass
 
     def onCheckAddonUpdates(self, evt: Any) -> None:
         """
@@ -968,9 +980,21 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
             return
 
         if available and info and AddonUpdateDialog:
+            if gui and hasattr(gui, "mainFrame") and hasattr(gui.mainFrame, "prePopup"):
+                try:
+                    gui.mainFrame.prePopup()
+                except Exception:
+                    pass
             dlg = AddonUpdateDialog(self, info)
-            dlg.ShowModal()
-            dlg.Destroy()
+            try:
+                dlg.ShowModal()
+            finally:
+                dlg.Destroy()
+                if gui and hasattr(gui, "mainFrame") and hasattr(gui.mainFrame, "postPopup"):
+                    try:
+                        gui.mainFrame.postPopup()
+                    except Exception:
+                        pass
         elif status == "up_to_date" and info:
             cur_ver = info.get("current_version", "")
             text = _("You are already using the latest version of Headless Media Player (version %s).") % cur_ver
@@ -1010,14 +1034,48 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
                     pass
 
     def onCopyDiagnosticsReport(self, evt: Any) -> None:
-        """Runs full system diagnostics and copies the report directly to Windows clipboard."""
-        success = False
-        try:
-            if diagnostics and hasattr(diagnostics, "copy_diagnostic_report_to_clipboard"):
-                success = diagnostics.copy_diagnostic_report_to_clipboard()
-        except Exception as e:
-            logger.error("Failed to copy diagnostic report: %s", e)
+        """Runs full system diagnostics asynchronously and copies the report to Windows clipboard."""
+        if hasattr(self, "copyDiagnosticsBtn") and self.copyDiagnosticsBtn:
+            try:
+                self.copyDiagnosticsBtn.Disable()
+                self.copyDiagnosticsBtn.SetLabel(_("Generating diagnostics report..."))
+            except Exception:
+                pass
+
+        if ui and hasattr(ui, "message"):
+            try:
+                ui.message(_("Generating system diagnostics report, please wait..."))
+            except Exception:
+                pass
+
+        def worker() -> None:
             success = False
+            try:
+                if diagnostics and hasattr(diagnostics, "copy_diagnostic_report_to_clipboard"):
+                    success = diagnostics.copy_diagnostic_report_to_clipboard()
+            except Exception as e:
+                logger.error("Failed to copy diagnostic report: %s", e)
+                success = False
+            if wx and hasattr(wx, "CallAfter"):
+                try:
+                    wx.CallAfter(self._onCopyDiagnosticsFinished, success)
+                except Exception:
+                    self._onCopyDiagnosticsFinished(success)
+            else:
+                self._onCopyDiagnosticsFinished(success)
+
+        threading.Thread(target=worker, daemon=True, name="HeadlessPlayer-DiagnosticsWorker").start()
+
+    def _onCopyDiagnosticsFinished(self, success: bool) -> None:
+        if not self:
+            return
+        if hasattr(self, "copyDiagnosticsBtn") and self.copyDiagnosticsBtn:
+            try:
+                if getattr(self.copyDiagnosticsBtn, "thisown", True):
+                    self.copyDiagnosticsBtn.Enable()
+                    self.copyDiagnosticsBtn.SetLabel(_("&Copy System Health & Diagnostics Report to Clipboard..."))
+            except Exception:
+                pass
 
         if success:
             msg = _("System diagnostics report successfully copied to clipboard. You can now paste and share it with the developer.")

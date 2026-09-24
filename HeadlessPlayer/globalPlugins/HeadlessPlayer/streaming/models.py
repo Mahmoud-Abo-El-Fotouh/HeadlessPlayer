@@ -6,6 +6,7 @@ HeadlessPlayer NVDA Add-on - Stream Item Models & URL Classification.
 from __future__ import annotations
 import logging
 import re
+import urllib.parse
 from typing import Any, Dict, List, Optional
 from ..utils import format_time
 
@@ -43,12 +44,68 @@ _YOUTUBE_HOST_RE = re.compile(
 )
 
 
+_TRACKING_PARAMS = frozenset({
+    "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+    "si", "fbclid", "gclid"
+})
+
+
 def normalize_url(text: str) -> str:
-    """Ensures the URL has an explicit scheme."""
+    """
+    Normalizes a media or web URL according to RFC 3986 canonicalization:
+    - Ensures explicit scheme (defaults www. to https://)
+    - Lowercases scheme and netloc (hostname)
+    - Strips standard default ports (:80 for http, :443 for https)
+    - Normalizes path slashes
+    - Strips invasive analytics / tracking query parameters (e.g. si, utm_*)
+    """
+    if not text or not isinstance(text, str):
+        return ""
     t = text.strip()
+    if not t:
+        return ""
     if t.lower().startswith("www."):
-        return "https://" + t
-    return t
+        t = "https://" + t
+
+    try:
+        parts = urllib.parse.urlsplit(t)
+    except Exception:
+        return t
+
+    if not parts.scheme:
+        return t
+
+    scheme = parts.scheme.lower()
+    netloc = parts.netloc
+
+    if "@" in netloc:
+        userinfo, hostport = netloc.split("@", 1)
+        userinfo_str = userinfo + "@"
+    else:
+        userinfo_str = ""
+        hostport = netloc
+
+    if ":" in hostport:
+        host, port = hostport.split(":", 1)
+        host = host.lower()
+        if (scheme == "http" and port == "80") or (scheme == "https" and port == "443"):
+            netloc = userinfo_str + host
+        else:
+            netloc = userinfo_str + f"{host}:{port}"
+    else:
+        netloc = userinfo_str + hostport.lower()
+
+    path = parts.path
+    if "//" in path:
+        path = re.sub(r"/+", "/", path)
+
+    query = parts.query
+    if query:
+        q_pairs = urllib.parse.parse_qsl(query, keep_blank_values=True)
+        filtered_q = [(k, v) for k, v in q_pairs if k.lower() not in _TRACKING_PARAMS]
+        query = urllib.parse.urlencode(filtered_q)
+
+    return urllib.parse.urlunsplit((scheme, netloc, path, query, parts.fragment))
 
 
 def extract_url(text: str) -> Optional[str]:
@@ -101,7 +158,7 @@ def classify_flat_entry(entry: Dict[str, Any]) -> str:
             return ITEM_CHANNEL
         if "playlist" in low or "list=" in low:
             return ITEM_PLAYLIST
-    if "channel" in low or "/@" in low or "/user/" in low or "/c/" in low:
+    if "/channel/" in low or "/@" in low or "/user/" in low or "/c/" in low:
         return ITEM_CHANNEL
     return ITEM_VIDEO
 
@@ -160,8 +217,12 @@ class StreamItem:
 
         self.views = kwargs.get("view_count", kwargs.get("views", views))
         self.count = kwargs.get("item_count", kwargs.get("count", count))
-        self.requires_login = bool(kwargs.get("requires_login", requires_login))
         self.extra = extra or kwargs.get("extra") or {}
+        self.requires_login = bool(
+            kwargs.get("requires_login", requires_login)
+            or self.extra.get("requires_login")
+            or self.extra.get("availability") == "needs_auth"
+        )
         self.is_live = bool(
             is_live
             or kwargs.get("is_live")
@@ -202,10 +263,12 @@ class StreamItem:
         self.count = val
 
     @classmethod
-    def from_flat_entry(cls, entry: Dict[str, Any]) -> "StreamItem":
+    def from_flat_entry(cls, entry: Dict[str, Any], default_uploader: Optional[str] = None) -> "StreamItem":
         """Builds a StreamItem from a flat-extracted yt-dlp entry dictionary."""
         kind = classify_flat_entry(entry)
-        raw_url = str(entry.get("url") or entry.get("webpage_url") or "")
+        raw_url = str(entry.get("webpage_url") or entry.get("original_url") or entry.get("url") or "")
+        if "googlevideo.com" in str(entry.get("url", "")):
+            raw_url = str(entry.get("webpage_url") or entry.get("original_url") or raw_url)
         if raw_url and not raw_url.startswith(("http://", "https://")):
             # YouTube flat extraction gives just the video ID as the URL for videos
             if kind in (ITEM_VIDEO, ITEM_SHORTS):
@@ -223,6 +286,7 @@ class StreamItem:
             or entry.get("uploader")
             or entry.get("uploader_id")
             or entry.get("channel_id")
+            or default_uploader
         )
         dur = entry.get("duration")
         duration_float: Optional[float] = None

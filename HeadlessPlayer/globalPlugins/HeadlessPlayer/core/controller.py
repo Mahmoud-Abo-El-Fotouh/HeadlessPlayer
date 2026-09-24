@@ -97,6 +97,7 @@ class PlayerController(
         self._is_resolving_stream: bool = False
         self._resolving_track_path: Optional[str] = None
         self._stream_auto_retries: int = 0
+        self._stream_ended: bool = False
 
         # Dynamic streaming queue auto-extension tracking
         self._active_stream_source_url: Optional[str] = None
@@ -124,6 +125,7 @@ class PlayerController(
         self._active_native_chapter_idx: Optional[int] = None
         self._active_stream_chapter_idx: Optional[int] = None
         self._suppress_next_auto_chapter: bool = False
+        self._suppress_auto_chapter_count: int = 0
 
         # Clip export and direct stream info state
         self._export_busy: bool = False
@@ -213,6 +215,7 @@ class PlayerController(
             self._is_terminating = True
             if hasattr(self.speech, "cancel_debounced_seek"):
                 self.speech.cancel_debounced_seek()
+            self.flush_pending_disk_saves()
             if getConfigValue("rememberPlaybackState", False):
                 self.save_session()
             else:
@@ -222,6 +225,7 @@ class PlayerController(
 
     def terminate(self) -> None:
         """Terminates controller and engine."""
+        self.flush_pending_disk_saves()
         self.shutdown()
 
     # -------------------------------------------------------------------------
@@ -323,9 +327,19 @@ class PlayerController(
                     pass
 
     def _exit_player_mode_for_dialog(self) -> None:
-        """Fully exits Player Mode before presenting an interactive dialog."""
+        """Suspends Player Mode before presenting an interactive dialog."""
         if self.input_layer and self.input_layer.is_active:
+            self._mode_suspended_for_dialog = True
             self.input_layer.set_player_mode(False, announce=False)
+        else:
+            self._mode_suspended_for_dialog = False
+
+    def _restore_player_mode_after_dialog(self) -> None:
+        """Restores Player Mode if it was active prior to opening the dialog."""
+        if getattr(self, "_mode_suspended_for_dialog", False):
+            self._mode_suspended_for_dialog = False
+            if self.input_layer and not self.input_layer.is_active:
+                self.input_layer.set_player_mode(True, announce=False)
 
     def _suspend_input(self) -> None:
         if self.input_layer:
@@ -393,9 +407,11 @@ class PlayerController(
             if not any(getattr(t, "is_stream", False) for t in self.playlist._tracks):
                 st_target = None
             tracks = [t.to_dict() if hasattr(t, "to_dict") else t.path for t in self.playlist._tracks]
+            orig_idx = self.playlist.original_index
+            saved_idx = orig_idx if orig_idx >= 0 else 0
             self.state_store.save_last_session(
                 tracks=tracks,
-                current_index=self.playlist.original_index,
+                current_index=saved_idx,
                 position=cur_pos,
                 shuffle=self.playlist.shuffle,
                 repeat_mode=self.playlist.repeat_mode.value,
@@ -404,7 +420,7 @@ class PlayerController(
                 source_type=st_type
             )
             log_info("CONTROLLER", "Playback session saved: %d tracks, idx=%d, pos=%.2f",
-                     len(tracks), self.playlist.original_index, cur_pos)
+                     len(tracks), saved_idx, cur_pos)
 
     def restore_session(self, auto_play: bool = False) -> bool:
         """Restores the last saved playback session."""
@@ -442,7 +458,7 @@ class PlayerController(
                      self.playlist.count, self.playlist.original_index, float(st.get("position", 0.0)))
 
             if auto_play and cur_track:
-                self.play_track(cur_track)
+                self.play_track(cur_track, resume_pos=pos if pos >= 0.5 else None)
 
             return True
 
@@ -459,9 +475,19 @@ class PlayerController(
             self._active_native_chapter_idx = None
             self._active_stream_chapter_idx = None
             self._suppress_next_auto_chapter = False
+            self._suppress_auto_chapter_count = 0
 
             cur = self.playlist.get_current_track()
-            if cur and (not cur.duration or cur.duration <= 0):
+            eng_path = getattr(self.engine, "path", None)
+            is_matching = bool(
+                cur and eng_path and (
+                    cur.path == eng_path
+                    or getattr(cur, "resolved_url", None) == eng_path
+                    or (hasattr(cur, "path") and cur.path in eng_path)
+                    or (not getattr(cur, "is_stream", False) and os.path.exists(cur.path) and os.path.exists(eng_path) and os.path.normcase(os.path.abspath(cur.path)) == os.path.normcase(os.path.abspath(eng_path)))
+                )
+            )
+            if is_matching and cur and (not cur.duration or cur.duration <= 0):
                 dur = getattr(self.engine, "duration", None)
                 if dur and dur > 0:
                     cur.duration = dur
@@ -489,10 +515,18 @@ class PlayerController(
             if self._pending_resume_pos is not None and self._pending_resume_pos >= 0.5:
                 target = self._pending_resume_pos
                 self._pending_resume_pos = None
-                self.engine.seek_absolute(target)
-                if not getattr(self, "_silence_resume_announcement", False):
-                    self.speech.announce_resume_position(target)
+                dur = getattr(self.engine, "duration", None) or (cur.duration if cur else None)
+                if dur and dur > 0 and target >= (dur - 2.0):
+                    target = None
+                    if cur and cur.path:
+                        self.state_store.clear_position(cur.path)
+                if target:
+                    self.engine.seek_absolute(target)
+                    if not getattr(self, "_silence_resume_announcement", False):
+                        self.speech.announce_resume_position(target)
                 self._silence_resume_announcement = False
+            else:
+                self._pending_resume_pos = None
 
         if getattr(self, "_restore_last_session", True):
             self.save_session()
@@ -533,6 +567,7 @@ class PlayerController(
                     self._stream_auto_retries = 0
                     if cur_path:
                         self.state_store.clear_position(cur_path)
+                    self._pending_resume_pos = None
 
                     next_t = self.playlist.on_track_ended()
                     if next_t:
@@ -541,6 +576,8 @@ class PlayerController(
                         self._check_stream_queue_auto_extend()
                     else:
                         self._last_loaded_path = None
+                        if is_stream:
+                            self._stream_ended = True
                 else:
                     logger.warning(
                         "Track '%s' ended prematurely at pos=%.2f / dur=%.2f (is_stream=%s, reason=%s)",
@@ -568,28 +605,52 @@ class PlayerController(
                             return
                         else:
                             self._stream_auto_retries = 0
+                            self._pending_resume_pos = None
                             self.engine.stop()
                             self.speech.speak(_(
                                 "Playback of this stream failed. Press Space to retry."
                             ))
                             return
                     else:
+                        self._pending_resume_pos = None
                         self.engine.stop()
                         self.speech.speak(_("Playback stopped."))
                         return
 
-            elif reason in ("stop", "quit"):
-                self.save_current_position()
+            elif reason == "quit":
+                if not getattr(self, "_explicit_stop_cleared", False):
+                    self.save_current_position()
             elif reason == "error":
+                self._pending_resume_pos = None
                 cur = self.playlist.get_current_track()
                 if cur and getattr(cur, "is_stream", False):
-                    try:
-                        stream_engine.clear_resolve_cache()
-                    except Exception:
-                        pass
-                    self.speech.speak(_(
-                        "Playback of this stream failed. Press Space to retry."
-                    ))
+                    auto_retries = getattr(self, "_stream_auto_retries", 0)
+                    if auto_retries < 2 and cur_pos > 0.5:
+                        self._stream_auto_retries = auto_retries + 1
+                        logger.info(
+                            "Auto-reconnecting stream for '%s' at %.2f (attempt %d/2)",
+                            cur.display_name, cur_pos, self._stream_auto_retries
+                        )
+                        try:
+                            stream_engine.clear_resolve_cache()
+                        except Exception:
+                            pass
+                        self._silence_resume_announcement = True
+                        self.speech.speak(_("Reconnecting..."))
+                        self.play_track(cur)
+                        return
+                    else:
+                        self._stream_auto_retries = 0
+                        try:
+                            stream_engine.clear_resolve_cache()
+                        except Exception:
+                            pass
+                        self.speech.speak(_(
+                            "Playback of this stream failed. Press Space to retry."
+                        ))
+                else:
+                    self.engine.stop()
+                    self.speech.speak(_("Playback stopped."))
 
     def _on_engine_property_change(self, name: str, data: Any) -> None:
         """Fired on mpv property change events."""
@@ -612,8 +673,11 @@ class PlayerController(
                 return
 
             with self._lock:
-                if self._suppress_next_auto_chapter:
-                    self._suppress_next_auto_chapter = False
+                suppress_count = getattr(self, "_suppress_auto_chapter_count", 0)
+                if suppress_count > 0 or self._suppress_next_auto_chapter:
+                    if suppress_count > 0:
+                        self._suppress_auto_chapter_count = suppress_count - 1
+                    self._suppress_next_auto_chapter = (getattr(self, "_suppress_auto_chapter_count", 0) > 0)
                     self._active_native_chapter_idx = ch_idx
                     return
 
@@ -648,8 +712,11 @@ class PlayerController(
                 cur_ch_idx = 0
 
             with self._lock:
-                if self._suppress_next_auto_chapter:
-                    self._suppress_next_auto_chapter = False
+                suppress_count = getattr(self, "_suppress_auto_chapter_count", 0)
+                if suppress_count > 0 or self._suppress_next_auto_chapter:
+                    if suppress_count > 0:
+                        self._suppress_auto_chapter_count = suppress_count - 1
+                    self._suppress_next_auto_chapter = (getattr(self, "_suppress_auto_chapter_count", 0) > 0)
                     self._active_stream_chapter_idx = cur_ch_idx
                     return
 

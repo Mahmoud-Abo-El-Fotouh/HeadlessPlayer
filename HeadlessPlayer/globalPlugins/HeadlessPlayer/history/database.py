@@ -9,6 +9,7 @@ Zero binary / C-extension dependencies; 100% compatible with all NVDA builds.
 """
 
 from __future__ import annotations
+import hashlib
 import json
 import logging
 import os
@@ -49,7 +50,7 @@ def _encode_database_payload(data: Dict[str, Any]) -> bytes:
 def _decode_database_payload(blob: bytes) -> Dict[str, Any]:
     """Decodes binary or legacy plain-text database blob."""
     if not blob:
-        return {}
+        raise ValueError("Database payload is empty (0 bytes)")
     if blob.startswith(MAGIC_HEADER):
         payload = blob[len(MAGIC_HEADER):]
         unmasked = bytes([b ^ _OBFUSCATE_KEY[i % len(_OBFUSCATE_KEY)] for i, b in enumerate(payload)])
@@ -122,7 +123,7 @@ def normalize_file_path(file_path: str) -> str:
     - Local files are expanded to absolute paths and normalized case.
     - Other online URLs are preserved cleanly.
     """
-    if not file_path:
+    if not file_path or "\x00" in str(file_path):
         return ""
     p = str(file_path).strip()
     m = _YT_ID_REGEX.search(p)
@@ -138,6 +139,41 @@ def normalize_file_path(file_path: str) -> str:
         return os.path.normcase(abs_path)
     except Exception:
         return p.lower()
+
+
+def compute_media_fingerprint(file_path: str) -> Optional[str]:
+    """
+    Computes a fast partial-hash fingerprint of a local media file using
+    the file size, first 4096 bytes, and last 4096 bytes.
+    Enables restoring playback positions across file renames or moves.
+    Returns None for remote streams, directories, or unreadable files.
+    """
+    if not file_path or "\x00" in str(file_path):
+        return None
+    p = str(file_path).strip()
+    if p.startswith(("http://", "https://", "youtube:", "ytdl://", "custom://")):
+        return None
+    try:
+        norm = normalize_file_path(p)
+        if not os.path.isfile(norm):
+            return None
+        size = os.path.getsize(norm)
+        if size <= 0:
+            return None
+        hasher = hashlib.md5()
+        hasher.update(str(size).encode("ascii"))
+        chunk_size = 4096
+        with open(norm, "rb") as f:
+            head = f.read(chunk_size)
+            hasher.update(head)
+            if size > chunk_size:
+                f.seek(max(0, size - chunk_size))
+                tail = f.read(chunk_size)
+                hasher.update(tail)
+        return hasher.hexdigest()
+    except Exception as e:
+        logger.debug("Failed to compute media fingerprint for '%s': %s", file_path, e)
+        return None
 
 
 def disambiguate_recent_name(item: Dict[str, Any], all_items: Sequence[Dict[str, Any]]) -> str:
@@ -287,11 +323,19 @@ class DatabaseManager:
                 payload = _encode_database_payload(self._cache)
                 with open(temp_path, "wb") as f:
                     f.write(payload)
+                    f.flush()
+                    try:
+                        os.fsync(f.fileno())
+                    except Exception:
+                        pass
 
                 if os.path.exists(self._db_path) and os.path.getsize(self._db_path) > 0:
                     bak1 = self._db_path + ".bak1"
                     bak2 = self._db_path + ".bak2"
                     try:
+                        with open(self._db_path, "rb") as existing_f:
+                            existing_blob = existing_f.read()
+                        _decode_database_payload(existing_blob)
                         if os.path.exists(bak1) and os.path.getsize(bak1) > 0:
                             shutil.copy2(bak1, bak2)
                         shutil.copy2(self._db_path, bak1)
@@ -527,21 +571,32 @@ class DatabaseManager:
             self.clear_position(file_path)
             return
         dur = duration_sec if duration_sec is not None else duration
-        if dur and dur > 0 and (dur - pos) <= end_threshold_sec:
-            self.clear_position(file_path)
-            return
+        if dur and dur > 0:
+            if end_threshold_sec <= 3.0:
+                if dur < 20.0:
+                    end_thresh = max(0.5, min(end_threshold_sec, dur * 0.05))
+                else:
+                    end_thresh = max(5.0, min(20.0, dur * 0.05))
+            else:
+                end_thresh = end_threshold_sec
+            if (dur - pos) <= end_thresh or pos >= dur:
+                self.clear_position(file_path)
+                return
 
         norm_path = normalize_file_path(file_path)
         if not norm_path:
             return
 
         is_stream = norm_path.startswith(("http://", "https://", "youtube:", "ytdl://", "custom://"))
+        fingerprint = kwargs.get("fingerprint")
         if not is_stream:
             try:
                 if file_size is None and os.path.isfile(norm_path):
                     file_size = os.path.getsize(norm_path)
                 if file_mtime is None and os.path.isfile(norm_path):
                     file_mtime = os.path.getmtime(norm_path)
+                if fingerprint is None and os.path.isfile(norm_path):
+                    fingerprint = compute_media_fingerprint(norm_path)
             except Exception:
                 pass
 
@@ -557,6 +612,8 @@ class DatabaseManager:
                 rec["file_size"] = int(file_size)
             if file_mtime is not None:
                 rec["file_mtime"] = float(file_mtime)
+            if fingerprint is not None:
+                rec["fingerprint"] = str(fingerprint)
 
             self._cache["positions"][norm_path] = rec
             self._save_to_disk()
@@ -598,22 +655,52 @@ class DatabaseManager:
         current_duration: Optional[float] = None,
         current_size: Optional[int] = None
     ) -> Optional[Dict[str, Any]]:
+        if not file_path or "\x00" in str(file_path):
+            return None
         norm_path = normalize_file_path(file_path)
         if not norm_path:
             return None
+
+        is_stream = norm_path.startswith(("http://", "https://", "youtube:", "ytdl://", "custom://"))
 
         with self._lock:
             rec = self._cache["positions"].get(norm_path)
             if not rec or not isinstance(rec, dict):
                 if norm_path.startswith("youtube:") and file_path in self._cache["positions"]:
                     rec = self._cache["positions"][file_path]
-                else:
+                elif not is_stream and os.path.isfile(norm_path):
+                    # Attempt fast partial-hash fingerprint matching for renamed/moved files
+                    fp = compute_media_fingerprint(norm_path)
+                    if fp:
+                        for old_path, old_rec in list(self._cache["positions"].items()):
+                            if isinstance(old_rec, dict) and old_rec.get("fingerprint") == fp:
+                                # Match found! Migrate record to new norm_path and remove stale old_path
+                                rec = dict(old_rec)
+                                rec["filename"] = os.path.basename(norm_path)
+                                try:
+                                    rec["file_mtime"] = os.path.getmtime(norm_path)
+                                    rec["file_size"] = os.path.getsize(norm_path)
+                                except Exception:
+                                    pass
+                                self._cache["positions"][norm_path] = rec
+                                if old_path != norm_path:
+                                    del self._cache["positions"][old_path]
+                                self._save_to_disk()
+                                logger.info(
+                                    "Restored playback position for moved/renamed file '%s' from fingerprint matching '%s'",
+                                    norm_path, old_path
+                                )
+                                break
+                if not rec or not isinstance(rec, dict):
                     return None
 
             pos = float(rec.get("position", 0.0))
-            dur = float(rec.get("duration", 0.0)) if rec.get("duration") is not None else None
+            dur = float(current_duration) if (current_duration and float(current_duration) > 0) else (float(rec.get("duration", 0.0)) if rec.get("duration") is not None else None)
 
-            is_stream = norm_path.startswith(("http://", "https://", "youtube:", "ytdl://", "custom://"))
+            if pos < 1.0:
+                del self._cache["positions"][norm_path]
+                self._save_to_disk()
+                return None
 
             if not is_stream:
                 if os.path.isfile(norm_path):
@@ -627,6 +714,17 @@ class DatabaseManager:
                                 logger.info(
                                     "Position invalidated for '%s': file size changed (saved=%d, actual=%d)",
                                     norm_path, saved_size, actual_size
+                                )
+                                del self._cache["positions"][norm_path]
+                                self._save_to_disk()
+                                return None
+
+                        saved_mtime = rec.get("file_mtime")
+                        if saved_mtime is not None and actual_mtime is not None:
+                            if abs(float(actual_mtime) - float(saved_mtime)) > 1.0:
+                                logger.info(
+                                    "Position invalidated for '%s': file modification time changed (saved=%.2f, actual=%.2f)",
+                                    norm_path, float(saved_mtime), float(actual_mtime)
                                 )
                                 del self._cache["positions"][norm_path]
                                 self._save_to_disk()
@@ -651,10 +749,15 @@ class DatabaseManager:
                     except Exception as e:
                         logger.debug("Error checking file fingerprint for '%s': %s", norm_path, e)
 
-            if dur and dur > 0 and (dur - pos) <= 3.0:
-                del self._cache["positions"][norm_path]
-                self._save_to_disk()
-                return None
+            if dur and dur > 0:
+                if dur < 20.0:
+                    end_thresh = max(0.5, min(3.0, dur * 0.05))
+                else:
+                    end_thresh = max(5.0, min(20.0, dur * 0.05))
+                if (dur - pos) <= end_thresh or pos >= dur:
+                    del self._cache["positions"][norm_path]
+                    self._save_to_disk()
+                    return None
 
             return dict(rec)
 

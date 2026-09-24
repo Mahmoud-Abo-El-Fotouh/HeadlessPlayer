@@ -60,3 +60,6 @@ cover/
 HeadlessPlayer_debug.*
 manage_logs.py
 scratch/
+tests/
+PROJECT_RULES.md
+*RULES.md
