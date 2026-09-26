@@ -317,6 +317,8 @@ def build_command(source: ExportSource, settings: Dict[str, Any], start: Optiona
     if not mpv:
         raise RuntimeError("mpv not found")
     fmt = settings.get("format", "mp3")
+    if not source.has_video and not bool(settings.get("audio_to_video")) and fmt == "mp4":
+        fmt = "mp3"
     story = settings.get("quality", "high") == "story"
     cmd: List[str] = [mpv, "--no-config", "--ytdl=no", "--really-quiet", "--no-terminal"]
     if start is not None:
@@ -343,13 +345,6 @@ def build_command(source: ExportSource, settings: Dict[str, Any], start: Optiona
             cmd += ["--no-video", "--oac=libmp3lame", "--oacopts=b=128k" if story else "--oacopts=b=192k"]
         inputs = [source.audio_url or source.path]
     elif fmt == "m4a":
-        if src_ext in (".m4a", ".aac"):
-            cmd += ["--no-video", "--oac=copy"]
-        else:
-            cmd += ["--no-video", "--oac=aac", "--oacopts=b=96k" if story else "--oacopts=b=160k"]
-        inputs = [source.audio_url or source.path]
-    elif not source.has_video and not bool(settings.get("audio_to_video")):
-        # Audio source without story video requested: export clean audio-only MP4 container
         if src_ext in (".m4a", ".aac"):
             cmd += ["--no-video", "--oac=copy"]
         else:
@@ -410,6 +405,10 @@ def export(source: ExportSource, settings: Dict[str, Any], start: Optional[float
     folder = folder or get_export_folder()
     os.makedirs(folder, exist_ok=True)
     fmt = settings.get("format", "mp3")
+    if not source.has_video and not bool(settings.get("audio_to_video")) and fmt == "mp4":
+        fmt = "mp3"
+        settings = dict(settings)
+        settings["format"] = "mp3"
     ext = "." + fmt.lstrip(".")
     if filename.lower().endswith(ext):
         base_name = filename[:-len(ext)]
