@@ -40,12 +40,22 @@ except NameError:
         return s
 
 
-def format_labels() -> List[tuple]:
-    return [
-        ("mp3", _("Audio MP3 (works everywhere)")),
-        ("m4a", _("Audio M4A / AAC (high purity)")),
-        ("mp4", _("Video MP4 (H.264 + AAC, stories & chats)")),
-    ]
+def format_labels(has_video: bool = True, audio_to_video: bool = False) -> List[tuple]:
+    if has_video:
+        return [
+            ("mp3", _("Audio MP3 (works everywhere)")),
+            ("m4a", _("Audio M4A / AAC (high purity)")),
+            ("mp4", _("Video MP4 (H.264 + AAC, stories & chats)")),
+        ]
+    elif audio_to_video:
+        return [
+            ("mp4", _("Video MP4 (H.264 + AAC, stories & chats)")),
+        ]
+    else:
+        return [
+            ("mp3", _("Audio MP3 (works everywhere)")),
+            ("m4a", _("Audio M4A / AAC (high purity)")),
+        ]
 
 
 def quality_labels() -> List[tuple]:
@@ -107,9 +117,16 @@ def prompt_export_dialog(
             if intro_message:
                 helper.addItem(cur_wx.StaticText(dlg, label=intro_message))
 
-            fmts = format_labels()
+            has_vid = bool(getattr(source, "has_video", False))
+            initial_a2v = bool(defaults.get("audio_to_video", False)) if not has_vid else False
+
+            fmts = format_labels(has_video=has_vid, audio_to_video=initial_a2v)
             quals = quality_labels()
             cur_fmt = str(defaults.get("format", "mp3"))
+            if not has_vid and not initial_a2v and cur_fmt == "mp4":
+                cur_fmt = "mp3"
+            elif not has_vid and initial_a2v:
+                cur_fmt = "mp4"
             cur_q = str(defaults.get("quality", "high"))
 
             nameCtrl = helper.addLabeledControl(_("File &name:"), cur_wx.TextCtrl)
@@ -134,9 +151,9 @@ def prompt_export_dialog(
                     vqChoice.SetSelection(pref_idx)
 
             wavChk = None
-            if not getattr(source, "has_video", False):
+            if not has_vid:
                 wavChk = helper.addItem(cur_wx.CheckBox(dlg, label=_("Convert audio to a story video (MP4 with animated &waveform)")))
-                wavChk.SetValue(bool(defaults.get("audio_to_video", False)))
+                wavChk.SetValue(initial_a2v)
 
             folderCtrl = helper.addLabeledControl(_("Save &to folder:"), cur_wx.TextCtrl)
             folderCtrl.SetValue(str(defaults.get("folder") or ce.get_export_folder()))
@@ -144,13 +161,30 @@ def prompt_export_dialog(
             rememberChk = helper.addItem(cur_wx.CheckBox(dlg, label=_("&Remember these settings for Quick Export (Shift+D)")))
             rememberChk.SetValue(True)
 
-            known_exts = {v.lower() for v, _l in fmts} | {"mp3", "m4a", "mp4", "wav", "flac", "opus", "mkv", "avi", "webm"}
+            known_exts = {"mp3", "m4a", "mp4", "wav", "flac", "opus", "mkv", "avi", "webm"}
 
             def _ext() -> str:
                 i = fmtChoice.GetSelection()
                 if isinstance(i, int) and 0 <= i < len(fmts):
                     return fmts[i][0]
-                return "mp3"
+                return "mp4" if (wavChk is not None and wavChk.GetValue()) else "mp3"
+
+            def _on_wav_toggle(evt: Any = None) -> None:
+                nonlocal fmts
+                is_a2v = bool(wavChk.GetValue()) if wavChk is not None else False
+                fmts = format_labels(has_video=has_vid, audio_to_video=is_a2v)
+                new_choices = [l for _v, l in fmts]
+                if hasattr(fmtChoice, "Clear") and hasattr(fmtChoice, "Append"):
+                    fmtChoice.Clear()
+                    for ch in new_choices:
+                        fmtChoice.Append(ch)
+                    fmtChoice.SetSelection(0)
+                elif hasattr(fmtChoice, "SetItems"):
+                    fmtChoice.SetItems(new_choices)
+                    fmtChoice.SetSelection(0)
+                _refresh_name()
+                if evt is not None:
+                    evt.Skip()
 
             def _refresh_name(evt: Any = None) -> None:
                 cur = nameCtrl.GetValue().strip()
@@ -167,8 +201,6 @@ def prompt_export_dialog(
                 is_video = _ext() == "mp4"
                 if vqChoice is not None:
                     vqChoice.Enable(is_video and not (wavChk is not None and wavChk.GetValue()))
-                if wavChk is not None:
-                    wavChk.Enable(is_video)
                 if evt is not None:
                     evt.Skip()
 
@@ -180,7 +212,7 @@ def prompt_export_dialog(
 
             fmtChoice.Bind(cur_wx.EVT_CHOICE, _refresh_name)
             if wavChk is not None:
-                wavChk.Bind(cur_wx.EVT_CHECKBOX, _refresh_name)
+                wavChk.Bind(cur_wx.EVT_CHECKBOX, _on_wav_toggle)
             browseBtn.Bind(cur_wx.EVT_BUTTON, _browse)
             _refresh_name()
 
@@ -199,12 +231,16 @@ def prompt_export_dialog(
                 if dlg.ShowModal() == cur_wx.ID_OK:
                     i = fmtChoice.GetSelection()
                     j = qChoice.GetSelection()
+                    is_a2v = bool(wavChk.GetValue()) if wavChk is not None else False
+                    sel_fmt = fmts[i][0] if (isinstance(i, int) and 0 <= i < len(fmts)) else _ext()
+                    if not has_vid and not is_a2v and sel_fmt == "mp4":
+                        sel_fmt = "mp3"
                     result = {
-                        "filename": nameCtrl.GetValue().strip() or ce.suggest_filename(source.title, start, end, _ext()),
-                        "format": fmts[i][0] if (isinstance(i, int) and 0 <= i < len(fmts)) else "mp3",
+                        "filename": nameCtrl.GetValue().strip() or ce.suggest_filename(source.title, start, end, sel_fmt),
+                        "format": sel_fmt,
                         "quality": quals[j][0] if (isinstance(j, int) and 0 <= j < len(quals)) else "high",
                         "video_quality": (vq_labels[vqChoice.GetSelection()] if vqChoice is not None and vqChoice.GetSelection() >= 0 else ""),
-                        "audio_to_video": bool(wavChk.GetValue()) if wavChk is not None else False,
+                        "audio_to_video": is_a2v,
                         "folder": folderCtrl.GetValue().strip() or ce.get_export_folder(),
                         "remember": bool(rememberChk.GetValue()),
                     }
