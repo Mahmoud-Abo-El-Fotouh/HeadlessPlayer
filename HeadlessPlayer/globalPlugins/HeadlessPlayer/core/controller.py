@@ -588,17 +588,17 @@ class PlayerController(
 
                     if is_stream and cur_track:
                         auto_retries = getattr(self, "_stream_auto_retries", 0)
-                        if auto_retries < 2:
+                        if auto_retries < 3:
                             self._stream_auto_retries = auto_retries + 1
                             logger.info(
-                                "Auto-reconnecting stream for '%s' at %.2f (attempt %d/2)",
+                                "Auto-reconnecting stream for '%s' at %.2f (attempt %d/3)",
                                 cur_track.display_name, cur_pos, self._stream_auto_retries
                             )
                             try:
                                 stream_engine.clear_resolve_cache()
                             except Exception:
                                 pass
-                            self._pending_resume_pos = cur_pos
+                            self._pending_resume_pos = cur_pos if cur_pos > 0.5 else None
                             self._silence_resume_announcement = True
                             self.speech.speak(_("Reconnecting..."))
                             self.play_track(cur_track)
@@ -625,16 +625,17 @@ class PlayerController(
                 cur = self.playlist.get_current_track()
                 if cur and getattr(cur, "is_stream", False):
                     auto_retries = getattr(self, "_stream_auto_retries", 0)
-                    if auto_retries < 2 and cur_pos > 0.5:
+                    if auto_retries < 3:
                         self._stream_auto_retries = auto_retries + 1
                         logger.info(
-                            "Auto-reconnecting stream for '%s' at %.2f (attempt %d/2)",
+                            "Auto-reconnecting stream for '%s' at %.2f (attempt %d/3)",
                             cur.display_name, cur_pos, self._stream_auto_retries
                         )
                         try:
                             stream_engine.clear_resolve_cache()
                         except Exception:
                             pass
+                        self._pending_resume_pos = cur_pos if cur_pos > 0.5 else None
                         self._silence_resume_announcement = True
                         self.speech.speak(_("Reconnecting..."))
                         self.play_track(cur)

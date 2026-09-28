@@ -554,7 +554,8 @@ class ControllerStreamingMixin:
             orig_idx = self.playlist.current_index + 1
             total = self.playlist.count
 
-        self.speech.speak(_("Loading: %s") % track.display_name)
+        if not getattr(self, "_silence_resume_announcement", False):
+            self.speech.speak(_("Loading: %s") % track.display_name)
         threading.Thread(
             target=self._resolve_and_play_stream,
             args=(track, generation, orig_idx, total),
@@ -625,6 +626,17 @@ class ControllerStreamingMixin:
                 self._check_stream_queue_auto_extend()
                 self._prefetch_next_stream_track()
             else:
+                auto_retries = getattr(self, "_stream_auto_retries", 0)
+                if auto_retries < 3:
+                    self._stream_auto_retries = auto_retries + 1
+                    try:
+                        stream_engine.clear_resolve_cache()
+                    except Exception:
+                        pass
+                    self._silence_resume_announcement = True
+                    self.speech.speak(_("Reconnecting..."))
+                    self.play_track(track)
+                    return
                 self.speech.speak(_("Playback engine failed to start."))
 
     def _prefetch_next_stream_track(self) -> Optional[threading.Thread]:

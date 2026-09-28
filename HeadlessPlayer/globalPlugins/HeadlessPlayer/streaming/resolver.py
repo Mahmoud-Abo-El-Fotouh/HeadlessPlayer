@@ -351,92 +351,77 @@ def resolve_stream(url: str, prefer_audio: bool = True) -> Dict[str, Any]:
             "best"
         )
 
-    def _extract(use_cookies: bool):
-        opts = _base_ydl_opts(use_cookies=use_cookies, target_url=url)
-        is_yt_target = bool(is_youtube_url(url) or "youtube" in url or "youtu.be" in url)
-        if not prefer_audio and is_yt_target:
-            opts["extractor_args"] = {
-                "youtube": {
-                    "player_client": ["tv_embedded"],
-                }
-            }
-            opts.update({
-                "noplaylist": True,
-                "format": "bestvideo+bestaudio/best",
-                "ignoreerrors": False,
-            })
-            opts.pop("cookiefile", None)
-            opts.pop("cookiesfrombrowser", None)
-            with ytdlp.YoutubeDL(opts) as ydl:
-                return ydl.extract_info(url, download=False)
+    is_yt_target = bool(is_youtube_url(url) or "youtube" in url or "youtu.be" in url)
 
-        if prefer_audio and is_yt_target:
-            # Fast audio stream resolution: skips hanging HLS manifests from manifest.googlevideo.com.
-            # Delivers all 5 audio bitrates (48k, 54k, 71k, 129k, 160k) in ~1.3s.
-            if not use_cookies:
-                opts["extractor_args"] = {
-                    "youtube": {
-                        "player_client": ["tv_embedded"],
-                        "skip": ["hls"],
-                    }
-                }
-            else:
-                opts["extractor_args"] = {
-                    "youtube": {
-                        "player_client": ["android", "ios"],
-                        "skip": ["hls"],
-                    }
-                }
+    def _build_strategies() -> List[Tuple[str, bool, Dict[str, Any], str]]:
+        st: List[Tuple[str, bool, Dict[str, Any], str]] = []
+        if not is_yt_target:
+            st.append(("generic_anon", False, {}, format_selector if prefer_audio else "best"))
+            if login_cookies_enabled():
+                st.append(("generic_auth", True, {}, format_selector if prefer_audio else "best"))
+            return st
 
-        opts.update({
-            "noplaylist": True,
-            "format": format_selector if prefer_audio else "best",
-            "ignoreerrors": False,
-        })
-        with ytdlp.YoutubeDL(opts) as ydl:
-            return ydl.extract_info(url, download=False)
+        # Video mode strategies
+        if not prefer_audio:
+            st.append(("tv_embedded_video", False, {"youtube": {"player_client": ["tv_embedded"]}}, "bestvideo+bestaudio/best"))
+            st.append(("android_video", False, {"youtube": {"player_client": ["android"]}}, "bestvideo+bestaudio/best"))
+            st.append(("web_video", False, {"youtube": {"player_client": ["web"]}}, "bestvideo+bestaudio/best"))
+            if login_cookies_enabled():
+                st.append(("cookies_video", True, {"youtube": {"player_client": ["web", "android"]}}, "bestvideo+bestaudio/best"))
+            return st
 
+        # Audio mode strategies
+        primary_client = cfg.get("youtubeExtractorClient", "tv_embedded")
+        primary_list = [c.strip() for c in primary_client.split(",") if c.strip()] if isinstance(primary_client, str) else []
+        st.append(("primary", False, {"youtube": {"player_client": primary_list or ["tv_embedded"], "skip": ["hls"]}}, format_selector))
+        st.append(("android_fast", False, {"youtube": {"player_client": ["android"], "player_skip": ["webpage", "configs"], "skip": ["hls"]}}, format_selector))
+        st.append(("ios", False, {"youtube": {"player_client": ["ios"], "skip": ["hls"]}}, format_selector))
+        st.append(("web", False, {"youtube": {"player_client": ["web"]}}, format_selector))
+        st.append(("mweb", False, {"youtube": {"player_client": ["mweb"]}}, format_selector))
+        st.append(("tv", False, {"youtube": {"player_client": ["tv"]}}, format_selector))
+
+        if login_cookies_enabled():
+            cookie_client = cfg.get("youtubeExtractorClientAuth", "android,ios")
+            c_list = [c.strip() for c in cookie_client.split(",") if c.strip()] if isinstance(cookie_client, str) else []
+            st.append(("cookies_auth", True, {"youtube": {"player_client": c_list or ["android", "ios"], "skip": ["hls"]}}, format_selector))
+            st.append(("cookies_web", True, {"youtube": {"player_client": ["web"]}, "youtubetab": {"skip": ["authcheck"]}}, format_selector))
+
+        return st
+
+    strategies = _build_strategies()
     info = None
     first_error: Optional[Exception] = None
-    try:
-        info = _extract(use_cookies=False)
-    except Exception as e:
-        first_error = e
+    last_error: Optional[Exception] = None
 
-    if not info and login_cookies_enabled():
-        logger.info("Anonymous extraction failed for %s; retrying with sign-in cookies", url)
+    for name, use_cookies, extractor_args, fmt in strategies:
         try:
-            info = _extract(use_cookies=True)
+            opts = _base_ydl_opts(use_cookies=use_cookies, target_url=url)
+            if not use_cookies:
+                opts.pop("cookiefile", None)
+                opts.pop("cookiesfrombrowser", None)
+            if extractor_args:
+                opts["extractor_args"] = extractor_args
+            opts.update({
+                "noplaylist": True,
+                "format": fmt,
+                "ignoreerrors": False,
+            })
+            with ytdlp.YoutubeDL(opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+            if info:
+                logger.debug("Successfully resolved stream for %s using strategy: %s", url, name)
+                break
         except Exception as e:
             if not first_error:
                 first_error = e
-
-    # Fallback for audio playback if primary extraction failed:
-    # Retry with android client skipping webpage & configs
-    is_yt_target = bool(is_youtube_url(url) or "youtube" in url or "youtu.be" in url)
-    if not info and prefer_audio and is_yt_target:
-        try:
-            logger.info("Primary audio extraction failed for %s; retrying with android fast player", url)
-            opts_fb = _base_ydl_opts(use_cookies=False, target_url=url)
-            opts_fb["extractor_args"] = {
-                "youtube": {
-                    "player_client": ["android"],
-                    "player_skip": ["webpage", "configs"],
-                }
-            }
-            opts_fb.update({
-                "noplaylist": True,
-                "format": format_selector if prefer_audio else "best",
-                "ignoreerrors": False,
-            })
-            with ytdlp.YoutubeDL(opts_fb) as ydl:
-                info = ydl.extract_info(url, download=False)
-        except Exception as e_fb:
-            logger.debug("Android fallback also failed: %s", e_fb)
+            last_error = e
+            logger.debug("Resolution strategy '%s' failed for %s: %s", name, url, e)
 
     if not info:
         if first_error:
             raise first_error
+        if last_error:
+            raise last_error
         raise RuntimeError("Extraction returned no result")
 
     if info.get("_type") == "playlist" and info.get("entries"):
