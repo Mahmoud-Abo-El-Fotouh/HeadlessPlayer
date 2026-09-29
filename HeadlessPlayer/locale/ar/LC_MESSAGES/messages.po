@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: HeadlessPlayer 1.3.0\n"
 "Report-Msgid-Bugs-To: https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer\n"
-"POT-Creation-Date: 2026-09-29 00:09+0300\n"
-"PO-Revision-Date: 2026-09-29 00:09+0300\n"
+"POT-Creation-Date: 2026-09-29 05:09+0300\n"
+"PO-Revision-Date: 2026-09-29 05:09+0300\n"
 "Last-Translator: Mahmoud Abo El Fotouh <mahmoudaboelfotouh.20@gmail.com>\n"
 "Language-Team: Arabic <mahmoudaboelfotouh.20@gmail.com>\n"
 "Language: ar\n"
@@ -2037,3 +2037,7 @@ msgstr "هذه القائمة تتطلب ملف تعريف ارتباط (cookies
 
 msgid "This feed requires valid sign-in cookies. Please configure or update your cookies.txt file in HeadlessPlayer settings."
 msgstr "هذه الخلاصة تتطلب ملف تعريف ارتباط (cookies.txt) صالح لتسجيل الدخول. يرجى تهيئة أو تحديث ملف الكوكيز في إعدادات HeadlessPlayer."
+
+msgid "Automatically &check for add-on updates on NVDA startup"
+msgstr "التحقق &تلقائياً من وجود تحديثات للإضافة عند بدء تشغيل NVDA"
+
