@@ -74,7 +74,7 @@ from .playlist import Playlist, Track, RepeatMode
 from .history import StateStore, get_state_store
 from .input import ModalInputLayer
 from .gui import HeadlessPlayerSettingsPanel
-from .utils.updater import cleanup_temp_addon_packages
+from .utils.updater import cleanup_temp_addon_packages, check_and_prompt_startup_update
 
 logger = logging.getLogger("HeadlessPlayer")
 
@@ -137,6 +137,12 @@ class GlobalPlugin(_BaseGlobalPlugin):
 
         # 5. Register Settings Panel Category in NVDA Settings Dialog
         self._register_settings_panel()
+
+        # 6. Check for Add-on Updates on Startup (if enabled in settings)
+        try:
+            check_and_prompt_startup_update()
+        except Exception as e:
+            logger.debug("Failed to schedule startup update check: %s", e)
 
         logger.info("HeadlessPlayer GlobalPlugin initialized successfully.")
 

@@ -68,6 +68,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "recentsKeepFolders": True,
     "recentsKeepPlaylists": True,
     "recentsKeepStreams": True,
+    "autoCheckAddonUpdateOnStartup": True,
 }
 
 DEFAULT_KEYMAP: Dict[str, str] = {

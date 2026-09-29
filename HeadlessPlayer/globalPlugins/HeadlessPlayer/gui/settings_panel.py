@@ -654,6 +654,14 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
                 wx.StaticText(self.panelShortcuts, label=_("Installed add-on version: %s") % cur_ver_str)
             )
 
+            self.autoCheckAddonUpdateChk = addonUpdatesGroup.addItem(
+                wx.CheckBox(
+                    self.panelShortcuts,
+                    label=_("Automatically &check for add-on updates on NVDA startup")
+                )
+            )
+            self.autoCheckAddonUpdateChk.SetValue(bool(cfg.get("autoCheckAddonUpdateOnStartup", True)))
+
             self.checkAddonUpdatesBtn = addonUpdatesGroup.addItem(
                 wx.Button(self.panelShortcuts, label=_("Check for &Add-on Updates on GitHub..."))
             )
@@ -1365,6 +1373,13 @@ class HeadlessPlayerSettingsPanel(SettingsPanel):
             if hasattr(self, "sbCatMusicOfftopicChk") and self.sbCatMusicOfftopicChk.GetValue():
                 cats.append("music_offtopic")
             setConfigValue("sponsorBlockCategories", ",".join(cats))
+
+        # Update startup add-on update check option
+        if hasattr(self, "autoCheckAddonUpdateChk"):
+            try:
+                setConfigValue("autoCheckAddonUpdateOnStartup", bool(self.autoCheckAddonUpdateChk.GetValue()))
+            except Exception:
+                pass
 
         # Save to database store
         saveConfig()

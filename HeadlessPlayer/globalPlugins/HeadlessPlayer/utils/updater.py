@@ -326,19 +326,24 @@ class AddonUpdateDialog(_WxDialog):
     read-only multi-line text box, live download progress, and direct installation trigger.
     """
 
-    def __init__(self, parent: Any, update_info: Dict[str, Any]) -> None:
+    def __init__(self, parent: Any = None, update_info: Optional[Dict[str, Any]] = None) -> None:
         if not wx:
             return
+        if parent is None and gui and hasattr(gui, "mainFrame"):
+            parent = gui.mainFrame
         super().__init__(
             parent,
             title=_("Headless Media Player - Add-on Update Available"),
             style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER
         )
-        self.update_info = update_info
+        self.update_info = update_info or {}
         self._is_downloading = False
         self.downloaded_file_path: Optional[str] = None
         self.InitUI()
-        self.CenterOnParent()
+        if self.GetParent():
+            self.CenterOnParent()
+        else:
+            self.CentreOnScreen()
 
     def InitUI(self) -> None:
         mainSizer = wx.BoxSizer(wx.VERTICAL)
@@ -487,6 +492,73 @@ class AddonUpdateDialog(_WxDialog):
 
     def onClose(self, evt: Any) -> None:
         self.EndModal(wx.ID_CANCEL)
+
+
+def show_update_dialog(update_info: Dict[str, Any], parent: Any = None) -> None:
+    """
+    Displays the AddonUpdateDialog on the main GUI thread.
+    Safely invokes prePopup / postPopup hooks if available in NVDA.
+    """
+    if not wx:
+        return
+    if parent is None and gui and hasattr(gui, "mainFrame"):
+        parent = gui.mainFrame
+    if gui and hasattr(gui, "mainFrame") and hasattr(gui.mainFrame, "prePopup"):
+        try:
+            gui.mainFrame.prePopup()
+        except Exception:
+            pass
+    dlg = AddonUpdateDialog(parent, update_info)
+    try:
+        dlg.ShowModal()
+    finally:
+        dlg.Destroy()
+        if gui and hasattr(gui, "mainFrame") and hasattr(gui.mainFrame, "postPopup"):
+            try:
+                gui.mainFrame.postPopup()
+            except Exception:
+                pass
+
+
+def check_and_prompt_startup_update(delay_sec: float = 3.0) -> None:
+    """
+    Checks for add-on updates asynchronously in the background on NVDA startup.
+    If an update is available and autoCheckAddonUpdateOnStartup is enabled, prompts the user with the AddonUpdateDialog.
+    Fails completely silently on error or if up-to-date so as not to interrupt NVDA startup.
+    """
+    try:
+        from .config_spec import getConfigValue
+    except ImportError:
+        try:
+            from utils.config_spec import getConfigValue
+        except ImportError:
+            def getConfigValue(k: str, d: Any = None) -> Any:
+                return d
+
+    if not getConfigValue("autoCheckAddonUpdateOnStartup", True):
+        return
+
+    def worker() -> None:
+        if delay_sec > 0:
+            import time
+            time.sleep(delay_sec)
+
+        # Re-check setting after delay in case user disabled it
+        if not getConfigValue("autoCheckAddonUpdateOnStartup", True):
+            return
+
+        try:
+            available, info, _status = check_for_addon_update()
+            if available and info and wx:
+                wx.CallAfter(show_update_dialog, info)
+        except Exception as e:
+            logger.debug("Startup add-on update check encountered an error: %s", e)
+
+    threading.Thread(
+        target=worker,
+        daemon=True,
+        name="HeadlessPlayer-StartupUpdateCheck"
+    ).start()
 
 
 def cleanup_temp_addon_packages() -> None:

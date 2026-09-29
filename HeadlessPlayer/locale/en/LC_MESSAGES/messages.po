@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: HeadlessPlayer 1.3.0\n"
 "Report-Msgid-Bugs-To: https://github.com/Mahmoud-Abo-El-Fotouh/HeadlessPlayer\n"
-"POT-Creation-Date: 2026-09-29 00:09+0300\n"
-"PO-Revision-Date: 2026-09-29 00:09+0300\n"
+"POT-Creation-Date: 2026-09-29 05:09+0300\n"
+"PO-Revision-Date: 2026-09-29 05:09+0300\n"
 "Last-Translator: Mahmoud Abo El Fotouh <mahmoudaboelfotouh.20@gmail.com>\n"
 "Language-Team: English <mahmoudaboelfotouh.20@gmail.com>\n"
 "Language: en\n"
@@ -2038,3 +2038,7 @@ msgstr "This playlist requires valid sign-in cookies. Please configure or update
 
 msgid "This feed requires valid sign-in cookies. Please configure or update your cookies.txt file in HeadlessPlayer settings."
 msgstr "This feed requires valid sign-in cookies. Please configure or update your cookies.txt file in HeadlessPlayer settings."
+
+msgid "Automatically &check for add-on updates on NVDA startup"
+msgstr "Automatically &check for add-on updates on NVDA startup"
+
